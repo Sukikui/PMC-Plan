@@ -1,0 +1,146 @@
+name: 🌀 Add New Portal
+description: Submit a new portal to be added to the PMC Map
+title: "[PORTAL] Add new portal: "
+labels: ["enhancement", "portal", "community-contribution"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing to the PMC Map! Please fill out all required fields below to add a new portal.
+        
+        **Important:** Make sure the portal doesn't already exist by checking the [current portals](https://github.com/tristanhabemont/PMC-Map/tree/main/public/data/portals).
+
+  - type: input
+    id: portal-id
+    attributes:
+      label: Portal ID
+      description: A unique identifier for this portal (lowercase, underscore-separated)
+      placeholder: "my_base_portal_ow"
+    validations:
+      required: true
+
+  - type: input
+    id: portal-name
+    attributes:
+      label: Portal Name
+      description: The display name for this portal
+      placeholder: "My Base Portal (Overworld)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: dimension
+    attributes:
+      label: Dimension
+      description: Which dimension is this portal located in?
+      options:
+        - overworld
+        - nether
+        - end
+    validations:
+      required: true
+
+  - type: input
+    id: coordinates-x
+    attributes:
+      label: X Coordinate
+      description: The X coordinate of the portal
+      placeholder: "100"
+    validations:
+      required: true
+
+  - type: input
+    id: coordinates-y
+    attributes:
+      label: Y Coordinate
+      description: The Y coordinate of the portal
+      placeholder: "64"
+    validations:
+      required: true
+
+  - type: input
+    id: coordinates-z
+    attributes:
+      label: Z Coordinate
+      description: The Z coordinate of the portal
+      placeholder: "200"
+    validations:
+      required: true
+
+  - type: input
+    id: linked-portal
+    attributes:
+      label: Linked Portal ID
+      description: The ID of the portal this connects to (optional, for manual linking)
+      placeholder: "my_base_portal_nether"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A brief description of this portal (optional)
+      placeholder: "Portal connecting to the main base in the nether"
+
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated tags to categorize this portal (optional)
+      placeholder: "base, main, transport"
+
+  - type: dropdown
+    id: is-active
+    attributes:
+      label: Is Active
+      description: Is this portal currently active and usable?
+      options:
+        - "true"
+        - "false"
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: json-data
+    attributes:
+      label: Generated JSON (Auto-filled)
+      description: "This will be auto-generated based on your inputs above. Please don't edit manually."
+      render: json
+      value: |
+        {
+          "id": "",
+          "name": "",
+          "dimension": "",
+          "coordinates": { "x": 0, "y": 0, "z": 0 },
+          "linkedPortalId": "",
+          "tags": [],
+          "description": "",
+          "isActive": true
+        }
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have verified this portal doesn't already exist
+          required: true
+        - label: The coordinates are accurate
+          required: true
+        - label: I have permission to add this portal to the public map
+          required: true
+        - label: If linking to another portal, I have verified the linked portal ID exists
+          required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## What happens next?
+        
+        1. Our automated validation will check your JSON format
+        2. If validation passes, a maintainer will review your submission
+        3. Once approved, your portal will be added to the map!
+        
+        **File location:** Your portal will be saved as `public/data/portals/{portal-id}.json`

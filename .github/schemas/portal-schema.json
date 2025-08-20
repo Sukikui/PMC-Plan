@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "PMC Map Portal Schema",
+  "description": "Schema for validating portal data in the PMC Map project",
+  "required": ["id", "name", "dimension", "coordinates"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "Unique identifier for the portal (lowercase, underscore-separated)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Display name of the portal"
+    },
+    "dimension": {
+      "type": "string",
+      "enum": ["overworld", "nether", "end"],
+      "description": "The dimension where this portal is located"
+    },
+    "coordinates": {
+      "type": "object",
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate"
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate"
+        }
+      },
+      "additionalProperties": false
+    },
+    "linkedPortalId": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "ID of the portal this connects to (for manual linking)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_-]+$",
+        "minLength": 1,
+        "maxLength": 30
+      },
+      "uniqueItems": true,
+      "maxItems": 10,
+      "description": "Array of tags to categorize the portal"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "Optional description of the portal"
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "Whether the portal is currently active and usable"
+    }
+  },
+  "additionalProperties": false
+}
