@@ -1,39 +1,39 @@
-name: 🏠 Add New Place
-description: Submit a new place to be added to the PMC Map
-title: "[PLACE] Add new place: "
+name: 🏠 Ajouter un nouveau lieu
+description: Soumettre un nouveau lieu à ajouter à la carte PMC
+title: "[LIEU] Ajouter un nouveau lieu : "
 labels: ["enhancement", "place", "community-contribution"]
 assignees: []
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for contributing to the PMC Map! Please fill out all required fields below to add a new place.
+        Merci de contribuer à la carte PMC ! Veuillez remplir tous les champs requis ci-dessous pour ajouter un nouveau lieu.
         
-        **Important:** Make sure the place doesn't already exist by checking the [current places](https://github.com/tristanhabemont/PMC-Map/tree/main/public/data/places).
+        **Important :** Assurez-vous que le lieu n'existe pas déjà en consultant les [lieux actuels](https://github.com/tristanhabemont/PMC-Map/tree/main/public/data/places).
 
   - type: input
     id: place-id
     attributes:
-      label: Place ID
-      description: A unique identifier for this place (lowercase, underscore-separated)
-      placeholder: "my_cool_base"
+      label: ID du lieu
+      description: Un identifiant unique pour ce lieu (minuscules, séparé par des underscores)
+      placeholder: "ma_base_cool"
     validations:
       required: true
 
   - type: input
     id: place-name
     attributes:
-      label: Place Name
-      description: The display name for this place
-      placeholder: "My Cool Base"
+      label: Nom du lieu
+      description: Le nom d'affichage pour ce lieu
+      placeholder: "Ma base cool"
     validations:
       required: true
 
   - type: dropdown
-    id: dimension
+    id: world
     attributes:
-      label: Dimension
-      description: Which dimension is this place located in?
+      label: Monde
+      description: Dans quel monde ce lieu est-il situé ?
       options:
         - overworld
         - nether
@@ -44,8 +44,8 @@ body:
   - type: input
     id: coordinates-x
     attributes:
-      label: X Coordinate
-      description: The X coordinate of the place
+      label: Coordonnée X
+      description: La coordonnée X du lieu
       placeholder: "100"
     validations:
       required: true
@@ -53,8 +53,8 @@ body:
   - type: input
     id: coordinates-y
     attributes:
-      label: Y Coordinate
-      description: The Y coordinate of the place
+      label: Coordonnée Y
+      description: La coordonnée Y du lieu
       placeholder: "64"
     validations:
       required: true
@@ -62,8 +62,8 @@ body:
   - type: input
     id: coordinates-z
     attributes:
-      label: Z Coordinate
-      description: The Z coordinate of the place
+      label: Coordonnée Z
+      description: La coordonnée Z du lieu
       placeholder: "200"
     validations:
       required: true
@@ -72,60 +72,52 @@ body:
     id: description
     attributes:
       label: Description
-      description: A brief description of this place (optional)
-      placeholder: "A large farming complex with automated crop systems"
+      description: Une brève description de ce lieu (optionnel)
+      placeholder: "Un grand complexe agricole avec des systèmes de cultures automatisés"
 
   - type: input
     id: tags
     attributes:
-      label: Tags
-      description: Comma-separated tags to categorize this place (optional)
-      placeholder: "farm, automated, redstone"
-
-  - type: input
-    id: nearest-portal
-    attributes:
-      label: Nearest Portal ID
-      description: The ID of the nearest portal to this place (optional)
-      placeholder: "main_hub_portal"
+      label: Étiquettes
+      description: Étiquettes séparées par des virgules pour catégoriser ce lieu (optionnel)
+      placeholder: "ferme, automatisé, redstone"
 
   - type: textarea
     id: json-data
     attributes:
-      label: Generated JSON (Auto-filled)
-      description: "This will be auto-generated based on your inputs above. Please don't edit manually."
+      label: JSON généré (Auto-rempli)
+      description: "Ceci sera généré automatiquement basé sur vos entrées ci-dessus. Veuillez ne pas éditer manuellement."
       render: json
       value: |
         {
           "id": "",
           "name": "",
-          "dimension": "",
+          "world": "",
           "coordinates": { "x": 0, "y": 0, "z": 0 },
           "tags": [],
-          "description": "",
-          "nearestPortalId": ""
+          "description": ""
         }
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: Checklist
-      description: Please confirm the following
+      label: Liste de vérification
+      description: Veuillez confirmer ce qui suit
       options:
-        - label: I have verified this place doesn't already exist
+        - label: J'ai vérifié que ce lieu n'existe pas déjà
           required: true
-        - label: The coordinates are accurate
+        - label: Les coordonnées sont exactes
           required: true
-        - label: I have permission to add this place to the public map
+        - label: J'ai la permission d'ajouter ce lieu à la carte publique
           required: true
 
   - type: markdown
     attributes:
       value: |
-        ## What happens next?
+        ## Que se passe-t-il ensuite ?
         
-        1. Our automated validation will check your JSON format
-        2. If validation passes, a maintainer will review your submission
-        3. Once approved, your place will be added to the map!
+        1. Notre validation automatique vérifiera le format de votre JSON
+        2. Si la validation réussit, un mainteneur examinera votre soumission
+        3. Une fois approuvé, votre lieu sera ajouté à la carte !
         
-        **File location:** Your place will be saved as `public/data/places/{place-id}.json`
+        **Emplacement du fichier :** Votre lieu sera sauvegardé comme `public/data/places/{place-id}.json`

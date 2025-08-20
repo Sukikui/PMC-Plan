@@ -124,8 +124,13 @@ export async function getPlacesByTag(tag: string): Promise<Place[]> {
   return places.filter(place => place.tags.includes(tag));
 }
 
-// Get portals by dimension
-export async function getPortalsByDimension(dimension: 'overworld' | 'nether' | 'end'): Promise<Portal[]> {
+// Get portals by world (renamed from dimension)
+export async function getPortalsByWorld(world: 'overworld' | 'nether' | 'end'): Promise<Portal[]> {
   const portals = await getPortals();
-  return portals.filter(portal => portal.dimension === dimension);
+  return portals.filter(portal => portal.world === world);
+}
+
+// Backward compatibility
+export async function getPortalsByDimension(dimension: 'overworld' | 'nether' | 'end'): Promise<Portal[]> {
+  return getPortalsByWorld(dimension);
 }

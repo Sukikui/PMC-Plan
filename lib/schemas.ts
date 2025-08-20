@@ -7,30 +7,29 @@ export const CoordinateSchema = z.object({
   z: z.number(),
 });
 
-// Dimension enum
-export const DimensionSchema = z.enum(['overworld', 'nether', 'end']);
+// World enum (renamed from Dimension)
+export const WorldSchema = z.enum(['overworld', 'nether', 'end']);
+
+// Maintain backward compatibility
+export const DimensionSchema = WorldSchema;
 
 // Portal schema
 export const PortalSchema = z.object({
   id: z.string(),
   name: z.string(),
-  dimension: DimensionSchema,
+  world: WorldSchema,
   coordinates: CoordinateSchema,
-  linkedPortalId: z.string().optional(), // For manual linking
-  tags: z.array(z.string()).default([]),
   description: z.string().optional(),
-  isActive: z.boolean().default(true),
 });
 
 // Place schema  
 export const PlaceSchema = z.object({
   id: z.string(),
   name: z.string(),
-  dimension: DimensionSchema,
+  world: WorldSchema,
   coordinates: CoordinateSchema,
   tags: z.array(z.string()).default([]),
   description: z.string().optional(),
-  nearestPortalId: z.string().optional(),
 });
 
 // Nether axis schema
@@ -48,7 +47,7 @@ export const NetherAxisSchema = z.object({
 // Path segment for routing
 export const PathSegmentSchema = z.object({
   type: z.enum(['walk', 'portal', 'axis']),
-  dimension: DimensionSchema,
+  dimension: WorldSchema,
   coordinates: CoordinateSchema,
   portalId: z.string().optional(),
   axisId: z.string().optional(),
@@ -76,7 +75,8 @@ export const PlayerPositionSchema = z.object({
 
 // Export types
 export type Coordinate = z.infer<typeof CoordinateSchema>;
-export type Dimension = z.infer<typeof DimensionSchema>;
+export type World = z.infer<typeof WorldSchema>;
+export type Dimension = z.infer<typeof DimensionSchema>; // Backward compatibility
 export type Portal = z.infer<typeof PortalSchema>;
 export type Place = z.infer<typeof PlaceSchema>;
 export type NetherAxis = z.infer<typeof NetherAxisSchema>;

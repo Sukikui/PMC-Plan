@@ -67,7 +67,7 @@ export function buildNetherGraph(portals: Portal[], axes: NetherAxis[]): NetherG
   const nodes = new Map<string, GraphNode>();
   
   // Filter to only nether portals that are active
-  const netherPortals = portals.filter(p => p.dimension === 'nether' && p.isActive);
+  const netherPortals = portals.filter(p => p.world === 'nether');
   
   // Add portal nodes
   for (const portal of netherPortals) {

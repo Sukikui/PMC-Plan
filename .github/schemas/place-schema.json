@@ -3,7 +3,7 @@
   "type": "object",
   "title": "PMC Map Place Schema",
   "description": "Schema for validating place data in the PMC Map project",
-  "required": ["id", "name", "dimension", "coordinates"],
+  "required": ["id", "name", "world", "coordinates"],
   "properties": {
     "id": {
       "type": "string",
@@ -18,10 +18,10 @@
       "maxLength": 100,
       "description": "Display name of the place"
     },
-    "dimension": {
+    "world": {
       "type": "string",
       "enum": ["overworld", "nether", "end"],
-      "description": "The dimension where this place is located"
+      "description": "The world where this place is located"
     },
     "coordinates": {
       "type": "object",
@@ -60,13 +60,6 @@
       "maxLength": 500,
       "description": "Optional description of the place"
     },
-    "nearestPortalId": {
-      "type": "string",
-      "pattern": "^[a-z0-9_]+$",
-      "minLength": 1,
-      "maxLength": 50,
-      "description": "ID of the nearest portal to this place"
-    }
   },
   "additionalProperties": false
 }

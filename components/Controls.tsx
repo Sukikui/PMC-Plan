@@ -6,7 +6,7 @@ interface Place {
   id: string;
   name: string;
   tags: string[];
-  dimension: 'overworld' | 'nether' | 'end';
+  world: 'overworld' | 'nether' | 'end';
   coordinates: { x: number; y: number; z: number };
   description?: string;
 }
@@ -122,7 +122,7 @@ export default function Controls({ onDestinationChange, onCalculateRoute, player
           <option value="">Select a destination...</option>
           {filteredPlaces.map(place => (
             <option key={place.id} value={place.id}>
-              {place.name} ({place.dimension})
+              {place.name} ({place.world})
             </option>
           ))}
         </select>
@@ -132,7 +132,7 @@ export default function Controls({ onDestinationChange, onCalculateRoute, player
         <div className="bg-gray-50 p-4 rounded-md">
           <h3 className="font-medium text-gray-900">{selectedPlace.name}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {selectedPlace.dimension} ({selectedPlace.coordinates.x}, {selectedPlace.coordinates.y}, {selectedPlace.coordinates.z})
+            {selectedPlace.world} ({selectedPlace.coordinates.x}, {selectedPlace.coordinates.y}, {selectedPlace.coordinates.z})
           </p>
           {selectedPlace.description && (
             <p className="text-sm text-gray-600 mt-2">{selectedPlace.description}</p>

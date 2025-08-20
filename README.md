@@ -89,11 +89,10 @@ Create JSON files in `public/data/places/`:
 {
   "id": "my_place",
   "name": "My Cool Place", 
-  "dimension": "overworld",
+  "world": "overworld",
   "coordinates": { "x": 100, "y": 64, "z": 200 },
   "tags": ["shop", "important"],
   "description": "A really cool place to visit",
-  "nearestPortalId": "nearby_portal"
 }
 ```
 
@@ -106,11 +105,9 @@ Overworld portal:
 {
   "id": "my_portal_ow",
   "name": "My Portal (Overworld)",
-  "dimension": "overworld",
+  "world": "overworld",
   "coordinates": { "x": 800, "y": 64, "z": 1600 },
-  "linkedPortalId": "my_portal_nether",
-  "tags": ["transport"],
-  "isActive": true
+  "description": "Portal connecting to the nether"
 }
 ```
 
@@ -119,11 +116,9 @@ Nether portal:
 {
   "id": "my_portal_nether", 
   "name": "My Portal (Nether)",
-  "dimension": "nether",
+  "world": "nether",
   "coordinates": { "x": 100, "y": 64, "z": 200 },
-  "linkedPortalId": "my_portal_ow",
-  "tags": ["transport"],
-  "isActive": true
+  "description": "Nether side of the portal"
 }
 ```
 

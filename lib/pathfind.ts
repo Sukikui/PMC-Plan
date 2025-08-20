@@ -77,7 +77,7 @@ export async function findPath(
   };
   
   // If both start and target are in the same dimension, use direct pathfinding
-  if (startPos.dim === targetPlace.dimension) {
+  if (startPos.dim === targetPlace.world) {
     return findDirectPath(state);
   }
   
@@ -205,7 +205,7 @@ function findInterDimensionalPath(state: PathfindingState): Path | null {
     let path: PathSegment[] = [];
     let totalDistance = 0;
     
-    if (startPos.dim === 'overworld' && targetPlace.dimension === 'nether') {
+    if (startPos.dim === 'overworld' && targetPlace.world === 'nether') {
       // Overworld -> Portal -> Nether
       const distanceToPortal = calculate2DDistance(
         { x: startPos.x, y: startPos.y, z: startPos.z },
@@ -244,7 +244,7 @@ function findInterDimensionalPath(state: PathfindingState): Path | null {
       
       totalDistance = distanceToPortal + distanceFromPortal;
       
-    } else if (startPos.dim === 'nether' && targetPlace.dimension === 'overworld') {
+    } else if (startPos.dim === 'nether' && targetPlace.world === 'overworld') {
       // Nether -> Portal -> Overworld
       const distanceToPortal = calculate2DDistance(
         { x: startPos.x, y: startPos.y, z: startPos.z },
@@ -384,7 +384,7 @@ function buildPathFromNodes(
     if (finalDistance > 0) {
       segments.push({
         type: 'walk',
-        dimension: targetPlace.dimension,
+        dimension: targetPlace.world,
         coordinates: targetPlace.coordinates,
         distance: finalDistance,
         instructions: `Walk to ${targetPlace.name}`,

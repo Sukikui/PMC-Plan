@@ -13,48 +13,16 @@ export interface PortalLink {
 
 export function linkPortals(portals: Portal[]): PortalLink[] {
   const links: PortalLink[] = [];
-  const overworldPortals = portals.filter(p => p.dimension === 'overworld');
-  const netherPortals = portals.filter(p => p.dimension === 'nether');
+  const overworldPortals = portals.filter(p => p.world === 'overworld');
+  const netherPortals = portals.filter(p => p.world === 'nether');
   const usedNetherPortals = new Set<string>();
   const usedOverworldPortals = new Set<string>();
 
-  // First pass: Handle manual links
-  for (const owPortal of overworldPortals) {
-    if (owPortal.linkedPortalId && !usedOverworldPortals.has(owPortal.id)) {
-      const netherPortal = netherPortals.find(p => p.id === owPortal.linkedPortalId);
-      if (netherPortal && !usedNetherPortals.has(netherPortal.id)) {
-        links.push({
-          overworldPortal: owPortal,
-          netherPortal,
-          distance: 0, // Manual links have priority
-          isManualLink: true,
-        });
-        usedOverworldPortals.add(owPortal.id);
-        usedNetherPortals.add(netherPortal.id);
-      }
-    }
-  }
+  // Manual linking is removed - portals are now auto-linked based on coordinates only
 
-  // Second pass: Handle manual links from nether side
-  for (const netherPortal of netherPortals) {
-    if (netherPortal.linkedPortalId && !usedNetherPortals.has(netherPortal.id)) {
-      const owPortal = overworldPortals.find(p => p.id === netherPortal.linkedPortalId);
-      if (owPortal && !usedOverworldPortals.has(owPortal.id)) {
-        links.push({
-          overworldPortal: owPortal,
-          netherPortal,
-          distance: 0, // Manual links have priority
-          isManualLink: true,
-        });
-        usedOverworldPortals.add(owPortal.id);
-        usedNetherPortals.add(netherPortal.id);
-      }
-    }
-  }
-
-  // Third pass: Auto-link remaining portals based on coordinate matching
+  // Auto-link portals based on coordinate matching
   for (const owPortal of overworldPortals) {
-    if (usedOverworldPortals.has(owPortal.id) || !owPortal.isActive) continue;
+    if (usedOverworldPortals.has(owPortal.id)) continue;
 
     // Convert overworld coordinates to nether scale
     const expectedNetherCoord = overworldToNether(owPortal.coordinates);
@@ -63,7 +31,7 @@ export function linkPortals(portals: Portal[]): PortalLink[] {
     let bestDistance = Infinity;
 
     for (const netherPortal of netherPortals) {
-      if (usedNetherPortals.has(netherPortal.id) || !netherPortal.isActive) continue;
+      if (usedNetherPortals.has(netherPortal.id)) continue;
 
       // Calculate distance between expected nether position and actual nether portal
       const distance = calculate2DDistance(expectedNetherCoord, netherPortal.coordinates);
@@ -124,7 +92,7 @@ export function getUnlinkedPortals(portals: Portal[], links: PortalLink[]): Port
     linkedPortalIds.add(link.netherPortal.id);
   });
   
-  return portals.filter(portal => !linkedPortalIds.has(portal.id) && portal.isActive);
+  return portals.filter(portal => !linkedPortalIds.has(portal.id));
 }
 
 // Validate portal links (check for conflicts or issues)
