@@ -1,0 +1,10 @@
+{
+  "id": "shopping_portal_ow",
+  "name": "Shopping District Portal (Overworld)",
+  "dimension": "overworld", 
+  "coordinates": { "x": 500, "y": 65, "z": -300 },
+  "linkedPortalId": "shopping_portal_nether",
+  "tags": ["shopping", "commercial"],
+  "description": "Portal to shopping district",
+  "isActive": true
+}

@@ -1,0 +1,8 @@
+{
+  "id": "end_portal",
+  "name": "End Portal",
+  "dimension": "overworld",
+  "coordinates": { "x": -850, "y": 12, "z": 1200 },
+  "tags": ["end", "portal", "important"],
+  "description": "Stronghold with End Portal"
+}

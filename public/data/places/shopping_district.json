@@ -1,0 +1,9 @@
+{
+  "id": "shopping_district",
+  "name": "Shopping District",
+  "dimension": "overworld", 
+  "coordinates": { "x": 480, "y": 64, "z": -320 },
+  "tags": ["shop", "commercial", "market"],
+  "description": "Main shopping and trading area with various stores",
+  "nearestPortalId": "shopping_portal_ow"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "iron_farm",
+  "name": "Iron Farm",
+  "dimension": "overworld",
+  "coordinates": { "x": -200, "y": 80, "z": 150 },
+  "tags": ["farm", "iron", "resource"],
+  "description": "Community iron farm for everyone to use",
+  "nearestPortalId": "spawn_portal_ow"
+}
