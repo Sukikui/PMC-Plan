@@ -1,0 +1,193 @@
+name: Validate Community Contributions
+
+on:
+  pull_request:
+    paths:
+      - 'public/data/places/*.json'
+      - 'public/data/portals/*.json'
+  issues:
+    types: [opened, edited]
+
+jobs:
+  validate-pr-files:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    name: Validate JSON Files in PR
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          npm install -g ajv-cli
+          
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            public/data/places/*.json
+            public/data/portals/*.json
+            
+      - name: Validate Places JSON
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Validating changed files..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Validating $file"
+            if [[ $file == public/data/places/*.json ]]; then
+              echo "Validating place: $file"
+              ajv validate -s .github/schemas/place-schema.json -d "$file" --verbose
+              if [ $? -ne 0 ]; then
+                echo "❌ Validation failed for $file"
+                exit 1
+              else
+                echo "✅ Validation passed for $file"
+              fi
+            elif [[ $file == public/data/portals/*.json ]]; then
+              echo "Validating portal: $file"
+              ajv validate -s .github/schemas/portal-schema.json -d "$file" --verbose
+              if [ $? -ne 0 ]; then
+                echo "❌ Validation failed for $file"
+                exit 1
+              else
+                echo "✅ Validation passed for $file"
+              fi
+            fi
+          done
+          
+      - name: Check for duplicate IDs
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Checking for duplicate IDs..."
+          
+          # Check places
+          if ls public/data/places/*.json 1> /dev/null 2>&1; then
+            DUPLICATE_PLACE_IDS=$(jq -r '.id' public/data/places/*.json | sort | uniq -d)
+            if [ ! -z "$DUPLICATE_PLACE_IDS" ]; then
+              echo "❌ Duplicate place IDs found: $DUPLICATE_PLACE_IDS"
+              exit 1
+            fi
+          fi
+          
+          # Check portals
+          if ls public/data/portals/*.json 1> /dev/null 2>&1; then
+            DUPLICATE_PORTAL_IDS=$(jq -r '.id' public/data/portals/*.json | sort | uniq -d)
+            if [ ! -z "$DUPLICATE_PORTAL_IDS" ]; then
+              echo "❌ Duplicate portal IDs found: $DUPLICATE_PORTAL_IDS"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ No duplicate IDs found"
+          
+      - name: Validate filename matches ID
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Validating filename matches JSON ID..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            filename=$(basename "$file" .json)
+            json_id=$(jq -r '.id' "$file")
+            if [ "$filename" != "$json_id" ]; then
+              echo "❌ Filename '$filename' doesn't match JSON ID '$json_id' in $file"
+              exit 1
+            else
+              echo "✅ Filename matches ID for $file"
+            fi
+          done
+
+  validate-issue:
+    if: github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'place') || contains(github.event.issue.labels.*.name, 'portal'))
+    runs-on: ubuntu-latest
+    name: Validate Issue Template Data
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          npm install -g ajv-cli
+          
+      - name: Extract and validate JSON from issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            
+            const issueBody = context.payload.issue.body;
+            const isPlace = context.payload.issue.labels.some(label => label.name === 'place');
+            const isPortal = context.payload.issue.labels.some(label => label.name === 'portal');
+            
+            // Extract JSON from the issue body
+            const jsonMatch = issueBody.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            
+            if (!jsonMatch) {
+              console.log('❌ No JSON found in issue body');
+              process.exit(1);
+            }
+            
+            const jsonData = jsonMatch[1];
+            console.log('Extracted JSON:', jsonData);
+            
+            // Write JSON to temp file
+            fs.writeFileSync('temp-data.json', jsonData);
+            
+            try {
+              // Validate JSON syntax
+              JSON.parse(jsonData);
+              console.log('✅ JSON syntax is valid');
+              
+              // Validate against schema
+              let schemaFile;
+              if (isPlace) {
+                schemaFile = '.github/schemas/place-schema.json';
+              } else if (isPortal) {
+                schemaFile = '.github/schemas/portal-schema.json';
+              } else {
+                console.log('❌ Issue must be labeled as either place or portal');
+                process.exit(1);
+              }
+              
+              console.log(`Validating against schema: ${schemaFile}`);
+              execSync(`ajv validate -s ${schemaFile} -d temp-data.json --verbose`, { stdio: 'inherit' });
+              console.log('✅ Schema validation passed');
+              
+              // Add a comment to the issue
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '✅ **Validation Passed!** Your JSON data is valid and ready for review by a maintainer.'
+              });
+              
+            } catch (error) {
+              console.log('❌ Validation failed:', error.message);
+              
+              // Add error comment to issue
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `❌ **Validation Failed!** Please fix the following issues:\n\n\`\`\`\n${error.message}\n\`\`\`\n\nPlease update your JSON data and edit the issue to re-trigger validation.`
+              });
+              
+              process.exit(1);
+            } finally {
+              // Cleanup
+              if (fs.existsSync('temp-data.json')) {
+                fs.unlinkSync('temp-data.json');
+              }
+            }
