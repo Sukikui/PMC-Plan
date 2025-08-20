@@ -1,9 +1,0 @@
-{
-  "id": "nether_hub",
-  "name": "Nether Hub",
-  "dimension": "nether",
-  "coordinates": { "x": 0, "y": 64, "z": 0 },
-  "tags": ["hub", "transport", "important"],
-  "description": "Central nether hub where all major axes meet",
-  "nearestPortalId": "spawn_portal_nether"
-}

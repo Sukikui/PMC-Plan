@@ -1,4 +1,4 @@
-# PMC Map - Minecraft Hub Pathfinding
+# PMC Map
 
 A Next.js application that provides intelligent pathfinding and navigation for Minecraft servers through the Nether hub network. Built with TypeScript, PixiJS for 2D mapping, and Zod for data validation.
 

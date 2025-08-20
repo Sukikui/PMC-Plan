@@ -1,9 +1,0 @@
-{
-  "id": "spawn",
-  "name": "Spawn",
-  "dimension": "overworld",
-  "coordinates": { "x": 0, "y": 64, "z": 0 },
-  "tags": ["spawn", "important"],
-  "description": "World spawn point",
-  "nearestPortalId": "spawn_portal_ow"
-}
