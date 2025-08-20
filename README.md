@@ -70,7 +70,7 @@ npm run dev
 The app polls `http://127.0.0.1:31337/position` expecting JSON in this format:
 ```json
 {
-  "dim": "overworld|nether|end",
+  "dim": "overworld|nether",
   "x": 123,
   "y": 64, 
   "z": 456,

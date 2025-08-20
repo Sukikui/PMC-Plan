@@ -8,7 +8,7 @@ export const CoordinateSchema = z.object({
 });
 
 // World enum (renamed from Dimension)
-export const WorldSchema = z.enum(['overworld', 'nether', 'end']);
+export const WorldSchema = z.enum(['overworld', 'nether']);
 
 // Maintain backward compatibility
 export const DimensionSchema = WorldSchema;
@@ -66,7 +66,7 @@ export const PathSchema = z.object({
 
 // Player position from localhost
 export const PlayerPositionSchema = z.object({
-  dim: DimensionSchema,
+  dim: WorldSchema,
   x: z.number(),
   y: z.number(),
   z: z.number(),

@@ -20,7 +20,7 @@
     },
     "world": {
       "type": "string",
-      "enum": ["overworld", "nether", "end"],
+      "enum": ["overworld", "nether"],
       "description": "The world where this portal is located"
     },
     "coordinates": {

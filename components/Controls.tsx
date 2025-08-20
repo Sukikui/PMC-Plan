@@ -6,13 +6,13 @@ interface Place {
   id: string;
   name: string;
   tags: string[];
-  world: 'overworld' | 'nether' | 'end';
+  world: 'overworld' | 'nether';
   coordinates: { x: number; y: number; z: number };
   description?: string;
 }
 
 interface PlayerPosition {
-  dim: 'overworld' | 'nether' | 'end';
+  dim: 'overworld' | 'nether';
   x: number;
   y: number;
   z: number;

@@ -14,7 +14,7 @@ Places are locations of interest on the server (bases, farms, shops, etc.).
 4. Fill out all required fields:
    - **Place ID**: Unique identifier (lowercase, underscores only)
    - **Place Name**: Display name
-   - **Monde**: overworld, nether, or end
+   - **Monde**: overworld or nether
    - **Coordinates**: X, Y, Z coordinates
    - **Description**: Brief description (optional)
    - **Tags**: Comma-separated tags (optional)
@@ -53,7 +53,7 @@ Portals are nether portals that connect different dimensions or locations.
 4. Fill out all required fields:
    - **Portal ID**: Unique identifier (lowercase, underscores only)
    - **Portal Name**: Display name
-   - **Monde**: overworld, nether, or end
+   - **Monde**: overworld or nether
    - **Coordinates**: X, Y, Z coordinates
    - **Description**: Brief description (optional)
 5. Submit the issue
@@ -83,7 +83,7 @@ All contributions are automatically validated using JSON schemas:
 ### Place Requirements:
 - **id**: Lowercase letters, numbers, and underscores only
 - **name**: 1-100 characters
-- **world**: Must be "overworld", "nether", or "end"
+- **world**: Must be "overworld" or "nether"
 - **coordinates**: Valid X, Y, Z numbers
 - **tags**: Max 10 tags, each 1-30 characters (optional)
 - **description**: Max 500 characters (optional)
@@ -91,7 +91,7 @@ All contributions are automatically validated using JSON schemas:
 ### Portal Requirements:
 - **id**: Lowercase letters, numbers, and underscores only
 - **name**: 1-100 characters
-- **world**: Must be "overworld", "nether", or "end"
+- **world**: Must be "overworld" or "nether"
 - **coordinates**: Valid X, Y, Z numbers
 - **description**: Max 500 characters (optional)
 
