@@ -1,0 +1,8 @@
+{
+  "id": "example_base",
+  "name": "Community Example Base",
+  "world": "overworld",
+  "coordinates": { "x": 1000, "y": 70, "z": -500 },
+  "tags": ["example", "base", "community", "storage"],
+  "description": "An example base showing the correct JSON format for community contributions. Features storage systems and farms."
+}
