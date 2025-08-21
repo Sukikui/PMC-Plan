@@ -1,0 +1,11 @@
+{
+  "id": "start_village",
+  "name": "Village de Départ",
+  "world": "overworld",
+  "coordinates": {
+    "x": -100,
+    "y": 65,
+    "z": -200
+  },
+  "description": "Point de départ pour tester le voyage via nether"
+}

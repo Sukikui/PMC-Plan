@@ -1,0 +1,11 @@
+{
+  "id": "portal_village_start",
+  "name": "Portail du Village",
+  "world": "overworld",
+  "coordinates": {
+    "x": -120,
+    "y": 65,
+    "z": -220
+  },
+  "description": "Portail près du village de départ"
+}

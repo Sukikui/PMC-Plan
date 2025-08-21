@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { z } from 'zod';
+import { PortalWithDistance, loadPortals, calculateEuclideanDistance } from '../utils/shared';
 
 const QuerySchema = z.object({
   x: z.coerce.number(),
@@ -10,68 +9,6 @@ const QuerySchema = z.object({
   max_distance: z.coerce.number().optional(),
   world: z.enum(['overworld', 'nether']).default('overworld'),
 });
-
-interface Portal {
-  id: string;
-  name: string;
-  world: string;
-  coordinates: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  description?: string;
-}
-
-interface PortalWithDistance {
-  id: string;
-  name: string;
-  world: string;
-  coordinates: {
-    x: number;
-    y: number;
-    z: number;
-  };
-  description?: string;
-  distance: number;
-}
-
-function calculateDistance(
-  x1: number, y1: number, z1: number,
-  x2: number, y2: number, z2: number
-): number {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const dz = z2 - z1;
-  return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-async function loadPortals(): Promise<Portal[]> {
-  const portalsDir = path.join(process.cwd(), 'public', 'data', 'portals');
-  
-  try {
-    const files = await fs.readdir(portalsDir);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
-    
-    const portals: Portal[] = [];
-    
-    for (const file of jsonFiles) {
-      try {
-        const filePath = path.join(portalsDir, file);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const portal: Portal = JSON.parse(content);
-        portals.push(portal);
-      } catch (error) {
-        console.warn(`Failed to load portal file ${file}:`, error);
-      }
-    }
-    
-    return portals;
-  } catch (error) {
-    console.warn('Failed to load portals directory:', error);
-    return [];
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -98,7 +35,7 @@ export async function GET(request: NextRequest) {
     const portalsWithDistance: PortalWithDistance[] = worldPortals
       .map(portal => ({
         ...portal,
-        distance: calculateDistance(
+        distance: calculateEuclideanDistance(
           x, y, z,
           portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
         )

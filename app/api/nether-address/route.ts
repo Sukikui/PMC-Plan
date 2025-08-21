@@ -1,41 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { z } from 'zod';
+import { NetherStop, NetherData, loadNetherData, calculateEuclideanDistance } from '../utils/shared';
 
 const QuerySchema = z.object({
   x: z.coerce.number(),
   y: z.coerce.number().optional(),
   z: z.coerce.number(),
 });
-
-interface NetherStop {
-  level: number;
-  x: number;
-  y: number;
-  z: number;
-}
-
-interface NetherAxes {
-  [key: string]: NetherStop[];
-}
-
-interface SpawnPoint {
-  x: number;
-  y: number;
-  z: number;
-}
-
-interface NetherData {
-  spawn: SpawnPoint;
-  axes: NetherAxes;
-}
-
-function calculateDistance(x1: number, z1: number, x2: number, z2: number): number {
-  const dx = x2 - x1;
-  const dz = z2 - z1;
-  return Math.sqrt(dx * dx + dz * dz);
-}
 
 
 function getAxisDirection(axisName: string): string {
@@ -58,9 +29,10 @@ function isMainAxis(axisName: string): boolean {
 
 function findSecondNearestAtSameLevel(
   targetX: number, 
+  targetY: number,
   targetZ: number, 
   nearestStop: NetherStop, 
-  axes: NetherAxes,
+  axes: NetherData['axes'],
   excludeAxisName: string
 ): { axisName: string; stop: NetherStop; distance: number } | null {
   let secondNearest: { axisName: string; stop: NetherStop; distance: number } | null = null;
@@ -70,7 +42,7 @@ function findSecondNearestAtSameLevel(
     
     const stopAtSameLevel = stops.find(stop => stop.level === nearestStop.level);
     if (stopAtSameLevel) {
-      const distance = calculateDistance(targetX, targetZ, stopAtSameLevel.x, stopAtSameLevel.z);
+      const distance = calculateEuclideanDistance(targetX, targetY, targetZ, stopAtSameLevel.x, stopAtSameLevel.y, stopAtSameLevel.z);
       if (!secondNearest || distance < secondNearest.distance) {
         secondNearest = {
           axisName: axisName,
@@ -128,16 +100,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Load nether axes data
-    const axesFile = path.join(process.cwd(), 'public', 'data', 'nether_axes.json');
-    const content = await fs.readFile(axesFile, 'utf-8');
-    const data: NetherData = JSON.parse(content);
+    const data = await loadNetherData();
 
     // Find the nearest stop across all axes
     let nearestStop: { axisName: string; stop: NetherStop; distance: number } | null = null;
     
     Object.entries(data.axes).forEach(([axisName, stops]) => {
       stops.forEach(stop => {
-        const distance = calculateDistance(x, z, stop.x, stop.z);
+        const distance = calculateEuclideanDistance(x, y || 70, z, stop.x, stop.y, stop.z);
         if (!nearestStop || distance < nearestStop.distance) {
           nearestStop = {
             axisName: axisName,
@@ -155,9 +125,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // At this point nearestStop is guaranteed to exist due to the null check above
+    const guaranteedNearestStop = nearestStop as { axisName: string; stop: NetherStop; distance: number };
+    
     // Check if spawn is nearer than the nearest stop
-    const spawnDistance = calculateDistance(x, z, data.spawn.x, data.spawn.z);
-    if (spawnDistance < nearestStop.distance) {
+    const spawnDistance = calculateEuclideanDistance(x, y || 70, z, data.spawn.x, data.spawn.y, data.spawn.z);
+    if (spawnDistance < guaranteedNearestStop.distance) {
       return NextResponse.json({
         address: "Spawn",
         nearestStop: {
@@ -170,28 +143,28 @@ export async function GET(request: NextRequest) {
     }
 
     // If the nearest stop is on a main axis and distance > 10 blocks, find second nearest at same level
-    if (isMainAxis(nearestStop.axisName) && nearestStop.distance > 10) {
+    if (isMainAxis(guaranteedNearestStop.axisName) && guaranteedNearestStop.distance > 10) {
       const secondNearest = findSecondNearestAtSameLevel(
-        x, z, nearestStop.stop, data.axes, 
-Object.keys(data.axes).find(key => key === nearestStop!.axisName) || ''
+        x, y || 70, z, guaranteedNearestStop.stop, data.axes, 
+        Object.keys(data.axes).find(key => key === guaranteedNearestStop.axisName) || ''
       );
 
       if (secondNearest) {
         const direction = determineDirection(
           x, z,
-          nearestStop.axisName,
-          nearestStop.stop,
+          guaranteedNearestStop.axisName,
+          guaranteedNearestStop.stop,
           secondNearest.axisName,
           secondNearest.stop
         );
 
         return NextResponse.json({
-          address: `${nearestStop.axisName} ${nearestStop.stop.level} ${direction}`,
+          address: `${guaranteedNearestStop.axisName} ${guaranteedNearestStop.stop.level} ${direction}`,
           nearestStop: {
-            axis: nearestStop.axisName,
-            level: nearestStop.stop.level,
-            coordinates: { x: nearestStop.stop.x, y: nearestStop.stop.y, z: nearestStop.stop.z },
-            distance: nearestStop.distance
+            axis: guaranteedNearestStop.axisName,
+            level: guaranteedNearestStop.stop.level,
+            coordinates: { x: guaranteedNearestStop.stop.x, y: guaranteedNearestStop.stop.y, z: guaranteedNearestStop.stop.z },
+            distance: guaranteedNearestStop.distance
           },
           direction
         });
@@ -200,12 +173,12 @@ Object.keys(data.axes).find(key => key === nearestStop!.axisName) || ''
 
     // For diagonal axes or when no second nearest found, return simple address
     return NextResponse.json({
-      address: `${nearestStop.axisName} ${nearestStop.stop.level}`,
+      address: `${guaranteedNearestStop.axisName} ${guaranteedNearestStop.stop.level}`,
       nearestStop: {
-        axis: nearestStop.axisName,
-        level: nearestStop.stop.level,
-        coordinates: { x: nearestStop.stop.x, y: nearestStop.stop.y, z: nearestStop.stop.z },
-        distance: nearestStop.distance
+        axis: guaranteedNearestStop.axisName,
+        level: guaranteedNearestStop.stop.level,
+        coordinates: { x: guaranteedNearestStop.stop.x, y: guaranteedNearestStop.stop.y, z: guaranteedNearestStop.stop.z },
+        distance: guaranteedNearestStop.distance
       }
     });
 

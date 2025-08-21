@@ -47,7 +47,7 @@
       "minLength": 1,
       "maxLength": 500,
       "description": "Optional description of the portal"
-    },
+    }
   },
   "additionalProperties": false
 }
