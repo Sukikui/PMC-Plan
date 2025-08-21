@@ -1,68 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Map2D from '@/components/Map2D';
-import Controls from '@/components/Controls';
-
-interface PlayerPosition {
-  dim: 'overworld' | 'nether' | 'end';
-  x: number;
-  y: number;
-  z: number;
-  ts: number;
-}
+import { useState } from 'react';
+import PlacesPanel from '@/components/PlacesPanel';
+import PlayerOverlay from '@/components/PlayerOverlay';
 
 export default function Home() {
-  const [playerPos, setPlayerPos] = useState<PlayerPosition | null>(null);
-  const [destination, setDestination] = useState<string>('');
-  const [pathData, setPathData] = useState<any>(null);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string>('');
 
-  // Poll localhost for player position
-  useEffect(() => {
-    const pollPosition = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:31337/position');
-        if (response.ok) {
-          const data = await response.json();
-          setPlayerPos(data);
-        }
-      } catch (error) {
-        // Silently fail if localhost server is not running
-      }
-    };
-
-    const interval = setInterval(pollPosition, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleRouteCalculation = async (toId: string) => {
-    if (!playerPos) return;
-
-    try {
-      const response = await fetch(
-        `/api/route?fromDim=${playerPos.dim}&fromX=${playerPos.x}&fromY=${playerPos.y}&fromZ=${playerPos.z}&toId=${toId}`
-      );
-      if (response.ok) {
-        const route = await response.json();
-        setPathData(route);
-      }
-    } catch (error) {
-      console.error('Failed to calculate route:', error);
-    }
+  const handlePlaceSelect = (id: string, type: 'place' | 'portal') => {
+    setSelectedPlaceId(id);
+    console.log('Selected:', id, type);
   };
 
   return (
-    <div className="flex h-screen">
-      <div className="flex-1">
-        <Map2D playerPos={playerPos} pathData={pathData} />
+    <div className="h-screen bg-white">
+      {/* Simple background for now */}
+      <div className="flex items-center justify-center h-full">
+        <div className="text-gray-800 text-center">
+          <h1 className="text-4xl font-bold mb-4">Carte PMC</h1>
+          <p className="text-gray-600">Sélectionnez un lieu dans le panneau de gauche</p>
+        </div>
       </div>
-      <div className="w-80 bg-gray-100 p-4">
-        <Controls 
-          onDestinationChange={setDestination}
-          onCalculateRoute={handleRouteCalculation}
-          playerPos={playerPos}
-        />
-      </div>
+      
+      {/* Left sliding panel */}
+      <PlacesPanel
+        onPlaceSelect={handlePlaceSelect}
+        selectedId={selectedPlaceId}
+      />
+      
+      {/* Player overlay */}
+      <PlayerOverlay />
     </div>
   );
 }
