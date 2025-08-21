@@ -1,0 +1,11 @@
+{
+  "id": "portal_city_end_nether",
+  "name": "Portail de la Cité (Nether)",
+  "world": "nether",
+  "coordinates": {
+    "x": 580,
+    "y": 70,
+    "z": 45
+  },
+  "description": "Côté nether du portail de la cité, près de Est-7-droite"
+}

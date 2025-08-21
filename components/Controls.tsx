@@ -12,7 +12,7 @@ interface Place {
 }
 
 interface PlayerPosition {
-  dim: 'overworld' | 'nether';
+  dim: 'overworld' | 'nether' | 'end';
   x: number;
   y: number;
   z: number;

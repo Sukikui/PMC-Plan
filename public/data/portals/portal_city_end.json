@@ -1,0 +1,11 @@
+{
+  "id": "portal_city_end",
+  "name": "Portail de la Cité",
+  "world": "overworld",
+  "coordinates": {
+    "x": 4520,
+    "y": 70,
+    "z": 280
+  },
+  "description": "Portail près de la cité d'arrivée"
+}

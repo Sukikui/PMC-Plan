@@ -1,0 +1,11 @@
+{
+  "id": "end_city",
+  "name": "Cité d'Arrivée", 
+  "world": "overworld",
+  "coordinates": {
+    "x": 4500,
+    "y": 70,
+    "z": 300
+  },
+  "description": "Destination finale du voyage de test"
+}
