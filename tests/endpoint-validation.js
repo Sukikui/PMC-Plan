@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const assert = require('assert');
 
 // Import fetch for Node.js versions that don't have it built-in
