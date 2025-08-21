@@ -59,7 +59,7 @@
       "minLength": 1,
       "maxLength": 500,
       "description": "Optional description of the place"
-    },
+    }
   },
   "additionalProperties": false
 }
