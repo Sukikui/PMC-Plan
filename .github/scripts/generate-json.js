@@ -55,20 +55,6 @@ function generatePortalJson(data) {
   return portal;
 }
 
-// Example usage:
-// const placeData = {
-//   id: 'my_base',
-//   name: 'My Base',
-//   world: 'overworld',
-//   coordinatesX: '100',
-//   coordinatesY: '64',
-//   coordinatesZ: '200',
-//   description: 'My awesome base',
-//   tags: 'base, home, storage',
-// };
-// 
-// console.log(JSON.stringify(generatePlaceJson(placeData), null, 2));
-
 module.exports = {
   generatePlaceJson,
   generatePortalJson
