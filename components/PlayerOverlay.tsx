@@ -12,7 +12,28 @@ interface PlayerData {
   username: string;
 }
 
-export default function PlayerOverlay() {
+interface PlayerOverlayProps {
+  onPlayerPositionChange?: (position: {x: number; y: number; z: number; world: string} | null) => void;
+  onManualCoordsChange?: (coords: {x: string; y: string; z: string; world: 'overworld' | 'nether'}) => void;
+}
+
+// Constants
+const ERROR_MESSAGES = {
+  NOT_IN_WORLD: 'Vous ne vous trouvez pas dans un monde',
+  ACCESS_DENIED: 'Accès refusé par le mod',
+  CONNECTION_FAILED: 'Impossible de se connecter au mod'
+} as const;
+
+const HELP_MESSAGES = {
+  [ERROR_MESSAGES.NOT_IN_WORLD]: 'Rejoignez le serveur pour synchroniser',
+  [ERROR_MESSAGES.ACCESS_DENIED]: 'Vérifiez les paramètres du mod PlayerCoordsAPI',
+  [ERROR_MESSAGES.CONNECTION_FAILED]: 'Assurez-vous que le mod PlayerCoordsAPI est activé'
+} as const;
+
+export default function PlayerOverlay({ 
+  onPlayerPositionChange,
+  onManualCoordsChange 
+}: PlayerOverlayProps) {
   const [playerData, setPlayerData] = useState<PlayerData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +63,11 @@ export default function PlayerOverlay() {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       
       if (errorMessage.includes('404')) {
-        setError('Joueur pas dans un monde');
+        setError(ERROR_MESSAGES.NOT_IN_WORLD);
       } else if (errorMessage.includes('403')) {
-        setError('Accès refusé par le mod');
+        setError(ERROR_MESSAGES.ACCESS_DENIED);
       } else {
-        setError('Impossible de se connecter au mod');
+        setError(ERROR_MESSAGES.CONNECTION_FAILED);
       }
       
       setIsConnected(false);
@@ -81,6 +102,32 @@ export default function PlayerOverlay() {
     return () => clearInterval(interval);
   }, [isConnected]);
 
+  // Notify parent component of player position changes
+  useEffect(() => {
+    if (playerData && onPlayerPositionChange) {
+      onPlayerPositionChange({
+        x: playerData.x,
+        y: playerData.y,
+        z: playerData.z,
+        world: playerData.world
+      });
+    } else if (!playerData && onPlayerPositionChange) {
+      onPlayerPositionChange(null);
+    }
+  }, [playerData, onPlayerPositionChange]);
+
+  // Notify parent component of manual coords changes
+  useEffect(() => {
+    if (onManualCoordsChange) {
+      onManualCoordsChange({
+        x: manualCoords.x,
+        y: manualCoords.y,
+        z: manualCoords.z,
+        world: manualWorld
+      });
+    }
+  }, [manualCoords, manualWorld, onManualCoordsChange]);
+
 
   return (
     <>
@@ -93,8 +140,21 @@ export default function PlayerOverlay() {
       `}</style>
       <div className="fixed top-4 right-4 w-80 z-50">
         <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-xl border border-gray-200/50">
+
+      {/* Server Logo */}
+      <div className="p-4 flex justify-center bg-white/80 backdrop-blur-sm rounded-t-xl border-b border-gray-200/30">
+        <img 
+          src="/pmc_logo.png" 
+          alt="Server Logo" 
+          className="h-12 w-auto object-contain"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      </div>
+      
       {/* Header with sync button */}
-      <div className="p-4 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm rounded-t-xl">
+      <div className="p-4 border-b border-gray-200/50 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -259,7 +319,7 @@ export default function PlayerOverlay() {
             isErrorFading ? 'opacity-0' : 'opacity-100'
           }`}
           style={{ 
-            top: playerData ? '270px' : '190px',
+            top: playerData ? '350px' : '270px',
             boxShadow: 'none'
           }}
         >
@@ -268,22 +328,20 @@ export default function PlayerOverlay() {
             <p className="text-xs text-red-700 font-medium">{error}</p>
           </div>
           <p className="text-xs text-red-600 mt-1 mb-2">
-            {error === 'Joueur pas dans un monde' 
-              ? 'Rejoignez un monde Minecraft pour synchroniser'
-              : error === 'Accès refusé par le mod'
-              ? 'Vérifiez les paramètres du mod PlayerCoordsAPI'
-              : 'Assurez-vous que le mod PlayerCoordsAPI est activé'
-            }
+            {HELP_MESSAGES[error as keyof typeof HELP_MESSAGES] || HELP_MESSAGES[ERROR_MESSAGES.CONNECTION_FAILED]}
           </p>
-          <button
-            onClick={() => window.open('https://modrinth.com/mod/playercoordsapi', '_blank')}
-            className="w-full px-3 py-2 text-xs bg-white/80 hover:bg-white border border-red-300 hover:border-red-400 text-red-700 hover:text-red-800 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md backdrop-blur-sm"
-          >
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-            Télécharger le mod
-          </button>
+          {/* Only show download button if it's not the "not in world" error */}
+          {error !== ERROR_MESSAGES.NOT_IN_WORLD && (
+            <button
+              onClick={() => window.open('https://modrinth.com/mod/playercoordsapi', '_blank')}
+              className="w-full px-3 py-2 text-xs bg-white/80 hover:bg-white border border-red-300 hover:border-red-400 text-red-700 hover:text-red-800 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md backdrop-blur-sm"
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+              Télécharger le mod
+            </button>
+          )}
         </div>
       )}
     </>

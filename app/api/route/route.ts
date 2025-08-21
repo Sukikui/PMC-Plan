@@ -10,18 +10,19 @@ import {
   calculateEuclideanDistance, 
   convertOverworldToNether 
 } from '../utils/shared';
+import { normalizeWorldName } from '../../../lib/world-utils';
 
 const QuerySchema = z.object({
   from_x: z.coerce.number().optional(),
   from_y: z.coerce.number().optional(),
   from_z: z.coerce.number().optional(),
   from_world: z.enum(['overworld', 'nether']).optional().nullable(),
-  from_place_id: z.string().optional(),
+  from_place_id: z.string().optional().nullable(),
   to_x: z.coerce.number().optional(),
   to_y: z.coerce.number().optional(),
   to_z: z.coerce.number().optional(),
   to_world: z.enum(['overworld', 'nether']).optional().nullable(),
-  to_place_id: z.string().optional(),
+  to_place_id: z.string().optional().nullable(),
 });
 
 interface RoutePoint {
@@ -155,16 +156,23 @@ async function callLinkedPortal(x: number, y: number, z: number, fromWorld: stri
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // Normalize world names before Zod validation
+    const rawFromWorld = searchParams.get('from_world');
+    const rawToWorld = searchParams.get('to_world');
+    const normalizedFromWorld = rawFromWorld ? normalizeWorldName(rawFromWorld) : null;
+    const normalizedToWorld = rawToWorld ? normalizeWorldName(rawToWorld) : null;
+    
     const params = QuerySchema.parse({
       from_x: searchParams.get('from_x'),
       from_y: searchParams.get('from_y'),
       from_z: searchParams.get('from_z'),
-      from_world: searchParams.get('from_world'),
+      from_world: normalizedFromWorld,
       from_place_id: searchParams.get('from_place_id'),
       to_x: searchParams.get('to_x'),
       to_y: searchParams.get('to_y'),
       to_z: searchParams.get('to_z'),
-      to_world: searchParams.get('to_world'),
+      to_world: normalizedToWorld,
       to_place_id: searchParams.get('to_place_id'),
     });
 
@@ -188,16 +196,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Load places if needed
+    // Load places and portals if needed
     const places = await loadPlaces();
+    const portals = await loadPortals();
     
     // Resolve from point
     let fromPoint: RoutePoint;
     if (hasFromPlace) {
-      const place = places.find(p => p.id === params.from_place_id);
+      // Check places first, then portals
+      let place = places.find(p => p.id === params.from_place_id);
+      if (!place) {
+        place = portals.find(p => p.id === params.from_place_id);
+      }
       if (!place) {
         return NextResponse.json(
-          { error: `Place with id '${params.from_place_id}' not found` },
+          { error: `Place or portal with id '${params.from_place_id}' not found` },
           { status: 404 }
         );
       }
@@ -221,10 +234,14 @@ export async function GET(request: NextRequest) {
     // Resolve to point
     let toPoint: RoutePoint;
     if (hasToPlace) {
-      const place = places.find(p => p.id === params.to_place_id);
+      // Check places first, then portals
+      let place = places.find(p => p.id === params.to_place_id);
+      if (!place) {
+        place = portals.find(p => p.id === params.to_place_id);
+      }
       if (!place) {
         return NextResponse.json(
-          { error: `Place with id '${params.to_place_id}' not found` },
+          { error: `Place or portal with id '${params.to_place_id}' not found` },
           { status: 404 }
         );
       }
@@ -398,11 +415,13 @@ async function handleOverworldToOverworld(fromPoint: RoutePoint, toPoint: RouteP
           distance: netherDistance,
           from: {
             id: linkedPortal1?.id || `${portal1.id}_nether`,
+            name: linkedPortal1?.name || `${portal1.name} (Nether)`,
             coordinates: portal1NetherCoords,
             address: portal1Address.address
           },
           to: {
             id: linkedPortal2.id,
+            name: linkedPortal2.name,
             coordinates: linkedPortal2.coordinates,
             address: portal2Address.address
           }
@@ -461,6 +480,7 @@ async function handleNetherToNether(fromPoint: RoutePoint, toPoint: RoutePoint) 
         type: "nether_transport",
         distance: distance,
         from: {
+          name: fromPoint.name || "Position de départ",
           coordinates: fromPoint.coordinates,
           address: fromAddress.address
         },
@@ -548,6 +568,7 @@ async function handleOverworldToNether(fromPoint: RoutePoint, toPoint: RoutePoin
         distance: netherDistance,
         from: {
           id: linkedPortal?.id || `${portal.id}_nether`,
+          name: linkedPortal?.name || `${portal.name} (Nether)`,
           coordinates: portalNetherCoords,
           address: portalAddress.address
         },
@@ -611,6 +632,7 @@ async function handleNetherToOverworld(fromPoint: RoutePoint, toPoint: RoutePoin
         type: "nether_transport",
         distance: netherDistance,
         from: {
+          name: fromPoint.name || "Position de départ", 
           coordinates: fromPoint.coordinates,
           address: fromAddress.address
         },
