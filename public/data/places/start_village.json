@@ -7,5 +7,6 @@
     "y": 65,
     "z": -200
   },
+  "tags": ["village", "spawn"],
   "description": "Point de départ pour tester le voyage via nether"
 }

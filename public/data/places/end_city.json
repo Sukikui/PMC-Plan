@@ -7,5 +7,6 @@
     "y": 70,
     "z": 300
   },
+  "tags": ["city", "destination"],
   "description": "Destination finale du voyage de test"
 }

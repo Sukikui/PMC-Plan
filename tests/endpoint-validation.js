@@ -88,6 +88,22 @@ const EXPECTED_RESULTS = {
         netherAddresses: ['Nord 2', 'Est 7 gauche']
       }
     }
+  },
+  'places-list': {
+    url: '/api/places',
+    expected: {
+      minLength: 3,
+      hasRequiredFields: ['id', 'name', 'world', 'coordinates'],
+      hasStartVillage: 'start_village'
+    }
+  },
+  'portals-list': {
+    url: '/api/portals',
+    expected: {
+      minLength: 6,
+      hasRequiredFields: ['id', 'name', 'world', 'coordinates'],
+      hasVillagePortal: 'portal_village_start'
+    }
   }
 };
 
@@ -156,6 +172,36 @@ async function validateEndpoint(testName, config) {
         assert(addresses.length > 0, 'Should have nether addresses in transport steps');
         assert(addresses.some(addr => addr.includes('Nord')), 'Should pass through Nord axis');
         assert(addresses.some(addr => addr.includes('Est')), 'Should pass through Est axis');
+        break;
+        
+      case 'places-list':
+        assert(Array.isArray(data), 'Response should be an array');
+        assert(data.length >= expected.minLength, `Should have at least ${expected.minLength} places, got ${data.length}`);
+        
+        // Check that all places have required fields
+        data.forEach(place => {
+          expected.hasRequiredFields.forEach(field => {
+            assert(place.hasOwnProperty(field), `Place missing required field: ${field}`);
+          });
+        });
+        
+        // Check that specific place exists
+        assert(data.some(place => place.id === expected.hasStartVillage), `Should contain place with id: ${expected.hasStartVillage}`);
+        break;
+        
+      case 'portals-list':
+        assert(Array.isArray(data), 'Response should be an array');
+        assert(data.length >= expected.minLength, `Should have at least ${expected.minLength} portals, got ${data.length}`);
+        
+        // Check that all portals have required fields
+        data.forEach(portal => {
+          expected.hasRequiredFields.forEach(field => {
+            assert(portal.hasOwnProperty(field), `Portal missing required field: ${field}`);
+          });
+        });
+        
+        // Check that specific portal exists
+        assert(data.some(portal => portal.id === expected.hasVillagePortal), `Should contain portal with id: ${expected.hasVillagePortal}`);
         break;
     }
     
