@@ -1,6 +1,6 @@
 {
   "id": "example_portal_ow",
-  "name": "Example Portal (Overworld)",
+  "name": "Example Portal",
   "world": "overworld",
   "coordinates": { "x": 950, "y": 65, "z": -480 },
   "description": "An example portal showing the correct JSON format for community contributions. Connects to the nether hub."

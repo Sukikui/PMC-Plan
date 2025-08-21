@@ -1,183 +1,113 @@
-# PMC Map
+# 🗺️ PMC Map
 
-A Next.js application that provides intelligent pathfinding and navigation for Minecraft servers through the Nether hub network. Built with TypeScript, PixiJS for 2D mapping, and Zod for data validation.
+**Smart route planning for Minecraft servers**
 
-## Features
+A web application that automatically calculates the best routes between destinations via the Nether portal network, with real-time synchronization of your player position.
 
-- **Real-time Player Tracking**: Integrates with a localhost Minecraft mod to show your current position
-- **Intelligent Pathfinding**: Uses A* algorithm to find optimal routes through the Nether tunnel network
-- **Portal Management**: Automatically links Overworld ↔ Nether portals with 8:1 coordinate scaling
-- **Interactive 2D Map**: PixiJS-powered map showing your location, destinations, and calculated routes
-- **Flexible Data Structure**: JSON-based system for places, portals, and nether axes
-- **Tag-based Filtering**: Organize and find destinations by categories (shop, farm, important, etc.)
+## ✨ Features
 
-## Project Structure
+- 🎯 **Smart navigation** - Automatic calculation of optimal routes via the Nether
+- 🔄 **Real-time sync** - PlayerCoordsAPI mod integration for current position  
+- 🌐 **Modern interface** - Clean design with interactive panels and notifications
+- 📍 **Destination management** - Places and portals organized by tags with search
+- 🚇 **Nether network** - Axis and address system for underground navigation
 
-```
-pmc-map/
-├─ app/
-│  ├─ page.tsx                      # Main UI (PixiJS canvas + controls)
-│  └─ api/
-│     ├─ places/route.ts            # GET /api/places (list places from JSON)
-│     └─ route/route.ts             # GET /api/route (compute path)
-├─ components/
-│  ├─ Map2D.tsx                     # PixiJS scene (player, portals, path)
-│  └─ Controls.tsx                  # UI controls (tags, destination picker)
-├─ lib/
-│  ├─ data.ts                       # Load & cache JSON data
-│  ├─ schemas.ts                    # Zod schemas for type safety
-│  ├─ coords.ts                     # OW↔Nether 8:1 conversions + distance
-│  ├─ portals_linking.ts            # Auto match Overworld <-> Nether portals
-│  ├─ nether_graph.ts               # Build graph from axes + portals
-│  ├─ pathfind.ts                   # A* / Dijkstra pathfinding
-│  └─ directions.ts                 # Generate readable navigation steps
-├─ public/
-│  └─ data/
-│     ├─ portals/                   # One JSON per portal
-│     ├─ places/                    # One JSON per place
-│     └─ nether_axes.json           # Structured Nether axes (N, S, E, W, NE…)
-└─ public/sprites/                  # Pixi assets (player, portal icons, etc.)
-```
-
-## API Endpoints
-
-- `GET /api/places?tag=shop|event|...` → Array of places filtered by tag
-- `GET /api/route?fromDim=...&fromX=...&fromY=...&fromZ=...&toId=...` → Path segments with distance calculations
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Minecraft mod that serves player position on `http://127.0.0.1:31337/position`
+## 🚀 Quick start
 
 ### Installation
 
-1. Install dependencies:
 ```bash
+# Clone the repository
+git clone https://github.com/Sukikui/PMC-Map.git
+# Install dependencies
 npm install
-```
-
-2. Start the development server:
-```bash
+# Launch in development
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000)
 
-### Minecraft Integration
+### Required Minecraft mod
 
-The app polls `http://127.0.0.1:31337/position` expecting JSON in this format:
-```json
-{
-  "dim": "overworld|nether",
-  "x": 123,
-  "y": 64, 
-  "z": 456,
-  "ts": 1640995200
-}
+Install [PlayerCoordsAPI](https://modrinth.com/mod/playercoordsapi) for automatic position synchronization.
+
+## 📁 Project structure
+
+```
+PMC-Map/
+├── app/
+│   ├── page.tsx              # Main interface
+│   └── api/                  # Next.js API routes
+│       ├── places/          # Places management
+│       ├── portals/         # Portals management  
+│       └── route/           # Route calculation
+├── components/
+│   ├── PlacesPanel.tsx      # Left panel (destinations)
+│   ├── PlayerOverlay.tsx    # Right panel (player position)
+│   └── TravelPlan.tsx       # Central display (route)
+├── public/data/
+│   ├── places/              # Places JSON files
+│   ├── portals/             # Portals JSON files
+│   └── nether_axes.json     # Nether network configuration
+└── lib/
+    └── world-utils.ts       # World conversion utilities
 ```
 
-Your Minecraft mod server must allow CORS from your domain.
+## ⚙️ Configuration
 
-## Data Configuration
+### Add a place
 
-### Adding Places
-
-Create JSON files in `public/data/places/`:
+Create `public/data/places/my_place.json`:
 ```json
 {
   "id": "my_place",
-  "name": "My Cool Place", 
-  "world": "overworld",
+  "name": "My Awesome Place",
+  "world": "overworld", 
   "coordinates": { "x": 100, "y": 64, "z": 200 },
   "tags": ["shop", "important"],
-  "description": "A really cool place to visit",
+  "description": "Place description"
 }
 ```
 
-### Adding Portals
+### Add a portal
 
-Create paired JSON files in `public/data/portals/`:
+Create a pair of linked portals:
 
-Overworld portal:
+`public/data/portals/portal_ow.json`:
 ```json
 {
-  "id": "my_portal_ow",
-  "name": "My Portal (Overworld)",
+  "id": "portal_ow",
+  "name": "My Portal",
   "world": "overworld",
-  "coordinates": { "x": 800, "y": 64, "z": 1600 },
-  "description": "Portal connecting to the nether"
+  "coordinates": { "x": 800, "y": 64, "z": 1600 }
 }
 ```
 
-Nether portal:
+`public/data/portals/portal_nether.json`:
 ```json
 {
-  "id": "my_portal_nether", 
-  "name": "My Portal (Nether)",
+  "id": "portal_nether", 
+  "name": "My Portal",
   "world": "nether",
-  "coordinates": { "x": 100, "y": 64, "z": 200 },
-  "description": "Nether side of the portal"
+  "coordinates": { "x": 100, "y": 64, "z": 200 }
 }
 ```
 
-### Configuring Nether Axes
+## 🛠️ Development scripts
 
-Edit `public/data/nether_axes.json` to define your tunnel network:
-```json
-{
-  "axes": [
-    {
-      "id": "main_north",
-      "name": "North Tunnel",
-      "direction": "north", 
-      "startCoordinates": { "x": 0, "y": 64, "z": -50 },
-      "endCoordinates": { "x": 0, "y": 64, "z": -1000 },
-      "tunnelWidth": 5,
-      "isMainAxis": true
-    }
-  ]
-}
+```bash
+npm run dev         # Development server
+npm run build       # Production build
+npm run start       # Production server
+npm run lint        # Code linting
+npm run type-check  # TypeScript checking
+npm test            # API tests
 ```
 
-## Development
+## 🏗️ Tech stack
 
-### Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production  
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript compiler
-
-### Tech Stack
-
-- **Next.js 14**: React framework with App Router
-- **TypeScript**: Type safety and better developer experience
-- **PixiJS**: High-performance 2D graphics for the interactive map
-- **Zod**: Runtime type validation for API inputs and data files
-- **Tailwind CSS**: Utility-first CSS framework
-- **A* Algorithm**: Pathfinding through the nether tunnel network
-
-## Deployment
-
-Deploy to Vercel (recommended):
-
-1. Connect your GitHub repository to Vercel
-2. Set the root directory to your repository root
-3. Deploy - Vercel will automatically detect the Next.js configuration
-
-The app will be available at your Vercel domain and can integrate with your Minecraft mod via CORS.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is MIT licensed.
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Static typing 
+- **Tailwind CSS** - Utility-first CSS framework
+- **Zod** - Schema validation
+- **PlayerCoordsAPI** - Minecraft mod for synchronization
