@@ -50,7 +50,7 @@ export default function PlayerOverlay({
     setError(null);
 
     try {
-      const response = await fetch('/api/player-coords');
+      const response = await fetch('http://localhost:25565/api/coords');
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
