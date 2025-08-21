@@ -25,19 +25,22 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Start Next.js dev server
-      run: npm run dev &
+    - name: Build application
+      run: npm run build
+
+    - name: Start Next.js production server
+      run: npm run start &
 
     - name: Wait for server to be ready
       run: |
         for i in {1..60}; do
-          if curl -f http://localhost:3000/api/places >/dev/null 2>&1; then
+          if curl -f http://localhost:3000/api/nether-address?x=0&z=0 >/dev/null 2>&1; then
             echo "✅ Server is ready"
-            sleep 5
+            sleep 10
             break
           fi
           echo "⏳ Waiting for server... ($i/60)"
-          sleep 3
+          sleep 5
         done
 
     - name: Run endpoint validation tests  
