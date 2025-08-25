@@ -1,5 +1,5 @@
 {
-  "name": "pmc-map",
+  "name": "pmc-plan",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -9,15 +9,15 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch", 
+    "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:endpoints": "node tests/endpoint-validation.js"
   },
   "dependencies": {
-    "next": "^14.2.0",
+    "next": "^15.5.0",
     "pixi.js": "^8.0.0",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "zod": "^3.22.0"
   },
   "devDependencies": {

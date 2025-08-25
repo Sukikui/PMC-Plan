@@ -1,41 +1,70 @@
 'use client';
 
 import { useState } from 'react';
-import PlacesPanel from '@/components/PlacesPanel';
-import PlayerOverlay from '@/components/PlayerOverlay';
+import DestinationPanel from '@/components/DestinationPanel';
+import PositionPanel from '@/components/PositionPanel';
 import TravelPlan from '@/components/TravelPlan';
+import InfoOverlay from '@/components/InfoOverlay';
+import SettingsPanel from '@/components/SettingsPanel';
+import BetaLockScreen from '@/components/BetaLockScreen';
+
+interface Place {
+  id: string;
+  name: string;
+  tags: string[];
+  world: 'overworld' | 'nether';
+  coordinates: { x: number; y: number; z: number };
+  description?: string;
+}
+
+interface Portal {
+  id: string;
+  name: string;
+  world: 'overworld' | 'nether';
+  coordinates: { x: number; y: number; z: number };
+  description?: string;
+}
 
 export default function Home() {
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>('');
   const [selectedPlaceType, setSelectedPlaceType] = useState<'place' | 'portal'>('place');
   const [playerPosition, setPlayerPosition] = useState<{x: number; y: number; z: number; world: string} | null>(null);
   const [manualCoords, setManualCoords] = useState<{x: string; y: string; z: string; world: 'overworld' | 'nether'}>({
     x: '', y: '', z: '', world: 'overworld'
   });
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [overlayItem, setOverlayItem] = useState<Place | Portal | null>(null);
+  const [overlayType, setOverlayType] = useState<'place' | 'portal'>('place');
 
   const handlePlaceSelect = (id: string, type: 'place' | 'portal') => {
     setSelectedPlaceId(id);
     setSelectedPlaceType(type);
   };
 
+  const handleInfoClick = (item: Place | Portal, type: 'place' | 'portal') => {
+    setOverlayItem(item);
+    setOverlayType(type);
+    setOverlayOpen(true);
+  };
+
+  // Show lock screen if not unlocked
+  if (!isUnlocked) {
+    return <BetaLockScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
+
   return (
-    <div className="h-screen bg-white">
-      {/* Simple background for now */}
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-800 text-center">
-          <h1 className="text-4xl font-bold mb-4">Carte PMC</h1>
-          <p className="text-gray-600">Sélectionnez un lieu dans le panneau de gauche</p>
-        </div>
-      </div>
-      
+    <div className="h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+
       {/* Left sliding panel */}
-      <PlacesPanel
+      <DestinationPanel
         onPlaceSelect={handlePlaceSelect}
         selectedId={selectedPlaceId}
+        onInfoClick={handleInfoClick}
       />
       
       {/* Player overlay */}
-      <PlayerOverlay 
+      <PositionPanel 
         onPlayerPositionChange={setPlayerPosition}
         onManualCoordsChange={setManualCoords}
       />
@@ -47,6 +76,17 @@ export default function Home() {
         playerPosition={playerPosition}
         manualCoords={manualCoords}
       />
+      
+      {/* Info Overlay */}
+      <InfoOverlay
+        isOpen={overlayOpen}
+        onClose={() => setOverlayOpen(false)}
+        item={overlayItem}
+        type={overlayType}
+      />
+
+      {/* Settings Panel */}
+      <SettingsPanel />
     </div>
   );
 }

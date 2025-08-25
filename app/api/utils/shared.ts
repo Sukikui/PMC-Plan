@@ -11,6 +11,15 @@ export interface Portal {
     z: number;
   };
   description?: string;
+  "nether-associate"?: {
+    id: string;
+    coordinates: {
+        x: number;
+        y: number;
+        z: number;
+    },
+    address: string;
+  }
 }
 
 export interface PortalWithDistance extends Portal {
@@ -18,7 +27,7 @@ export interface PortalWithDistance extends Portal {
 }
 
 export interface Place {
-  id: string;
+  id:string;
   name: string;
   world: string;
   coordinates: {
@@ -96,6 +105,161 @@ export async function loadPortals(): Promise<Portal[]> {
     console.warn('Failed to load portals directory:', error);
     return [];
   }
+}
+
+export async function findNearestPortals(
+    x: number,
+    y: number = 70,
+    z: number,
+    world: 'overworld' | 'nether' = 'overworld',
+    max_distance?: number
+  ): Promise<PortalWithDistance[]> {
+    const allPortals = await loadPortals();
+    const worldPortals = allPortals.filter(portal => portal.world === world);
+  
+    if (worldPortals.length === 0) {
+      return [];
+    }
+  
+    const portalsWithDistance: PortalWithDistance[] = worldPortals
+      .map(portal => ({
+        ...portal,
+        distance: calculateEuclideanDistance(
+          x, y, z,
+          portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
+        )
+      }))
+      .sort((a, b) => a.distance - b.distance);
+  
+    return max_distance
+      ? portalsWithDistance.filter(portal => portal.distance <= max_distance)
+      : portalsWithDistance;
+}
+
+function getAxisDirection(axisName: string): string {
+    const directions: { [key: string]: string } = {
+      'Nord': 'north', 'Sud': 'south', 'Ouest': 'west', 'Est': 'east',
+      'Nord-Ouest': 'northwest', 'Nord-Est': 'northeast',
+      'Sud-Ouest': 'southwest', 'Sud-Est': 'southeast'
+    };
+    return directions[axisName] || 'unknown';
+}
+  
+function isMainAxis(axisName: string): boolean {
+    return ['Nord', 'Sud', 'Ouest', 'Est'].includes(axisName);
+}
+  
+function findSecondNearestAtSameLevel(
+    targetX: number, targetY: number, targetZ: number,
+    nearestStop: NetherStop,
+    axes: NetherData['axes'],
+    excludeAxisName: string
+): { axisName: string; stop: NetherStop; distance: number } | null {
+    let secondNearest: { axisName: string; stop: NetherStop; distance: number } | null = null;
+    
+    Object.entries(axes).forEach(([axisName, stops]) => {
+      if (axisName === excludeAxisName) return;
+      
+      const stopAtSameLevel = stops.find(stop => stop.level === nearestStop.level);
+      if (stopAtSameLevel) {
+        const distance = calculateEuclideanDistance(targetX, targetY, targetZ, stopAtSameLevel.x, stopAtSameLevel.y, stopAtSameLevel.z);
+        if (!secondNearest || distance < secondNearest.distance) {
+          secondNearest = { axisName, stop: stopAtSameLevel, distance };
+        }
+      }
+    });
+    
+    return secondNearest;
+}
+  
+function determineDirection(
+    targetX: number, targetZ: number,
+    mainAxisName: string, mainAxisStop: NetherStop,
+    secondAxisName: string, secondAxisStop: NetherStop
+): string {
+    const mainDirection = getAxisDirection(mainAxisName);
+    const secondDirection = getAxisDirection(secondAxisName);
+    
+    if (mainDirection === 'north') {
+      if (secondDirection === 'northeast' || secondDirection === 'east') return 'droite';
+      if (secondDirection === 'northwest' || secondDirection === 'west') return 'gauche';
+    } else if (mainDirection === 'south') {
+      if (secondDirection === 'southeast' || secondDirection === 'east') return 'droite';
+      if (secondDirection === 'southwest' || secondDirection === 'west') return 'gauche';
+    } else if (mainDirection === 'east') {
+      if (secondDirection === 'northeast' || secondDirection === 'north') return 'gauche';
+      if (secondDirection === 'southeast' || secondDirection === 'south') return 'droite';
+    } else if (mainDirection === 'west') {
+      if (secondDirection === 'northwest' || secondDirection === 'north') return 'droite';
+      if (secondDirection === 'southwest' || secondDirection === 'south') return 'gauche';
+    }
+    
+    if (mainDirection === 'north' || mainDirection === 'south') {
+      return targetX > mainAxisStop.x ? 'droite' : 'gauche';
+    } else {
+      return targetZ < mainAxisStop.z ? 'droite' : 'gauche';
+    }
+}
+
+export async function calculateNetherAddress(x: number, y: number, z: number): Promise<any> {
+    const data = await loadNetherData();
+    let nearestStop: { axisName: string; stop: NetherStop; distance: number } | null = null;
+  
+    Object.entries(data.axes).forEach(([axisName, stops]) => {
+      stops.forEach(stop => {
+        const distance = calculateEuclideanDistance(x, y, z, stop.x, stop.y, stop.z);
+        if (!nearestStop || distance < nearestStop.distance) {
+          nearestStop = { axisName, stop, distance };
+        }
+      });
+    });
+  
+    if (!nearestStop) {
+      return { error: 'No nether stops found' };
+    }
+  
+    // TypeScript assertion: nearestStop is guaranteed to be non-null here
+    const selectedStop = nearestStop as { axisName: string; stop: NetherStop; distance: number };
+    
+    const spawnDistance = calculateEuclideanDistance(x, y, z, data.spawn.x, data.spawn.y, data.spawn.z);
+    if (spawnDistance < selectedStop.distance) {
+      return {
+        address: "Spawn",
+        nearestStop: {
+          axis: "Spawn",
+          level: null,
+          coordinates: { x: data.spawn.x, y: data.spawn.y, z: data.spawn.z },
+          distance: spawnDistance
+        }
+      };
+    }
+  
+    if (isMainAxis(selectedStop.axisName) && selectedStop.distance > 10) {
+      const secondNearest = findSecondNearestAtSameLevel(x, y, z, selectedStop.stop, data.axes, selectedStop.axisName);
+      if (secondNearest) {
+        const direction = determineDirection(x, z, selectedStop.axisName, selectedStop.stop, secondNearest.axisName, secondNearest.stop);
+        return {
+          address: `${selectedStop.axisName} ${selectedStop.stop.level} ${direction}`,
+          nearestStop: {
+            axis: selectedStop.axisName,
+            level: selectedStop.stop.level,
+            coordinates: { x: selectedStop.stop.x, y: selectedStop.stop.y, z: selectedStop.stop.z },
+            distance: selectedStop.distance
+          },
+          direction
+        };
+      }
+    }
+  
+    return {
+      address: `${selectedStop.axisName} ${selectedStop.stop.level}`,
+      nearestStop: {
+        axis: selectedStop.axisName,
+        level: selectedStop.stop.level,
+        coordinates: { x: selectedStop.stop.x, y: selectedStop.stop.y, z: selectedStop.stop.z },
+        distance: selectedStop.distance
+      }
+    };
 }
 
 export async function loadPlaces(): Promise<Place[]> {

@@ -1,5 +1,5 @@
 name: 🌀 Ajouter un nouveau portail
-description: Soumettre un nouveau portail à ajouter à la carte PMC
+description: Soumettre un nouveau portail à ajouter à PMC Plan
 title: "[PORTAIL] Ajouter un nouveau portail : "
 labels: ["enhancement", "portal", "community-contribution"]
 assignees: []
@@ -7,9 +7,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Merci de contribuer à la carte PMC ! Veuillez remplir tous les champs requis ci-dessous pour ajouter un nouveau portail.
+        Merci de contribuer à PMC Plan ! Veuillez remplir tous les champs requis ci-dessous pour ajouter un nouveau portail.
         
-        **Important :** Assurez-vous que le portail n'existe pas déjà en consultant les [portails actuels](https://github.com/tristanhabemont/PMC-Map/tree/main/public/data/portals).
+        **Important :** Assurez-vous que le portail n'existe pas déjà en consultant les [portails actuels](https://github.com/Sukikui/PMC-Plan/tree/main/public/data/portals).
 
   - type: input
     id: portal-id
@@ -99,7 +99,7 @@ body:
           required: true
         - label: Les coordonnées sont exactes
           required: true
-        - label: J'ai la permission d'ajouter ce portail à la carte publique
+        - label: J'ai la permission d'ajouter ce portail au plan public
           required: true
 
   - type: markdown
@@ -109,6 +109,6 @@ body:
         
         1. Notre validation automatique vérifiera le format de votre JSON
         2. Si la validation réussit, un mainteneur examinera votre soumission
-        3. Une fois approuvé, votre portail sera ajouté à la carte !
+        3. Une fois approuvé, votre portail sera ajouté au plan !
         
         **Emplacement du fichier :** Votre portail sera sauvegardé comme `public/data/portals/{portal-id}.json`

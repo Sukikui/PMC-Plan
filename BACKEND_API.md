@@ -355,7 +355,7 @@ curl "http://localhost:3000/api/places"
 Returns a list of all available portals from the data files.
 
 **Parameters:**
-None
+- `merge-nether-portals` (boolean, optional) - If `true`, merges overworld portals with their corresponding nether portals, adding a `nether-associate` field to the overworld portal objects.
 
 **Response:**
 ```json
@@ -381,4 +381,32 @@ None
 ```bash
 # Get all portals
 curl "http://localhost:3000/api/portals"
+
+# Get all portals and merge overworld portals with their nether associates
+curl "http://localhost:3000/api/portals?merge-nether-portals=true"
+```
+
+**Response with `merge-nether-portals=true`:**
+```json
+[
+  {
+    "id": "portal_village_start",
+    "name": "Portail du Village",
+    "world": "overworld",
+    "coordinates": {"x": -120, "y": 65, "z": -220},
+    "description": "Portail près du village de départ",
+    "nether-associate": {
+      "id": "portal_village_start_nether",
+      "coordinates": {"x": -15, "y": 70, "z": -28},
+      "address": "Nord 2 gauche"
+    }
+  },
+  {
+    "id": "portal_village_start_nether",
+    "name": "Portail du Village",
+    "world": "nether",
+    "coordinates": {"x": -15, "y": 70, "z": -28},
+    "description": "Côté nether du portail du village, près de Nord-2-gauche"
+  }
+]
 ```

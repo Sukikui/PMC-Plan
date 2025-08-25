@@ -1,4 +1,4 @@
-# 🗺️ PMC Map
+# 🗺️ PMC Plan
 
 **Smart route planning for Minecraft servers**
 
@@ -18,7 +18,7 @@ A web application that automatically calculates the best routes between destinat
 
 ```bash
 # Clone the repository
-git clone https://github.com/Sukikui/PMC-Map.git
+git clone https://github.com/Sukikui/PMC-Plan.git
 # Install dependencies
 npm install
 # Launch in development
@@ -34,7 +34,7 @@ Install [PlayerCoordsAPI](https://modrinth.com/mod/playercoordsapi) for automati
 ## 📁 Project structure
 
 ```
-PMC-Map/
+PMC-Plan/
 ├── app/
 │   ├── page.tsx              # Main interface
 │   └── api/                  # Next.js API routes
@@ -42,8 +42,8 @@ PMC-Map/
 │       ├── portals/         # Portals management  
 │       └── route/           # Route calculation
 ├── components/
-│   ├── PlacesPanel.tsx      # Left panel (destinations)
-│   ├── PlayerOverlay.tsx    # Right panel (player position)
+│   ├── DestinationPanel.tsx # Left panel (destinations)
+│   ├── PositionPanel.tsx    # Right panel (player position)
 │   └── TravelPlan.tsx       # Central display (route)
 ├── public/data/
 │   ├── places/              # Places JSON files

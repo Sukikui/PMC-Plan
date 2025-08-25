@@ -154,32 +154,32 @@ export default function TravelPlan({
     switch (type) {
       case 'overworld_transport':
         return (
-          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center border-2 border-green-200">
-            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-8 h-8 bg-green-100 dark:bg-green-800/40 rounded-full flex items-center justify-center border-2 border-green-200 dark:border-green-700 transition-colors duration-300">
+            <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
             </svg>
           </div>
         );
       case 'nether_transport':
         return (
-          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center border-2 border-red-200">
-            <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-8 h-8 bg-red-100 dark:bg-red-800/40 rounded-full flex items-center justify-center border-2 border-red-200 dark:border-red-700 transition-colors duration-300">
+            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
             </svg>
           </div>
         );
       case 'portal':
         return (
-          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center border-2 border-purple-200">
-            <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-800/40 rounded-full flex items-center justify-center border-2 border-purple-200 dark:border-purple-700 transition-colors duration-300">
+            <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
           </div>
         );
       default:
         return (
-          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+          <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 transition-colors duration-300">
+            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-300 rounded-full"></div>
           </div>
         );
     }
@@ -244,15 +244,15 @@ export default function TravelPlan({
 
   if (!selectedPlaceId) {
     return (
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-gray-900/95 via-white dark:via-gray-900 to-indigo-100 dark:to-gray-900/95 flex items-center justify-center transition-colors duration-300">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 dark:from-blue-800/30 to-indigo-100 dark:to-indigo-800/30 flex items-center justify-center transition-colors duration-300">
+            <svg className="w-8 h-8 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">Planification d'itinéraire</h2>
-          <p className="text-gray-600">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Planification d'itinéraire</h2>
+          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
             Sélectionnez une destination dans le panneau de gauche
           </p>
         </div>
@@ -262,11 +262,11 @@ export default function TravelPlan({
 
   if (loading) {
     return (
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-gray-900/95 via-white dark:via-gray-900 to-indigo-100 dark:to-gray-900/95 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-6 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">Calcul en cours...</h2>
-          <p className="text-gray-600">Recherche du meilleur itinéraire</p>
+          <div className="w-12 h-12 mx-auto mb-6 border-4 border-blue-200 dark:border-blue-700 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin transition-colors duration-300"></div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Calcul en cours...</h2>
+          <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">Recherche du meilleur itinéraire</p>
         </div>
       </div>
     );
@@ -274,15 +274,15 @@ export default function TravelPlan({
 
   if (error) {
     return (
-      <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-50 dark:from-red-950 via-white dark:via-gray-900 to-pink-50 dark:to-pink-950 flex items-center justify-center transition-colors duration-300">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-100 to-pink-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-100 dark:from-red-800/30 to-pink-100 dark:to-pink-800/30 flex items-center justify-center transition-colors duration-300">
+            <svg className="w-8 h-8 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-red-900 mb-3">Erreur de calcul</h2>
-          <p className="text-red-700">{error}</p>
+          <h2 className="text-xl font-bold text-red-900 dark:text-red-100 mb-3 transition-colors duration-300">Erreur de calcul</h2>
+          <p className="text-red-700 dark:text-red-300 transition-colors duration-300">{error}</p>
         </div>
       </div>
     );
@@ -290,16 +290,16 @@ export default function TravelPlan({
 
   if (!route) {
     return (
-      <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 dark:from-yellow-950 via-white dark:via-gray-900 to-orange-50 dark:to-orange-950 flex items-center justify-center transition-colors duration-300">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-yellow-100 dark:from-yellow-800/30 to-orange-100 dark:to-orange-800/30 flex items-center justify-center transition-colors duration-300">
+            <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-yellow-900 mb-3">Position requise</h2>
-          <p className="text-yellow-700">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-yellow-300 mb-3 transition-colors duration-300">Position requise</h2>
+          <p className="text-gray-600 dark:text-yellow-500 transition-colors duration-300">
             Synchronisez-vous avec le mod PlayerCoordsAPI<br />
             ou indiquez manuellement vos coordonnées
           </p>
@@ -309,7 +309,7 @@ export default function TravelPlan({
   }
 
   return (
-    <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-white to-blue-50">
+    <div className="absolute inset-0 bg-gradient-to-br from-green-100 dark:from-green-950 via-white dark:via-gray-900 to-blue-100 dark:to-blue-950 transition-colors duration-300">
       {/* Center content between left panel (w-96) and right panel (w-80) */}
       <div className="absolute inset-0 left-[25rem] right-[21rem] overflow-y-auto">
         <div className="p-6 min-h-full flex flex-col justify-center">
@@ -379,8 +379,8 @@ export default function TravelPlan({
                             {(step.from.coordinates || (index === 0 && route.player_from.coordinates)) && (
                               <span className="text-xs text-gray-500">
                                 {step.from.coordinates 
-                                  ? `${step.from.coordinates.x}, ${step.from.coordinates.y}, ${step.from.coordinates.z}`
-                                  : `${route.player_from.coordinates.x}, ${route.player_from.coordinates.y}, ${route.player_from.coordinates.z}`
+                                  ? `${Math.floor(step.from.coordinates.x)}, ${Math.floor(step.from.coordinates.y)}, ${Math.floor(step.from.coordinates.z)}`
+                                  : `${Math.floor(route.player_from.coordinates.x)}, ${Math.floor(route.player_from.coordinates.y)}, ${Math.floor(route.player_from.coordinates.z)}`
                                 }
                               </span>
                             )}

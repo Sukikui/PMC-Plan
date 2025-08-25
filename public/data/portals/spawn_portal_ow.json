@@ -1,0 +1,7 @@
+{
+  "id": "spawn_portal_ow",
+  "name": "Portail du Spawn",
+  "world": "overworld",
+  "coordinates": { "x": 0, "y": 65, "z": -0 },
+  "description": "Spawn principal du serveur."
+}
