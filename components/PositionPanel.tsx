@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import SyncNotification, { getErrorMessage } from './SyncNotification';
 
 interface PlayerData {
@@ -31,7 +31,7 @@ export default function PositionPanel({
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isNewConnection, setIsNewConnection] = useState(false);
 
-  const syncPosition = async (isAutoSync = false) => {
+  const syncPosition = useCallback(async (isAutoSync = false) => {
     if (!isAutoSync) {
       setIsLoading(true);
     }
@@ -88,7 +88,7 @@ export default function PositionPanel({
         setIsLoading(false);
       }
     }
-  };
+  }, [isConnected]);
 
   const disconnect = () => {
     setIsConnected(false);
@@ -101,7 +101,7 @@ export default function PositionPanel({
 
     const interval = setInterval(() => syncPosition(true), 2000);
     return () => clearInterval(interval);
-  }, [isConnected]);
+  }, [isConnected, syncPosition]);
 
   // Notify parent component of player position changes
   useEffect(() => {

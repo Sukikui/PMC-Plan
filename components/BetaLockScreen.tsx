@@ -99,11 +99,11 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
               disabled={!password.trim()}
               className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
                 password.trim()
-                  ? 'bg-blue-500 text-white hover:bg-blue-600 active:scale-95'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  ? "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
               }`}
             >
-              Débloquer l'accès
+              Débloquer l&apos;accès
             </button>
           </form>
 

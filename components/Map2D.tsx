@@ -1,19 +1,20 @@
 'use client';
 
-interface PlayerPosition {
-  dim: 'overworld' | 'nether' | 'end';
-  x: number;
-  y: number;
-  z: number;
-  ts: number;
+interface Step {
+  type: string;
+  [key: string]: any;
+}
+
+interface PathData {
+  steps: Step[];
+  total_distance: number;
 }
 
 interface Map2DProps {
-  playerPos: PlayerPosition | null;
-  pathData: any;
+  pathData: PathData | null;
 }
 
-export default function Map2D({ playerPos, pathData }: Map2DProps) {
+export default function Map2D({ pathData }: Map2DProps) {
   return (
     <div className="relative w-full h-full bg-gray-800 flex items-center justify-center">
       <div className="text-white text-center">

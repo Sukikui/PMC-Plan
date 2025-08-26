@@ -38,6 +38,22 @@ export interface Place {
   description?: string;
 }
 
+export interface NetherAddress {
+  address: string;
+  nearestStop: {
+    axis: string;
+    level: number | null;
+    coordinates: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    distance: number;
+  };
+  direction?: string;
+  error?: string;
+}
+
 export interface NetherStop {
   level: number;
   x: number;
@@ -175,7 +191,7 @@ function findSecondNearestAtSameLevel(
 function determineDirection(
     targetX: number, targetZ: number,
     mainAxisName: string, mainAxisStop: NetherStop,
-    secondAxisName: string, secondAxisStop: NetherStop
+    secondAxisName: string
 ): string {
     const mainDirection = getAxisDirection(mainAxisName);
     const secondDirection = getAxisDirection(secondAxisName);
@@ -201,7 +217,7 @@ function determineDirection(
     }
 }
 
-export async function calculateNetherAddress(x: number, y: number, z: number): Promise<any> {
+export async function calculateNetherAddress(x: number, y: number, z: number): Promise<NetherAddress> {
     const data = await loadNetherData();
     let nearestStop: { axisName: string; stop: NetherStop; distance: number } | null = null;
   
@@ -237,7 +253,7 @@ export async function calculateNetherAddress(x: number, y: number, z: number): P
     if (isMainAxis(selectedStop.axisName) && selectedStop.distance > 10) {
       const secondNearest = findSecondNearestAtSameLevel(x, y, z, selectedStop.stop, data.axes, selectedStop.axisName);
       if (secondNearest) {
-        const direction = determineDirection(x, z, selectedStop.axisName, selectedStop.stop, secondNearest.axisName, secondNearest.stop);
+        const direction = determineDirection(x, z, selectedStop.axisName, selectedStop.stop, secondNearest.axisName);
         return {
           address: `${selectedStop.axisName} ${selectedStop.stop.level} ${direction}`,
           nearestStop: {
