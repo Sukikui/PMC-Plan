@@ -134,13 +134,13 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
     } else if (world === 'nether') {
       return `${baseClasses} bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300`;
     }
-    return `${baseClasses} bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300`;
+    return `${baseClasses} bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400`;
   };
 
   return (
-    <div className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-96 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl rounded-xl border border-gray-200/50 dark:border-gray-600/50 z-50 flex flex-col transition-colors duration-300">
+    <div className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-96 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl dark:shadow-black/65 rounded-xl border border-gray-200/50 dark:border-gray-800/50 z-50 flex flex-col transition-colors duration-300">
       {/* Header */}
-      <div className="flex-shrink-0 p-6 border-b border-gray-200/50 dark:border-gray-600/50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-t-xl transition-colors duration-300">
+      <div className="flex-shrink-0 p-6 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-t-xl transition-colors duration-300">
         {/* Tag Filters */}
         <div className="mt-2">
           <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide transition-colors duration-300">Filtrer par tags</div>
@@ -152,7 +152,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                 className={`px-2 py-1 text-xs rounded-full border transition-colors duration-300 ${
                   enabledTags.has(tag)
                     ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    : 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'
                 }`}
               >
                 {tag}
@@ -170,7 +170,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Nom, description, tags, monde..."
-              className="w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white/70 dark:bg-gray-900/70 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-300 placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white/70 dark:bg-gray-900/70 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-300 placeholder-gray-400 dark:placeholder-gray-500"
             />
             {searchQuery && (
               <button
@@ -208,11 +208,8 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
             (filteredPlaces.length === 0 && filteredPortals.length === 0) ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-500 text-center space-y-4">
                 <p>Aucun résultats (｡•́︿•̀｡)</p>
-                <a href="https://github.com/Sukikui/PMC-Plan/issues" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-circle" viewBox="0 0 16 16">
-                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                  </svg>
+                <a href="https://github.com/Sukikui/PMC-Plan/issues" target="_blank" rel="noopener noreferrer" className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-full transition-all duration-300 flex items-center gap-2">
+                  +
                   Ajouter un lieu ou un portail
                 </a>
               </div>
@@ -227,22 +224,22 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                         <div
                           key={place.id}
                           onClick={() => handlePlaceClick(place.id, 'place')}
-                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md ${
+                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md dark:hover:shadow-black/40 ${
                             selectedId === place.id 
                               ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 shadow-sm' 
-                              : 'bg-white/70 dark:bg-gray-900/70 border border-gray-200/70 dark:border-gray-600/70 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-500'
+                              : 'bg-white/70 dark:bg-gray-900/70 border border-gray-200/70 dark:border-gray-800/95 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-700'
                           }`}
                         >
                           <div className="flex items-start justify-between">
-                            <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-blue-900 dark:group-hover:text-blue-300 flex-1 transition-colors duration-300">
+                            <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {place.name}
                             </div>
                             <button
                               onClick={(e) => handleInfoClick(e, place, 'place')}
-                              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500 border border-gray-200 dark:border-gray-600 shadow-sm transition-all duration-300 flex-shrink-0"
+                              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/95 shadow-sm dark:shadow-black/65 transition-all duration-300 flex-shrink-0"
                               aria-label="Plus d'informations"
                             >
-                              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-300 text-sm transition-colors duration-300">
+                              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm transition-colors duration-300">
                                 +
                               </span>
                             </button>
@@ -256,8 +253,8 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             </span>
                           </div>
                           {selectedId === place.id && place.description && (
-                            <div className="mt-2 p-2 bg-blue-50/50 border-l-2 border-blue-300 rounded-r">
-                              <p className="text-xs text-gray-700">
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
                                 {place.description.length > 80 ? `${place.description.substring(0, 80)}...` : place.description}
                               </p>
                             </div>
@@ -267,7 +264,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               {place.tags.map(tag => (
                                 <span 
                                   key={tag} 
-                                  className="inline-block bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded-full transition-colors duration-300"
+                                  className="inline-block bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-1 rounded-full transition-colors duration-300"
                                 >
                                   {tag}
                                 </span>
@@ -289,22 +286,22 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                         <div
                           key={portal.id}
                           onClick={() => handlePlaceClick(portal.id, 'portal')}
-                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md ${
+                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md dark:hover:shadow-black/40 ${
                             selectedId === portal.id 
                               ? 'bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-700 shadow-sm' 
-                              : 'bg-white/70 dark:bg-gray-900/70 border border-gray-200/70 dark:border-gray-600/70 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-500'
+                              : 'bg-white/70 dark:bg-gray-900/70 border border-gray-200/70 dark:border-gray-800/95 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-700'
                           }`}
                         >
                           <div className="flex items-start justify-between">
-                            <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-900 dark:group-hover:text-purple-300 flex-1 transition-colors duration-300">
+                            <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {portal.name}
                             </div>
                             <button
                               onClick={(e) => handleInfoClick(e, portal, 'portal')}
-                              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500 border border-gray-200 dark:border-gray-600 shadow-sm transition-all duration-300 flex-shrink-0"
+                              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/95 shadow-sm dark:shadow-black/65 transition-all duration-300 flex-shrink-0"
                               aria-label="Plus d'informations"
                             >
-                              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-300 text-sm transition-colors duration-300">
+                              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm transition-colors duration-300">
                                 +
                               </span>
                             </button>
@@ -318,7 +315,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             </span>
                           </div>
                           {portal['nether-associate'] && (
-                            <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-700/80 transition-colors duration-300">
+                            <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/80 transition-colors duration-300">
                                 <div className="flex items-center gap-2">
                                     <span className={getWorldBadge('nether')}>
                                     nether
@@ -335,8 +332,8 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             </div>
                             )}
                           {selectedId === portal.id && portal.description && (
-                            <div className="mt-2 p-2 bg-purple-50/50 border-l-2 border-purple-300 rounded-r">
-                              <p className="text-xs text-gray-700">
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
                                 {portal.description.length > 80 ? `${portal.description.substring(0, 80)}...` : portal.description}
                               </p>
                             </div>

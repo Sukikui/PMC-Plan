@@ -168,10 +168,10 @@ export default function PositionPanel({
         }
       `}</style>
       <div className="fixed top-4 right-4 w-80 z-50">
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl rounded-xl border border-gray-200/50 dark:border-gray-600/50 transition-colors duration-300">
+        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl dark:shadow-black/65 rounded-xl border border-gray-200/50 dark:border-gray-800/50 transition-colors duration-300">
 
       {/* Server Logo */}
-      <div className="p-4 flex justify-center bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-t-xl border-b border-gray-200/30 dark:border-gray-600/50 transition-colors duration-300">
+      <div className="p-4 flex justify-center bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-t-xl border-b border-gray-200/30 dark:border-gray-800/50 transition-colors duration-300">
         <img 
           src="/pmc_logo.png" 
           alt="Server Logo" 
@@ -183,7 +183,7 @@ export default function PositionPanel({
       </div>
       
       {/* Header with sync button */}
-      <div className="p-4 border-b border-gray-200/50 dark:border-gray-600/50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm transition-colors duration-300">
+      <div className="p-4 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm transition-colors duration-300">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-blue-500 animate-pulse' : 'bg-red-500'}`}></div>
@@ -226,7 +226,7 @@ export default function PositionPanel({
           <>
             {/* Player name */}
             <div 
-              className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 dark:border-gray-600/50 transition-colors duration-300"
+              className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 dark:border-gray-800/50 transition-colors duration-300"
               style={{
                 animation: isNewConnection ? 'blueGlow 0.5s ease-out' : undefined,
                 animationName: isNewConnection ? (document.documentElement.classList.contains('dark') ? 'blueGlowDark' : 'blueGlow') : undefined
@@ -276,11 +276,11 @@ export default function PositionPanel({
             {/* Coordinates */}
             <div className="flex items-center gap-3">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">X</label>
-              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-600/50 rounded transition-colors duration-300">
+              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded transition-colors duration-300">
                 {Math.floor(playerData.x)}
               </div>
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Y</label>
-              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-600/50 rounded transition-colors duration-300">
+              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded transition-colors duration-300">
                 {Math.floor(playerData.y)}
               </div>
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Z</label>
@@ -323,7 +323,7 @@ export default function PositionPanel({
                 value={manualCoords.x}
                 onChange={(e) => setManualCoords(prev => ({ ...prev, x: e.target.value }))}
                 placeholder="0"
-                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-600/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Y</label>
               <input
@@ -331,7 +331,7 @@ export default function PositionPanel({
                 value={manualCoords.y}
                 onChange={(e) => setManualCoords(prev => ({ ...prev, y: e.target.value }))}
                 placeholder="64"
-                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-600/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Z</label>
               <input
@@ -339,7 +339,7 @@ export default function PositionPanel({
                 value={manualCoords.z}
                 onChange={(e) => setManualCoords(prev => ({ ...prev, z: e.target.value }))}
                 placeholder="0"
-                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/80 dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-600/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none mr-3"
+                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/80 dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-800/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none mr-3"
               />
             </div>
           </div>

@@ -69,13 +69,13 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
       return {
         border: 'border-blue-200 dark:border-blue-700',
         headerBg: 'bg-white/90 dark:bg-gray-900/95',
-        headerBorder: 'border-gray-200/50 dark:border-gray-600/50'
+        headerBorder: 'border-gray-200/50 dark:border-gray-800/50'
       };
     } else {
       return {
         border: 'border-purple-200 dark:border-purple-700',
         headerBg: 'bg-white/90 dark:bg-gray-900/95',
-        headerBorder: 'border-gray-200/50 dark:border-gray-600/50'
+        headerBorder: 'border-gray-200/50 dark:border-gray-800/50'
       };
     }
   };
@@ -90,7 +90,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
         aria-label="Fermer l'overlay"
       />
       
-      <div className={`relative bg-white/90 dark:bg-gray-900/95 backdrop-blur-md rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border-2 ${typeStyles.border} transition-colors duration-300`}>
+      <div className={`relative bg-white/90 dark:bg-gray-900/95 backdrop-blur-md rounded-xl shadow-2xl dark:shadow-black/65 max-w-2xl w-full max-h-[80vh] overflow-y-auto border-2 ${typeStyles.border} transition-colors duration-300`}>
         {/* Header */}
         <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} transition-colors duration-300`}>
           <div className="flex items-start justify-between">
@@ -111,7 +111,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                 </span>
               </div>
               {'nether-associate' in item && item['nether-associate'] && (
-                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-600/50 transition-colors duration-300">
+                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/50 transition-colors duration-300">
                     <div className="flex items-center gap-2">
                         <span className={getWorldBadge('nether')}>
                         nether
@@ -131,10 +131,10 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
             
             <button
               onClick={onClose}
-              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-800 hover:bg-white/90 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500 border border-gray-200 dark:border-gray-600 shadow-sm transition-all duration-200 flex-shrink-0"
+              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/80 shadow-sm dark:shadow-black/65 transition-all duration-200 flex-shrink-0"
               aria-label="Fermer"
             >
-              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-300 text-sm transition-colors duration-300">
+              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm transition-colors duration-300">
                 ×
               </span>
             </button>
