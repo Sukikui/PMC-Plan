@@ -67,13 +67,15 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
   const getTypeStyles = () => {
     if (type === 'place') {
       return {
-        border: 'border-blue-200 dark:border-blue-700',
+        border: 'border-gray-200/50 dark:border-gray-800/50',
+        shadow: 'shadow-blue-400/75 dark:shadow-blue-700/50',
         headerBg: 'bg-white/90 dark:bg-gray-900/95',
         headerBorder: 'border-gray-200/50 dark:border-gray-800/50'
       };
     } else {
       return {
-        border: 'border-purple-200 dark:border-purple-700',
+        border: 'border-gray-200/50 dark:border-gray-800/50',
+        shadow: 'shadow-purple-400/75 dark:shadow-purple-700/50',
         headerBg: 'bg-white/90 dark:bg-gray-900/95',
         headerBorder: 'border-gray-200/50 dark:border-gray-800/50'
       };
@@ -90,7 +92,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
         aria-label="Fermer l'overlay"
       />
       
-      <div className={`relative bg-white/90 dark:bg-gray-900/95 backdrop-blur-md rounded-xl shadow-2xl dark:shadow-black/65 max-w-2xl w-full max-h-[80vh] overflow-y-auto border-2 ${typeStyles.border} transition-colors duration-300`}>
+      <div className={`relative bg-white/90 dark:bg-gray-900/95 backdrop-blur-md rounded-xl [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] overflow-y-auto border ${typeStyles.border} transition-colors duration-300`}>
         {/* Header */}
         <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} transition-colors duration-300`}>
           <div className="flex items-start justify-between">

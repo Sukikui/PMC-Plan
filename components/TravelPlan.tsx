@@ -244,7 +244,7 @@ export default function TravelPlan({
 
     if (!selectedPlaceId) {
         return (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-gray-900/95 via-white dark:via-gray-900 to-indigo-100 dark:to-gray-900/95 flex items-center justify-center transition-colors duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-950/20 via-white dark:via-gray-900 to-indigo-100 dark:to-indigo-900/20 flex items-center justify-center transition-colors duration-300">
                 <div className="text-center max-w-md">
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 dark:from-blue-800/30 to-indigo-100 dark:to-indigo-800/30 flex items-center justify-center transition-colors duration-300">
                         <svg className="w-8 h-8 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +262,7 @@ export default function TravelPlan({
 
     if (loading) {
         return (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-gray-900/95 via-white dark:via-gray-900 to-indigo-100 dark:to-gray-900/95 flex items-center justify-center transition-colors duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-950/20 via-white dark:via-gray-900 to-indigo-100 dark:to-indigo-900/20 flex items-center justify-center transition-colors duration-300">
                 <div className="text-center">
                     <div className="w-12 h-12 mx-auto mb-6 border-4 border-blue-200 dark:border-blue-700 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin transition-colors duration-300"></div>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Calcul en cours...</h2>
@@ -298,8 +298,8 @@ export default function TravelPlan({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-yellow-300 mb-3 transition-colors duration-300">Position requise</h2>
-                    <p className="text-gray-600 dark:text-yellow-500 transition-colors duration-300">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Position requise</h2>
+                    <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                         Synchronisez-vous avec le mod PlayerCoordsAPI<br />
                         ou indiquez manuellement vos coordonnées
                     </p>
@@ -325,7 +325,7 @@ export default function TravelPlan({
                         <div className="space-y-5">
                             {/* Route Steps */}
                             {route.steps.filter(step => step.type !== 'portal').map((step, index) => (
-                                <div key={index} className="flex items-start gap-3">
+                                <div key={index} className="flex items-start gap-3 justify-center">
                                     <div className="flex flex-col items-center flex-shrink-0">
                                         <div className="transform scale-110">
                                             {getStepIcon(step.type)}
@@ -334,7 +334,7 @@ export default function TravelPlan({
                                             <div className="w-0.5 h-6 bg-gradient-to-b from-gray-300 to-gray-300 mt-2"></div>
                                         )}
                                     </div>
-                                    <div className="flex-1 min-w-0 bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/60">
+                                    <div className="flex-1 min-w-0 max-w-lg bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/60">
                                         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                                             <h3 className="font-bold text-gray-900">{getStepTitle(step)}</h3>
                                             {step.distance && (

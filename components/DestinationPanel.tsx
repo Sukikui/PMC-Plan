@@ -207,7 +207,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
           ) : (
             (filteredPlaces.length === 0 && filteredPortals.length === 0) ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-500 text-center space-y-4">
-                <p>Aucun résultats (｡•́︿•̀｡)</p>
+                <p>Aucun résultat. (｡•́︿•̀｡)</p>
                 <a href="https://github.com/Sukikui/PMC-Plan/issues" target="_blank" rel="noopener noreferrer" className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-2 rounded-full transition-all duration-300 flex items-center gap-2">
                   +
                   Ajouter un lieu ou un portail
@@ -224,12 +224,11 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                         <div
                           key={place.id}
                           onClick={() => handlePlaceClick(place.id, 'place')}
-                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md dark:hover:shadow-black/40 ${
-                            selectedId === place.id 
-                              ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 shadow-sm' 
+                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:[box-shadow:0_0_15px_0_var(--tw-shadow-color)] hover:shadow-blue-400/75 dark:hover:shadow-blue-700/50 ${
+                            selectedId === place.id
+                              ? 'bg-blue-100 dark:bg-blue-900/20 border-2 border-blue-400 dark:border-blue-700'
                               : 'bg-white/70 dark:bg-gray-900/70 border border-gray-200/70 dark:border-gray-800/95 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-700'
-                          }`}
-                        >
+                          }`}>
                           <div className="flex items-start justify-between">
                             <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {place.name}
@@ -286,12 +285,11 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                         <div
                           key={portal.id}
                           onClick={() => handlePlaceClick(portal.id, 'portal')}
-                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md dark:hover:shadow-black/40 ${
-                            selectedId === portal.id 
-                              ? 'bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-700 shadow-sm' 
+                          className={`relative group p-4 rounded-lg cursor-pointer transition-all duration-300 hover:[box-shadow:0_0_15px_0_var(--tw-shadow-color)] hover:shadow-purple-400/75 dark:hover:shadow-purple-700/50 ${
+                            selectedId === portal.id
+                              ? 'bg-purple-100 dark:bg-purple-900/20 border-2 border-purple-400 dark:border-purple-700'
                               : 'bg-white/70 dark:bg-gray-900/70 border border-gray-200/70 dark:border-gray-800/95 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-700'
-                          }`}
-                        >
+                          }`}>
                           <div className="flex items-start justify-between">
                             <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {portal.name}

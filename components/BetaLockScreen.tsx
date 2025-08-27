@@ -57,8 +57,8 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
         }
       `}</style>
       
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-100 dark:from-gray-900 via-white dark:via-gray-950 to-indigo-100 dark:to-gray-900 flex items-center justify-center z-50 transition-colors duration-300">
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl rounded-xl border border-gray-200/50 dark:border-gray-600/50 p-8 max-w-md w-full mx-4 transition-colors duration-300">
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-950/20 via-white dark:via-gray-900 to-indigo-100 dark:to-indigo-900/20 flex items-center justify-center z-50 transition-colors duration-300">
+        <div className="max-w-md w-full mx-4">
           
           {/* Logo/Title */}
           <div className="text-center mb-8">

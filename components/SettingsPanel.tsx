@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 const SettingsPanel = () => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [theme, setTheme] = useState('system');
+    const [theme, setTheme] = useState('light');
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('pmc-plan-theme');
@@ -91,6 +91,7 @@ const SettingsPanel = () => {
                                 >
                                     Clair
                                 </button>
+                                {/*
                                 <button
                                     onClick={() => handleThemeChange('dark')}
                                     className={`px-2 py-1 text-xs rounded-full border transition-colors ${
@@ -101,6 +102,8 @@ const SettingsPanel = () => {
                                 >
                                     Sombre
                                 </button>
+                                */}
+                                {/*
                                 <button
                                     onClick={() => handleThemeChange('system')}
                                     className={`px-2 py-1 text-xs rounded-full border transition-colors ${
@@ -111,6 +114,7 @@ const SettingsPanel = () => {
                                 >
                                     Système
                                 </button>
+                                */}
                             </div>
                         </div>
 
@@ -121,6 +125,18 @@ const SettingsPanel = () => {
 
                         {/* Links */}
                         <div className="space-y-2">
+                            <a 
+                                href="https://modrinth.com/mod/playercoordsapi"
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="flex items-center gap-2 text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-2 rounded-full transition-all duration-300"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Télécharger PlayerCoordsAPI
+                            </a>
+                            
                             <a 
                                 href="https://github.com/Sukikui/PMC-Plan/issues" 
                                 target="_blank" 

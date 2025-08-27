@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import SyncNotification, { getErrorMessage } from './SyncNotification';
+import SyncNotification, { getErrorMessage, ERROR_MESSAGES } from './SyncNotification';
 
 interface PlayerData {
   x: number;
@@ -61,24 +61,29 @@ export default function PositionPanel({
       setPlayerData(data);
       setIsConnected(true);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      
-      if (!errorMessage.includes('Failed to fetch') && 
-          !errorMessage.includes('Load failed') && 
-          !errorMessage.includes('aborted') &&
-          !errorMessage.includes('NetworkError')) {
+      const rawErrorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const categorizedErrorMessage = getErrorMessage(rawErrorMessage); // Get the categorized message
+
+      // Only log as "Unexpected sync error" if it's not a known, non-critical error
+      if (categorizedErrorMessage !== ERROR_MESSAGES.NOT_IN_WORLD && // Add this condition
+          categorizedErrorMessage !== ERROR_MESSAGES.ACCESS_DENIED && // Also exclude access denied from unexpected
+          categorizedErrorMessage !== ERROR_MESSAGES.CONNECTION_FAILED && // Also exclude connection failed from unexpected
+          !rawErrorMessage.includes('Failed to fetch') && // Keep existing network checks
+          !rawErrorMessage.includes('Load failed') &&
+          !rawErrorMessage.includes('aborted') &&
+          !rawErrorMessage.includes('NetworkError')) {
         console.error('Unexpected sync error:', {
           error: err,
-          message: errorMessage,
+          message: rawErrorMessage,
           type: err instanceof Error ? err.constructor.name : typeof err
         });
       }
-      
+
       setIsConnected(false);
       setPlayerData(null);
-      
+
       if (!isAutoSync) {
-        setSyncError(getErrorMessage(errorMessage));
+        setSyncError(categorizedErrorMessage); // Use the categorized message for notification
         
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
