@@ -82,7 +82,7 @@ Finds nearest portals from a location, ordered by distance.
 [
   {
     "id": "portal_spawn",
-    "name": "Spawn Portal", 
+    "name": "Spawn Portal",
     "world": "overworld",
     "coordinates": { "x": 950, "y": 65, "z": -480 },
     "description": "Main spawn portal",
@@ -91,7 +91,7 @@ Finds nearest portals from a location, ordered by distance.
   {
     "id": "portal_base1",
     "name": "Base Portal",
-    "world": "overworld", 
+    "world": "overworld",
     "coordinates": { "x": 1200, "y": 70, "z": -300 },
     "description": "Community base portal",
     "distance": 287.1
@@ -118,9 +118,9 @@ curl "http://localhost:3000/api/nearest-portals?x=120&z=-60&world=nether"
 Finds the linked portal in the opposite dimension using Minecraft's 8:1 conversion ratio.
 
 **Parameters:**
-- `x` (number) - X coordinate of source portal
-- `y` (number) - Y coordinate of source portal  
-- `z` (number) - Z coordinate of source portal
+- `from_x` (number) - X coordinate of source portal
+- `from_y` (number) - Y coordinate of source portal
+- `from_z` (number) - Z coordinate of source portal
 - `from_world` (string) - World of the source portal (`overworld` or `nether`)
 
 **Response:**
@@ -145,8 +145,8 @@ null
 **Logic:**
 - Converts coordinates using 8:1 ratio
 - Search area depends on target dimension:
-  - **Overworld portals**: 256x256 block area (±128 blocks)
-  - **Nether portals**: 32x32 block area (±16 blocks)
+    - **Overworld portals**: 256x256 block area (±128 blocks)
+    - **Nether portals**: 32x32 block area (±16 blocks)
 - Y coordinate ignored for search area determination (height doesn't matter for cube)
 - **Distance calculation**: Uses 3D euclidean distance (X,Y,Z) to find nearest portal
 - Returns nearest portal if multiple found in search area
@@ -154,10 +154,10 @@ null
 **Examples:**
 ```bash
 # Find nether portal linked to overworld portal at (950, 65, -480)  
-curl "http://localhost:3000/api/linked-portal?x=950&y=65&z=-480&from_world=overworld"
+curl "http://localhost:3000/api/linked-portal?from_x=950&from_y=65&from_z=-480&from_world=overworld"
 
 # Find overworld portal linked to nether portal at (119, 65, -60)
-curl "http://localhost:3000/api/linked-portal?x=119&y=65&z=-60&from_world=nether"
+curl "http://localhost:3000/api/linked-portal?from_x=119&from_y=65&from_z=-60&from_world=nether"
 ```
 
 ---

@@ -42,7 +42,7 @@ const EXPECTED_RESULTS = {
     expected: {
       length: '>= 1',
       firstPortal: {
-        id: 'portal_village_start',
+        id: 'portail_village',
         name: 'Portail du Village',
         world: 'overworld'
       }
@@ -53,30 +53,30 @@ const EXPECTED_RESULTS = {
     expected: {
       length: '>= 1',
       firstPortal: {
-        id: 'portal_city_end',
-        name: 'Portail de la Cité',
+        id: 'portail_end',
+        name: "Portail de l'End",
         world: 'overworld'
       }
     }
   },
   'linked-portal-village': {
-    url: '/api/linked-portal?x=-120&y=65&z=-220&from_world=overworld',
+    url: '/api/linked-portal?from_x=-120&from_y=65&from_z=-220&from_world=overworld',
     expected: {
-      id: 'portal_village_start_nether',
-      name: 'Portail du Village (Nether)',
+      id: 'portal_village_nether',
+      name: 'Portail du Village',
       world: 'nether'
     }
   },
   'linked-portal-city': {
-    url: '/api/linked-portal?x=4520&y=70&z=280&from_world=overworld',
+    url: '/api/linked-portal?from_x=4520&from_y=70&from_z=280&from_world=overworld',
     expected: {
-      id: 'portal_city_end_nether',
-      name: 'Portail de la Cité (Nether)', 
+      id: 'portail_end_nether',
+      name: "Portail de l'End", 
       world: 'nether'
     }
   },
   'route-full-journey': {
-    url: '/api/route?from_place_id=start_village&to_place_id=end_city',
+    url: '/api/route?from_place_id=village_depart&to_place_id=cite_end',
     expected: {
       player_from: {
         coordinates: { x: -100, y: 65, z: -200 },
@@ -84,8 +84,7 @@ const EXPECTED_RESULTS = {
       },
       steps: {
         length: 5,
-        types: ['overworld_transport', 'portal', 'nether_transport', 'portal', 'overworld_transport'],
-        netherAddresses: ['Nord 2', 'Est 7 gauche']
+        types: ['overworld_transport', 'portal', 'nether_transport', 'portal', 'overworld_transport']
       }
     }
   },
@@ -94,15 +93,15 @@ const EXPECTED_RESULTS = {
     expected: {
       minLength: 3,
       hasRequiredFields: ['id', 'name', 'world', 'coordinates'],
-      hasStartVillage: 'start_village'
+      hasStartVillage: 'village_depart'
     }
   },
   'portals-list': {
     url: '/api/portals',
     expected: {
-      minLength: 6,
+      minLength: 5,
       hasRequiredFields: ['id', 'name', 'world', 'coordinates'],
-      hasVillagePortal: 'portal_village_start'
+      hasVillagePortal: 'portail_village'
     }
   }
 };

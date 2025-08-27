@@ -3,9 +3,9 @@ import { z } from 'zod';
 import { PortalWithDistance, loadPortals, calculateEuclideanDistance, convertOverworldToNether, convertNetherToOverworld } from '../utils/shared';
 
 const QuerySchema = z.object({
-  x: z.coerce.number(),
-  y: z.coerce.number(),
-  z: z.coerce.number(),
+  from_x: z.coerce.number(),
+  from_y: z.coerce.number(),
+  from_z: z.coerce.number(),
   from_world: z.enum(['overworld', 'nether']),
 });
 
@@ -23,10 +23,10 @@ function isInSearchCube(
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const { x, y, z, from_world } = QuerySchema.parse({
-      x: searchParams.get('x'),
-      y: searchParams.get('y'),
-      z: searchParams.get('z'),
+    const { from_x, from_y, from_z, from_world } = QuerySchema.parse({
+      from_x: searchParams.get('from_x'),
+      from_y: searchParams.get('from_y'),
+      from_z: searchParams.get('from_z'),
       from_world: searchParams.get('from_world'),
     });
 
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     // Determine target world, search coordinates, and search radius
     const targetWorld = from_world === 'overworld' ? 'nether' : 'overworld';
     const searchCoords = from_world === 'overworld' 
-      ? convertOverworldToNether(x, z)
-      : convertNetherToOverworld(x, z);
+      ? convertOverworldToNether(from_x, from_z)
+      : convertNetherToOverworld(from_x, from_z);
     
     // Search radius depends on target world: ±128 for overworld, ±16 for nether
     const searchRadius = targetWorld === 'overworld' ? 128 : 16;
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     for (const portal of targetWorldPortals) {
       if (isInSearchCube(searchCoords.x, searchCoords.z, portal.coordinates.x, portal.coordinates.z, searchRadius)) {
         const distance = calculateEuclideanDistance(
-          searchCoords.x, y, searchCoords.z,
+          searchCoords.x, from_y, searchCoords.z,
           portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
         );
         candidatePortals.push({
