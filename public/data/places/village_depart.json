@@ -1,0 +1,12 @@
+{
+  "id": "village_depart",
+  "name": "Village de Départ",
+  "world": "overworld",
+  "coordinates": {
+    "x": -100,
+    "y": 65,
+    "z": -200
+  },
+  "tags": ["village", "spawn"],
+  "description": "Point de départ pour tous les joueurs arrivant sur Play-MC.fr !"
+}
