@@ -1,0 +1,12 @@
+{
+  "id": "cite_end",
+  "name": "Cité de l'End",
+  "world": "overworld",
+  "coordinates": {
+    "x": 4500,
+    "y": 70,
+    "z": 300
+  },
+  "tags": ["end", "portail"],
+  "description": "Destination finale de votre aventure, en route pour vaincre l'Ender Dragon !"
+}

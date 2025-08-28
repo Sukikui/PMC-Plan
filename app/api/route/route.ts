@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { 
-  Place, 
   Portal, 
   NetherData,
   loadPlaces, 
@@ -36,12 +35,33 @@ interface RoutePoint {
   id?: string;
 }
 
+interface NetherAddress {
+  address: string;
+  nearestStop: {
+    axis: string;
+    level: number | null;
+    coordinates: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    distance: number;
+  };
+  direction?: string;
+}
 
+interface NearestStop {
+  axisName: string;
+  stop: {
+    x: number;
+    y: number;
+    z: number;
+    level: number;
+  };
+  distance: number;
+}
 
-
-
-
-async function callNetherAddress(x: number, y: number, z: number): Promise<any> {
+async function callNetherAddress(x: number, y: number, z: number): Promise<NetherAddress> {
   const netherData = await loadNetherData();
   
   const nearestStop = findNearestStop(x, z, netherData);
@@ -87,8 +107,8 @@ async function callNetherAddress(x: number, y: number, z: number): Promise<any> 
   };
 }
 
-function findNearestStop(x: number, z: number, data: NetherData) {
-  let nearestStop: any = null;
+function findNearestStop(x: number, z: number, data: NetherData): NearestStop {
+  let nearestStop: NearestStop | null = null;
   
   Object.entries(data.axes).forEach(([axisName, stops]) => {
     stops.forEach(stop => {
@@ -103,7 +123,7 @@ function findNearestStop(x: number, z: number, data: NetherData) {
     });
   });
   
-  return nearestStop;
+  return nearestStop!;
 }
 
 async function callNearestPortals(x: number, y: number, z: number, world: string, maxDistance?: number): Promise<(Portal & {distance: number})[]> {
@@ -339,7 +359,7 @@ async function handleOverworldToOverworld(fromPoint: RoutePoint, toPoint: RouteP
   
   // Try to find linked portals or calculate theoretical ones
   const portal1 = nearbyPortalsFrom[0];
-  let linkedPortal1 = await callLinkedPortal(
+  const linkedPortal1 = await callLinkedPortal(
     portal1.coordinates.x, portal1.coordinates.y, portal1.coordinates.z, 'overworld'
   );
   
@@ -356,7 +376,7 @@ async function handleOverworldToOverworld(fromPoint: RoutePoint, toPoint: RouteP
   }
   
   const portal2 = nearbyPortalsTo[0];
-  let linkedPortal2 = await callLinkedPortal(
+  const linkedPortal2 = await callLinkedPortal(
     portal2.coordinates.x, portal2.coordinates.y, portal2.coordinates.z, 'overworld'
   );
   
@@ -509,7 +529,7 @@ async function handleOverworldToNether(fromPoint: RoutePoint, toPoint: RoutePoin
   }
   
   const portal = nearbyPortals[0];
-  let linkedPortal = await callLinkedPortal(
+  const linkedPortal = await callLinkedPortal(
     portal.coordinates.x, portal.coordinates.y, portal.coordinates.z, 'overworld'
   );
   
@@ -599,7 +619,7 @@ async function handleNetherToOverworld(fromPoint: RoutePoint, toPoint: RoutePoin
   }
   
   const portal = nearbyPortals[0];
-  let linkedPortal = await callLinkedPortal(
+  const linkedPortal = await callLinkedPortal(
     portal.coordinates.x, portal.coordinates.y, portal.coordinates.z, 'overworld'
   );
   
@@ -675,7 +695,7 @@ async function handleNetherToOverworld(fromPoint: RoutePoint, toPoint: RoutePoin
   });
 }
 
-function calculateNetherNetworkDistance(address1: any, address2: any): number {
+function calculateNetherNetworkDistance(address1: NetherAddress, address2: NetherAddress): number {
   // Simplified implementation - in reality this would calculate the actual network distance
   // based on the nether axes system described in DECISION.md
   

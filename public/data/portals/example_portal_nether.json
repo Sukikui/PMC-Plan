@@ -1,7 +1,0 @@
-{
-  "id": "example_portal_nether",
-  "name": "Example Portal",
-  "world": "nether",
-  "coordinates": { "x": 119, "y": 65, "z": -60 },
-  "description": "The nether side of the example portal, demonstrating proper linking between dimensions."
-}

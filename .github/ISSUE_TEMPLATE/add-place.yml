@@ -1,5 +1,5 @@
 name: 🏠 Ajouter un nouveau lieu
-description: Soumettre un nouveau lieu à ajouter à la carte PMC
+description: Soumettre un nouveau lieu à ajouter à PMC Plan
 title: "[LIEU] Ajouter un nouveau lieu : "
 labels: ["enhancement", "place", "community-contribution"]
 assignees: []
@@ -7,9 +7,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Merci de contribuer à la carte PMC ! Veuillez remplir tous les champs requis ci-dessous pour ajouter un nouveau lieu.
+        Merci de contribuer à PMC Plan ! Veuillez remplir tous les champs requis ci-dessous pour ajouter un nouveau lieu.
         
-        **Important :** Assurez-vous que le lieu n'existe pas déjà en consultant les [lieux actuels](https://github.com/tristanhabemont/PMC-Map/tree/main/public/data/places).
+        **Important :** Assurez-vous que le lieu n'existe pas déjà en consultant les [lieux actuels](https://github.com/Sukikui/PMC-Plan/tree/main/public/data/places).
 
   - type: input
     id: place-id
@@ -107,7 +107,7 @@ body:
           required: true
         - label: Les coordonnées sont exactes
           required: true
-        - label: J'ai la permission d'ajouter ce lieu à la carte publique
+        - label: J'ai la permission d'ajouter ce lieu au plan public
           required: true
 
   - type: markdown
@@ -117,6 +117,6 @@ body:
         
         1. Notre validation automatique vérifiera le format de votre JSON
         2. Si la validation réussit, un mainteneur examinera votre soumission
-        3. Une fois approuvé, votre lieu sera ajouté à la carte !
+        3. Une fois approuvé, votre lieu sera ajouté au plan !
         
         **Emplacement du fichier :** Votre lieu sera sauvegardé comme `public/data/places/{place-id}.json`

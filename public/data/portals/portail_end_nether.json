@@ -1,0 +1,10 @@
+{
+  "id": "portail_end_nether",
+  "name": "Portail de l'End",
+  "world": "nether",
+  "coordinates": {
+    "x": 580,
+    "y": 70,
+    "z": 45
+  }
+}
