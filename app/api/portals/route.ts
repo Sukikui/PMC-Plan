@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
             'nether-associate': {
               id: linkedPortal.id,
               coordinates: linkedPortal.coordinates,
-              address: netherAddress.address
+              address: netherAddress.address || ''
             }
           };
         }

@@ -39,8 +39,8 @@ export interface Place {
 }
 
 export interface NetherAddress {
-  address: string;
-  nearestStop: {
+  address?: string;
+  nearestStop?: {
     axis: string;
     level: number | null;
     coordinates: {
