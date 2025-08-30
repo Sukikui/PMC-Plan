@@ -87,6 +87,15 @@ body:
       description: IDs des portails associés à ce lieu, séparés par des virgules (optionnel)
       placeholder: "portail_village_suki, portail_autre_lieu"
 
+  - type: textarea
+    id: image
+    attributes:
+      label: Image du lieu (optionnel)
+      description: |
+        Glissez-déposez une image de votre lieu ici (PNG recommandé, max 5MB).
+        L'image sera automatiquement nommée avec l'ID de votre lieu : `{place-id}.png`
+      placeholder: "Glissez votre image ici ou cliquez pour sélectionner un fichier..."
+
   - type: checkboxes
     id: checklist
     attributes:
