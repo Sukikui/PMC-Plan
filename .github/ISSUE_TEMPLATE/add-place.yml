@@ -1,7 +1,9 @@
 name: 🏠 Ajouter un nouveau lieu
 description: Soumettre un nouveau lieu à ajouter à PMC Plan
 title: "🏠 Ajouter un nouveau lieu : "
-labels: ["community-contribution", "place"]
+labels: 
+  - community-contribution
+  - place
 assignees: []
 body:
   - type: markdown
