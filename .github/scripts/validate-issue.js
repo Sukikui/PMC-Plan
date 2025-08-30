@@ -194,20 +194,45 @@ Ferme #${context.issue.number}`;
 }
 
 async function addSuccessComment(github, context) {
+    const type = context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail';
     const message = context.pullRequestUrl 
-        ? `🚀 **Validation réussie et PR créée automatiquement !** 
+        ? `✅ **Soumission acceptée !**
 
-Votre ${context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail'} a été validé et une pull request a été générée automatiquement:  
+Votre ${type} a été validé avec succès ! Une pull request a été créée automatiquement :
 ➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**
 
-Un mainteneur va maintenant examiner et merger la PR. Merci pour votre contribution ! 🎉`
-        : '✅ **Validation réussie !** Vos données sont valides et prêtes pour examen par un mainteneur.';
+**Prochaines étapes :**
+- Un mainteneur va examiner votre soumission
+- Si tout est correct, elle sera intégrée à PMC Plan
+- Vous serez notifié quand c'est fait
+
+Merci pour votre contribution ! 🎉
+
+Cette issue va être fermée automatiquement car elle a été traitée.`
+        : `✅ **Soumission acceptée !**
+
+Votre ${type} a été validé avec succès ! 
+
+Un mainteneur va maintenant traiter votre demande. Vous serez notifié dès que c'est intégré à PMC Plan.
+
+Merci pour votre contribution ! 🎉
+
+Cette issue va être fermée automatiquement car elle a été traitée.`;
 
     await github.rest.issues.createComment({
         issue_number: context.issue.number,
         owner: context.repo.owner,
         repo: context.repo.repo,
         body: message
+    });
+
+    // Close the issue since it's been processed
+    await github.rest.issues.update({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        state: 'closed',
+        state_reason: 'completed'
     });
 }
 
