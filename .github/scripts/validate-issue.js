@@ -333,15 +333,36 @@ async function handleImageDownload(github, context, imageText, placeId) {
 }
 
 async function downloadAndValidateImage(imageUrl, imageExtension, context, placeId) {
-    // Download image
+    // Download image with GitHub token for authentication
     const https = require('https');
     const http = require('http');
+    const url = require('url');
     
     // Choose appropriate module based on URL
     const client = imageUrl.startsWith('https:') ? https : http;
+    const parsedUrl = url.parse(imageUrl);
+    
+    const options = {
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.path,
+        headers: {
+            'User-Agent': 'GitHub-Actions',
+            'Accept': 'image/*',
+        }
+    };
+    
+    // Add GitHub token for authentication if it's a GitHub URL
+    if (imageUrl.includes('github.com') || imageUrl.includes('githubusercontent.com')) {
+        options.headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
+    }
+    
+    console.log(`Making request to ${parsedUrl.hostname}${parsedUrl.path}`);
     
     const response = await new Promise((resolve, reject) => {
-        client.get(imageUrl, (res) => {
+        const req = client.request(options, (res) => {
+            console.log(`Response status: ${res.statusCode} ${res.statusMessage}`);
+            console.log(`Response headers:`, res.headers);
+            
             // Handle redirects
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 console.log(`Following redirect to: ${res.headers.location}`);
@@ -369,6 +390,8 @@ async function downloadAndValidateImage(imageUrl, imageExtension, context, place
             console.error('Download error:', err);
             reject(err);
         });
+        
+        req.end();
     });
     
     // Validate image size (max 5MB)
