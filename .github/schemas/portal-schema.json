@@ -7,10 +7,10 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^[a-z0-9_]+$",
       "minLength": 1,
       "maxLength": 50,
-      "description": "Unique identifier for the portal (lowercase, underscore-separated)"
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Unique identifier for the portal (lowercase, underscores only)"
     },
     "name": {
       "type": "string",

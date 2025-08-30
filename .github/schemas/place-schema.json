@@ -59,6 +59,18 @@
       "minLength": 1,
       "maxLength": 500,
       "description": "Optional description of the place"
+    },
+    "portals": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+$",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "uniqueItems": true,
+      "maxItems": 10,
+      "description": "Array of portal IDs associated with this place"
     }
   },
   "additionalProperties": false
