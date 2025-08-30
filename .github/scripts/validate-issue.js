@@ -214,7 +214,14 @@ Cette issue va être fermée automatiquement car elle a été traitée.`;
         body: message
     });
 
-    // Close the issue since it's been processed
+    // Add success check label and close the issue
+    await github.rest.issues.addLabels({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.issue.number,
+        labels: ['check-passed']
+    });
+
     await github.rest.issues.update({
         issue_number: context.issue.number,
         owner: context.repo.owner,
@@ -253,7 +260,14 @@ Pour soumettre votre ${context.payload.issue.labels.some(l => l.name === 'place'
 Cette issue va être fermée automatiquement.`
     });
 
-    // Close the issue
+    // Add failed check label and close the issue
+    await github.rest.issues.addLabels({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.issue.number,
+        labels: ['check-failed']
+    });
+
     await github.rest.issues.update({
         issue_number: context.issue.number,
         owner: context.repo.owner,
