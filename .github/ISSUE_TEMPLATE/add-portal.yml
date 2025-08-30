@@ -1,7 +1,9 @@
 name: 🌀 Ajouter un nouveau portail
 description: Soumettre un nouveau portail à ajouter à PMC Plan
 title: "🌀 Ajouter un nouveau portail : "
-labels: ["community-contribution", "portal"]
+labels: 
+  - community-contribution
+  - portal
 assignees: []
 body:
   - type: markdown
