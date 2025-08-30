@@ -313,105 +313,78 @@ Cette issue va être fermée automatiquement.`
 
 async function handleImageDownload(github, context, imageText, placeId) {
     console.log('Processing image text:', imageText);
-    
-    // Extract GitHub image URL from src attribute
-    const srcRegex = /src="([^"]*github[^"]*)"/i;
-    const srcMatch = imageText.match(srcRegex);
-    
-    if (!srcMatch) {
-        throw new Error('No valid GitHub image URL found in src attribute. Please upload an image file.');
-    }
-    
+    const srcMatch = imageText.match(/src="([^"]+)"/i);
+    if (!srcMatch) throw new Error('No image src found. Please upload an image.');
     const imageUrl = srcMatch[1];
     console.log(`Found image URL: ${imageUrl}`);
-    
-    // GitHub user-attachments don't have file extensions, assume PNG
-    const imageExtension = 'png';
-    
-    console.log(`Downloading image from: ${imageUrl}`);
-    return await downloadAndValidateImage(imageUrl, imageExtension, context, placeId);
+    const referer = context.payload.issue.html_url; // important pour user-attachments
+    return await downloadAndValidateImage(imageUrl, referer, context, placeId);
 }
 
-async function downloadAndValidateImage(imageUrl, imageExtension, context, placeId) {
-    // Download image with GitHub token for authentication
+async function downloadAndValidateImage(imageUrl, referer, context, placeId, depth = 0) {
+    if (depth > 5) throw new Error('Too many redirects while downloading image');
+
     const https = require('https');
     const http = require('http');
-    const url = require('url');
-    
-    // Choose appropriate module based on URL
-    const client = imageUrl.startsWith('https:') ? https : http;
-    const parsedUrl = url.parse(imageUrl);
-    
-    const options = {
-        hostname: parsedUrl.hostname,
-        path: parsedUrl.path,
-        headers: {
-            'User-Agent': 'GitHub-Actions',
-            'Accept': 'image/*',
-        }
+    const { URL } = require('url');
+    const u = new URL(imageUrl);
+    const client = u.protocol === 'https:' ? https : http;
+
+    const headers = {
+        'User-Agent': 'GitHub-Actions',
+        'Accept': 'image/*'
     };
-    
-    // Add GitHub token for authentication if it's a GitHub URL
-    if (imageUrl.includes('github.com') || imageUrl.includes('githubusercontent.com')) {
-        options.headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
-    }
-    
-    console.log(`Making request to ${parsedUrl.hostname}${parsedUrl.path}`);
-    
-    const response = await new Promise((resolve, reject) => {
+
+    // ⚠️ user-attachments nécessite un Referer et refuse les tokens
+    const isUserAttachments = u.hostname === 'github.com' && u.pathname.startsWith('/user-attachments/');
+    if (isUserAttachments && referer) headers['Referer'] = referer;
+
+    // Pour les autres hôtes (CDN externes), pas de token par défaut.
+    // Si tu dois authentifier un domaine interne, gère-le explicitement ici.
+
+    const options = { hostname: u.hostname, path: u.pathname + u.search, headers };
+
+    const { buffer, size, contentType } = await new Promise((resolve, reject) => {
         const req = client.request(options, (res) => {
             console.log(`Response status: ${res.statusCode} ${res.statusMessage}`);
-            console.log(`Response headers:`, res.headers);
-            
-            // Handle redirects
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                console.log(`Following redirect to: ${res.headers.location}`);
-                return downloadAndValidateImage(res.headers.location, imageExtension, context, placeId)
-                    .then(resolve)
-                    .catch(reject);
+                const next = new URL(res.headers.location, `${u.protocol}//${u.host}`).toString();
+                console.log(`Following redirect to: ${next}`);
+                downloadAndValidateImage(next, referer, context, placeId, depth + 1).then(resolve).catch(reject);
+                return;
             }
-            
             if (res.statusCode !== 200) {
                 reject(new Error(`Failed to download image: ${res.statusCode} ${res.statusMessage}`));
                 return;
             }
-            
             const chunks = [];
-            res.on('data', (chunk) => chunks.push(chunk));
-            res.on('end', () => {
-                const buffer = Buffer.concat(chunks);
-                console.log(`Downloaded ${buffer.length} bytes from ${imageUrl}`);
-                resolve({
-                    buffer: buffer,
-                    size: buffer.length
-                });
-            });
-        }).on('error', (err) => {
-            console.error('Download error:', err);
-            reject(err);
+            res.on('data', c => chunks.push(c));
+            res.on('end', () => resolve({
+                buffer: Buffer.concat(chunks),
+                size: chunks.reduce((a,c)=>a+c.length,0),
+                contentType: res.headers['content-type'] || 'application/octet-stream'
+            }));
         });
-        
+        req.on('error', reject);
         req.end();
     });
-    
-    // Validate image size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (response.size > maxSize) {
-        throw new Error(`Image too large: ${(response.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed: 5MB`);
-    }
-    
-    console.log(`✅ Image size validated: ${(response.size / 1024 / 1024).toFixed(1)}MB`);
-    
-    const imagePath = `public/data/place_images/${placeId}.png`;
-    
-    // Store image data for upload
-    context.imageData = {
-        buffer: response.buffer,
-        path: imagePath,
-        size: response.size
-    };
-    
-    console.log(`✅ Image prepared for upload: ${imagePath}`);
+
+    // Taille max 5MB
+    const maxSize = 5 * 1024 * 1024;
+    if (size > maxSize) throw new Error(`Image too large: ${(size/1024/1024).toFixed(1)}MB (>5MB)`);
+
+    // Déterminer l’extension depuis Content-Type
+    const ct = contentType.toLowerCase();
+    const ext = ct.includes('png') ? 'png'
+        : ct.includes('jpeg') ? 'jpg'
+            : ct.includes('jpg') ? 'jpg'
+                : ct.includes('webp') ? 'webp'
+                    : ct.includes('gif') ? 'gif'
+                        : 'png';
+
+    const imagePath = `public/data/place_images/${placeId}.${ext}`;
+    context.imageData = { buffer, path: imagePath, size };
+    console.log(`✅ Image prepared for upload: ${imagePath} (${(size/1024).toFixed(0)} KB)`);
     return true;
 }
 
