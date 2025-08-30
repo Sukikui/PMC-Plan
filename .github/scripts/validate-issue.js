@@ -161,16 +161,26 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
         
         // Upload image if present
         if (context.imageData) {
+            console.log(`🖼️ Uploading image: ${context.imageData.path} (${context.imageData.size} bytes)`);
             const encodedImage = context.imageData.buffer.toString('base64');
-            await github.rest.repos.createOrUpdateFileContents({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                path: context.imageData.path,
-                message: `feat: add image for place ${jsonData.name}\n\nAutomatically uploaded from issue #${context.issue.number}`,
-                content: encodedImage,
-                branch: branchName
-            });
-            console.log(`✅ Created image: ${context.imageData.path}`);
+            console.log(`🔄 Base64 encoded image size: ${encodedImage.length} characters`);
+            
+            try {
+                await github.rest.repos.createOrUpdateFileContents({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: context.imageData.path,
+                    message: `feat: add image for place ${jsonData.name}\n\nAutomatically uploaded from issue #${context.issue.number}`,
+                    content: encodedImage,
+                    branch: branchName
+                });
+                console.log(`✅ Successfully uploaded image: ${context.imageData.path}`);
+            } catch (error) {
+                console.error(`❌ Failed to upload image:`, error.message);
+                throw error;
+            }
+        } else {
+            console.log('ℹ️ No image data found, skipping image upload');
         }
         
         // Create pull request
@@ -302,11 +312,20 @@ Cette issue va être fermée automatiquement.`
 }
 
 async function handleImageDownload(github, context, imageText, placeId) {
-    // Extract GitHub image URL from the text
-    const imageUrlRegex = /https:\/\/github\.com\/.*\/assets\/.*\.(png|jpg|jpeg|gif|webp)/i;
+    console.log('Processing image text:', imageText);
+    
+    // Extract GitHub image URL from the text (more flexible regex)
+    const imageUrlRegex = /https:\/\/github\.com\/[^"'\s]+\.(png|jpg|jpeg|gif|webp)/i;
     const match = imageText.match(imageUrlRegex);
     
     if (!match) {
+        // Try alternative pattern for GitHub user attachments
+        const altRegex = /src="([^"]*github[^"]*\.(png|jpg|jpeg|gif|webp)[^"]*)"/i;
+        const altMatch = imageText.match(altRegex);
+        if (altMatch) {
+            console.log(`Found image URL via alt pattern: ${altMatch[1]}`);
+            return await downloadAndValidateImage(altMatch[1], altMatch[2], context, placeId);
+        }
         throw new Error('No valid GitHub image URL found. Please upload an image file.');
     }
     
@@ -314,23 +333,46 @@ async function handleImageDownload(github, context, imageText, placeId) {
     const imageExtension = match[1].toLowerCase();
     
     console.log(`Downloading image from: ${imageUrl}`);
-    
+    return await downloadAndValidateImage(imageUrl, imageExtension, context, placeId);
+}
+
+async function downloadAndValidateImage(imageUrl, imageExtension, context, placeId) {
     // Download image
     const https = require('https');
+    const http = require('http');
+    
+    // Choose appropriate module based on URL
+    const client = imageUrl.startsWith('https:') ? https : http;
+    
     const response = await new Promise((resolve, reject) => {
-        https.get(imageUrl, (res) => {
+        client.get(imageUrl, (res) => {
+            // Handle redirects
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                console.log(`Following redirect to: ${res.headers.location}`);
+                return downloadAndValidateImage(res.headers.location, imageExtension, context, placeId)
+                    .then(resolve)
+                    .catch(reject);
+            }
+            
             if (res.statusCode !== 200) {
-                reject(new Error(`Failed to download image: ${res.statusCode}`));
+                reject(new Error(`Failed to download image: ${res.statusCode} ${res.statusMessage}`));
                 return;
             }
             
             const chunks = [];
             res.on('data', (chunk) => chunks.push(chunk));
-            res.on('end', () => resolve({
-                buffer: Buffer.concat(chunks),
-                size: Buffer.concat(chunks).length
-            }));
-        }).on('error', reject);
+            res.on('end', () => {
+                const buffer = Buffer.concat(chunks);
+                console.log(`Downloaded ${buffer.length} bytes from ${imageUrl}`);
+                resolve({
+                    buffer: buffer,
+                    size: buffer.length
+                });
+            });
+        }).on('error', (err) => {
+            console.error('Download error:', err);
+            reject(err);
+        });
     });
     
     // Validate image size (max 5MB)
@@ -341,17 +383,16 @@ async function handleImageDownload(github, context, imageText, placeId) {
     
     console.log(`✅ Image size validated: ${(response.size / 1024 / 1024).toFixed(1)}MB`);
     
-    // Convert to PNG if needed and prepare for upload
-    const fs = require('fs');
     const imagePath = `public/data/place_images/${placeId}.png`;
     
-    // For now, just validate - the actual file upload will be handled in generateFilesAndCreatePR
+    // Store image data for upload
     context.imageData = {
         buffer: response.buffer,
         path: imagePath,
         size: response.size
     };
     
+    console.log(`✅ Image prepared for upload: ${imagePath}`);
     return true;
 }
 
