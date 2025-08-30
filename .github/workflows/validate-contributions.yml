@@ -6,7 +6,7 @@ on:
       - 'public/data/places/*.json'
       - 'public/data/portals/*.json'
   issues:
-    types: [opened]
+    types: [opened, edited]
 
 jobs:
   validate-pr-files:

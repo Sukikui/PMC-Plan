@@ -53,6 +53,16 @@ async function validateIssueData(github, context) {
         execSync(`ajv validate -s ${schemaFile} -d temp-data.json --verbose`, { stdio: 'inherit' });
         console.log('✅ Schema validation passed');
         
+        // Check ID uniqueness
+        const filePath = isPlace 
+            ? `public/data/places/${jsonData.id}.json`
+            : `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
+        
+        if (fs.existsSync(filePath)) {
+            throw new Error(`ID '${jsonData.id}' already exists at ${filePath}. Please choose a unique identifier.`);
+        }
+        console.log('✅ ID uniqueness verified');
+        
         // Additional validation for places with linked portals
         if (isPlace && jsonData.portals && jsonData.portals.length > 0) {
             console.log('Validating linked portals exist...');
@@ -87,7 +97,7 @@ async function validateIssueData(github, context) {
 }
 
 async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal) {
-    const branchName = `auto-add-${isPlace ? 'place' : 'portal'}-${jsonData.id}-${Date.now()}`;
+    const branchName = `add-${isPlace ? 'place' : 'portal'}/${jsonData.id}`;
     
     try {
         console.log('🚀 Starting automatic PR creation...');
@@ -202,11 +212,40 @@ Un mainteneur va maintenant examiner et merger la PR. Merci pour votre contribut
 }
 
 async function addErrorComment(github, context, errorMessage) {
+    // Parse common error types to provide user-friendly messages
+    let userFriendlyMessage;
+    
+    if (errorMessage.includes('already exists')) {
+        userFriendlyMessage = `L'ID que vous avez choisi existe déjà. Veuillez créer une nouvelle issue avec un identifiant unique.`;
+    } else if (errorMessage.includes('Champs requis manquants') || errorMessage.includes('Required field missing')) {
+        userFriendlyMessage = `Certains champs obligatoires sont manquants dans votre soumission. Veuillez créer une nouvelle issue en remplissant tous les champs requis.`;
+    } else if (errorMessage.includes('Linked portal') && errorMessage.includes('not found')) {
+        userFriendlyMessage = `Un des portails liés que vous avez mentionné n'existe pas. Veuillez vérifier les IDs des portails et créer une nouvelle issue.`;
+    } else if (errorMessage.includes('validation failed') || errorMessage.includes('invalid')) {
+        userFriendlyMessage = `Les données fournies ne respectent pas le format attendu. Veuillez créer une nouvelle issue en suivant attentivement le template.`;
+    } else {
+        userFriendlyMessage = `Il y a eu un problème avec votre soumission. Veuillez créer une nouvelle issue en vous assurant de bien remplir tous les champs.`;
+    }
+
     await github.rest.issues.createComment({
         issue_number: context.issue.number,
         owner: context.repo.owner,
         repo: context.repo.repo,
-        body: `❌ **Validation échouée !** Veuillez corriger les problèmes suivants:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\nVeuillez mettre à jour votre issue pour relancer la validation.`
+        body: `❌ **Soumission non valide**
+
+${userFriendlyMessage}
+
+Pour soumettre votre ${context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail'}, veuillez créer une **nouvelle issue** en utilisant le bon template.
+
+Cette issue va être fermée automatiquement.`
+    });
+
+    // Close the issue
+    await github.rest.issues.update({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        state: 'closed'
     });
 }
 
