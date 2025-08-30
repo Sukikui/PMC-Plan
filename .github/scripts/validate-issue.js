@@ -78,6 +78,17 @@ async function validateIssueData(github, context) {
             console.log('✅ All linked portals exist');
         }
         
+        // Handle image download and validation for places
+        if (isPlace && extractedData.image && extractedData.image.trim()) {
+            try {
+                await handleImageDownload(github, context, extractedData.image.trim(), jsonData.id);
+                console.log('✅ Image download and validation completed');
+            } catch (error) {
+                console.log('⚠️ Image processing failed:', error.message);
+                // Continue without image - it's optional
+            }
+        }
+
         // Generate files and create PR automatically
         await generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal);
         
@@ -148,13 +159,27 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
         
         console.log(`✅ Created file: ${filePath}`);
         
+        // Upload image if present
+        if (context.imageData) {
+            const encodedImage = context.imageData.buffer.toString('base64');
+            await github.rest.repos.createOrUpdateFileContents({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: context.imageData.path,
+                message: `feat: add image for place ${jsonData.name}\n\nAutomatically uploaded from issue #${context.issue.number}`,
+                content: encodedImage,
+                branch: branchName
+            });
+            console.log(`✅ Created image: ${context.imageData.path}`);
+        }
+        
         // Create pull request
         const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
         const prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
 
 **ID:** \`${jsonData.id}\`  
 **World:** \`${jsonData.world}\` 
-**Created file:** \`${filePath}\``;
+**Created file:** \`${filePath}\`${context.imageData ? `\n**Image:** \`${context.imageData.path}\` (${(context.imageData.size / 1024 / 1024).toFixed(1)}MB)` : ''}`;
 
         const { data: pullRequest } = await github.rest.pulls.create({
             owner: context.repo.owner,
@@ -276,6 +301,60 @@ Cette issue va être fermée automatiquement.`
     });
 }
 
+async function handleImageDownload(github, context, imageText, placeId) {
+    // Extract GitHub image URL from the text
+    const imageUrlRegex = /https:\/\/github\.com\/.*\/assets\/.*\.(png|jpg|jpeg|gif|webp)/i;
+    const match = imageText.match(imageUrlRegex);
+    
+    if (!match) {
+        throw new Error('No valid GitHub image URL found. Please upload an image file.');
+    }
+    
+    const imageUrl = match[0];
+    const imageExtension = match[1].toLowerCase();
+    
+    console.log(`Downloading image from: ${imageUrl}`);
+    
+    // Download image
+    const https = require('https');
+    const response = await new Promise((resolve, reject) => {
+        https.get(imageUrl, (res) => {
+            if (res.statusCode !== 200) {
+                reject(new Error(`Failed to download image: ${res.statusCode}`));
+                return;
+            }
+            
+            const chunks = [];
+            res.on('data', (chunk) => chunks.push(chunk));
+            res.on('end', () => resolve({
+                buffer: Buffer.concat(chunks),
+                size: Buffer.concat(chunks).length
+            }));
+        }).on('error', reject);
+    });
+    
+    // Validate image size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (response.size > maxSize) {
+        throw new Error(`Image too large: ${(response.size / 1024 / 1024).toFixed(1)}MB. Maximum allowed: 5MB`);
+    }
+    
+    console.log(`✅ Image size validated: ${(response.size / 1024 / 1024).toFixed(1)}MB`);
+    
+    // Convert to PNG if needed and prepare for upload
+    const fs = require('fs');
+    const imagePath = `public/data/place_images/${placeId}.png`;
+    
+    // For now, just validate - the actual file upload will be handled in generateFilesAndCreatePR
+    context.imageData = {
+        buffer: response.buffer,
+        path: imagePath,
+        size: response.size
+    };
+    
+    return true;
+}
+
 function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     const data = {};
     
@@ -326,7 +405,7 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     const fieldValues = extractField();
     
     if (isPlace) {
-        // Expected order: ID, Name, World, X, Y, Z, Description, Tags, Portals
+        // Expected order: ID, Name, World, X, Y, Z, Description, Tags, Portals, Image
         if (fieldValues.length >= 6) {
             data.placeId = fieldValues[0] || '';
             data.placeName = fieldValues[1] || '';
@@ -337,6 +416,7 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
             data.description = fieldValues[6] || '';
             data.tags = fieldValues[7] || '';
             data.portals = fieldValues[8] || '';
+            data.image = fieldValues[9] || '';
         }
     } else if (isPortal) {
         // Expected order: ID, Name, World, X, Y, Z, Description
