@@ -67,9 +67,9 @@ body:
       required: true
 
   - type: textarea
-    id: description (optionnel)
+    id: description
     attributes:
-      label: Description
+      label: Description (optionnel)
       description: Une brève description de ce lieu
       placeholder: "Village de Suki au sein duquel de nombreux secrets et trésors sont gardés à tout jamais..."
 
