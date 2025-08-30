@@ -6,8 +6,8 @@
  */
 function generatePlaceJson(data) {
   const place = {
-    id: data.id.trim(),
-    name: data.name.trim(),
+    id: data.placeId.trim(),
+    name: data.placeName.trim(),
     world: data.world,
     coordinates: {
       x: parseFloat(data.coordinatesX),
@@ -27,6 +27,11 @@ function generatePlaceJson(data) {
     place.description = data.description.trim();
   }
 
+  if (data.portals && data.portals.trim()) {
+    place.portals = data.portals.split(',').map(portal => portal.trim()).filter(portal => portal);
+  } else {
+    place.portals = [];
+  }
 
   return place;
 }
@@ -35,24 +40,22 @@ function generatePlaceJson(data) {
  * Generate portal JSON from issue template data
  */
 function generatePortalJson(data) {
-  const portal = {
-    id: data.id.trim(),
-    name: data.name.trim(),
-    world: data.world,
-    coordinates: {
-      x: parseFloat(data.coordinatesX),
-      y: parseFloat(data.coordinatesY),
-      z: parseFloat(data.coordinatesZ)
+    const portal = {
+        id: data.portalId.trim(),
+        name: data.portalName.trim(),
+        world: data.world,
+        coordinates: {
+            x: parseFloat(data.coordinatesX),
+            y: parseFloat(data.coordinatesY),
+            z: parseFloat(data.coordinatesZ)
+        }
+    };
+
+    // Add optional fields only if they have values
+    if (data.description && data.description.trim()) {
+        portal.description = data.description.trim();
     }
-  };
-
-  // Add optional fields only if they have values
-
-  if (data.description && data.description.trim()) {
-    portal.description = data.description.trim();
-  }
-
-  return portal;
+    return portal;
 }
 
 module.exports = {

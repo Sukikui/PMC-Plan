@@ -1,0 +1,11 @@
+{
+  "id": "portail_village_suki",
+  "name": "Portail du village de Suki",
+  "world": "overworld",
+  "coordinates": {
+    "x": 4520,
+    "y": 70,
+    "z": 280
+  },
+  "description": "Donne l'accès sur l'entrée principale du village de Suki."
+}

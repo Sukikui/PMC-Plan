@@ -1,13 +1,14 @@
 name: 🏠 Ajouter un nouveau lieu
 description: Soumettre un nouveau lieu à ajouter à PMC Plan
-title: "[LIEU] Ajouter un nouveau lieu : "
-labels: ["enhancement", "place", "community-contribution"]
+title: "🏠 Ajouter un nouveau lieu : "
+labels: ["community-contribution", "place"]
 assignees: []
 body:
   - type: markdown
     attributes:
       value: |
         Merci de contribuer à PMC Plan ! Veuillez remplir tous les champs requis ci-dessous pour ajouter un nouveau lieu.
+        Pour vous aider, des exemples de [lieux](https://github.com/Sukikui/PMC-Plan/tree/main/public/data/place_examples) et de [portails](https://github.com/Sukikui/PMC-Plan/tree/main/public/data/portal_examples) sont disponibles.
         
         **Important :** Assurez-vous que le lieu n'existe pas déjà en consultant les [lieux actuels](https://github.com/Sukikui/PMC-Plan/tree/main/public/data/places).
 
@@ -16,7 +17,7 @@ body:
     attributes:
       label: ID du lieu
       description: Un identifiant unique pour ce lieu (minuscules, séparé par des underscores)
-      placeholder: "ma_base_cool"
+      placeholder: "village_suki"
     validations:
       required: true
 
@@ -25,7 +26,7 @@ body:
     attributes:
       label: Nom du lieu
       description: Le nom d'affichage pour ce lieu
-      placeholder: "Ma base cool"
+      placeholder: "Village de Suki"
     validations:
       required: true
 
@@ -33,7 +34,6 @@ body:
     id: world
     attributes:
       label: Monde
-      description: Dans quel monde ce lieu est-il situé ?
       options:
         - overworld
         - nether
@@ -44,8 +44,7 @@ body:
     id: coordinates-x
     attributes:
       label: Coordonnée X
-      description: La coordonnée X du lieu
-      placeholder: "100"
+      placeholder: "0"
     validations:
       required: true
 
@@ -53,7 +52,6 @@ body:
     id: coordinates-y
     attributes:
       label: Coordonnée Y
-      description: La coordonnée Y du lieu
       placeholder: "64"
     validations:
       required: true
@@ -62,8 +60,7 @@ body:
     id: coordinates-z
     attributes:
       label: Coordonnée Z
-      description: La coordonnée Z du lieu
-      placeholder: "200"
+      placeholder: "0"
     validations:
       required: true
 
@@ -72,30 +69,21 @@ body:
     attributes:
       label: Description
       description: Une brève description de ce lieu (optionnel)
-      placeholder: "Un grand complexe agricole avec des systèmes de cultures automatisés"
+      placeholder: "Village de Suki au sein duquel de nombreux secrets et trésors sont gardés à tout jamais..."
 
   - type: input
     id: tags
     attributes:
       label: Étiquettes
       description: Étiquettes séparées par des virgules pour catégoriser ce lieu (optionnel)
-      placeholder: "ferme, automatisé, redstone"
+      placeholder: "ferme, ville, magasin"
 
-  - type: textarea
-    id: json-data
+  - type: input
+    id: portals
     attributes:
-      label: JSON généré (Auto-rempli)
-      description: "Ceci sera généré automatiquement basé sur vos entrées ci-dessus. Veuillez ne pas éditer manuellement."
-      render: json
-      value: |
-        {
-          "id": "",
-          "name": "",
-          "world": "",
-          "coordinates": { "x": 0, "y": 0, "z": 0 },
-          "tags": [],
-          "description": ""
-        }
+      label: Portails liés
+      description: IDs des portails associés à ce lieu, séparés par des virgules (optionnel)
+      placeholder: "portail_village_suki, portail_autre_lieu"
 
   - type: checkboxes
     id: checklist
@@ -107,7 +95,7 @@ body:
           required: true
         - label: Les coordonnées sont exactes
           required: true
-        - label: J'ai la permission d'ajouter ce lieu au plan public
+        - label: J'ai indiqué l'ensemble des portails liés à ce lieu
           required: true
 
   - type: markdown
@@ -115,8 +103,8 @@ body:
       value: |
         ## Que se passe-t-il ensuite ?
         
-        1. Notre validation automatique vérifiera le format de votre JSON
-        2. Si la validation réussit, un mainteneur examinera votre soumission
-        3. Une fois approuvé, votre lieu sera ajouté au plan !
+        1. Une Issue est générée automatiquement suite à votre soumission 
+        2. Si la validation automatique de votre Issue réussit, un mainteneur examinera votre soumission
+        3. Une fois approuvé, votre lieu sera ajouté à PMC Plan !
         
         **Emplacement du fichier :** Votre lieu sera sauvegardé comme `public/data/places/{place-id}.json`
