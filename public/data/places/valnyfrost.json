@@ -1,0 +1,15 @@
+{
+  "id": "valnyfrost",
+  "name": "ValnyFrost",
+  "world": "overworld",
+  "coordinates": {
+    "x": 10,
+    "y": 10,
+    "z": 10
+  },
+  "tags": [
+    "ville"
+  ],
+  "description": "azert",
+  "portals": []
+}
