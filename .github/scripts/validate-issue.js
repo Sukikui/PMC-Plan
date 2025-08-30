@@ -152,13 +152,9 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
         const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
         const prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
 
-**Type:** ${isPlace ? 'Place' : 'Portal'}  
-**Name:** ${jsonData.name}  
 **ID:** \`${jsonData.id}\`  
 **World:** \`${jsonData.world}\` 
-**Coordinates:** (${jsonData.coordinates.x}, ${jsonData.coordinates.y}, ${jsonData.coordinates.z})
-
-### Created file: \`${filePath}\``;
+**Created file:** \`${filePath}\``;
 
         const { data: pullRequest } = await github.rest.pulls.create({
             owner: context.repo.owner,
@@ -197,11 +193,6 @@ async function addSuccessComment(github, context) {
 
 Votre ${type} a été validé avec succès ! Une pull request a été créée automatiquement :
 ➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**
-
-**Prochaines étapes :**
-- Un mainteneur va examiner votre soumission
-- Si tout est correct, elle sera intégrée à PMC Plan
-- Vous serez notifié quand c'est fait
 
 Merci pour votre contribution ! 🎉
 
