@@ -314,23 +314,19 @@ Cette issue va être fermée automatiquement.`
 async function handleImageDownload(github, context, imageText, placeId) {
     console.log('Processing image text:', imageText);
     
-    // Extract GitHub image URL from the text (more flexible regex)
-    const imageUrlRegex = /https:\/\/github\.com\/[^"'\s]+\.(png|jpg|jpeg|gif|webp)/i;
-    const match = imageText.match(imageUrlRegex);
+    // Extract GitHub image URL from src attribute
+    const srcRegex = /src="([^"]*github[^"]*)"/i;
+    const srcMatch = imageText.match(srcRegex);
     
-    if (!match) {
-        // Try alternative pattern for GitHub user attachments
-        const altRegex = /src="([^"]*github[^"]*\.(png|jpg|jpeg|gif|webp)[^"]*)"/i;
-        const altMatch = imageText.match(altRegex);
-        if (altMatch) {
-            console.log(`Found image URL via alt pattern: ${altMatch[1]}`);
-            return await downloadAndValidateImage(altMatch[1], altMatch[2], context, placeId);
-        }
-        throw new Error('No valid GitHub image URL found. Please upload an image file.');
+    if (!srcMatch) {
+        throw new Error('No valid GitHub image URL found in src attribute. Please upload an image file.');
     }
     
-    const imageUrl = match[0];
-    const imageExtension = match[1].toLowerCase();
+    const imageUrl = srcMatch[1];
+    console.log(`Found image URL: ${imageUrl}`);
+    
+    // GitHub user-attachments don't have file extensions, assume PNG
+    const imageExtension = 'png';
     
     console.log(`Downloading image from: ${imageUrl}`);
     return await downloadAndValidateImage(imageUrl, imageExtension, context, placeId);
