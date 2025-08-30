@@ -149,27 +149,16 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
         console.log(`✅ Created file: ${filePath}`);
         
         // Create pull request
-        const prTitle = `${isPlace ? '🏠' : '🌀'} Ajout automatique: ${jsonData.name}`;
-        const prBody = `## 🤖 PR automatique générée depuis l'issue #${context.issue.number}
+        const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
+        const prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
 
-**Type:** ${isPlace ? 'Lieu' : 'Portail'}  
-**Nom:** ${jsonData.name}  
+**Type:** ${isPlace ? 'Place' : 'Portal'}  
+**Name:** ${jsonData.name}  
 **ID:** \`${jsonData.id}\`  
-**Monde:** ${jsonData.world}  
-**Coordonnées:** (${jsonData.coordinates.x}, ${jsonData.coordinates.y}, ${jsonData.coordinates.z})
+**World:** \`${jsonData.world}\` 
+**Coordinates:** (${jsonData.coordinates.x}, ${jsonData.coordinates.y}, ${jsonData.coordinates.z})
 
-### Fichier créé
-- \`${filePath}\`
-
-### Vérifications effectuées ✅
-- Validation du schéma JSON
-- Vérification de l'unicité de l'ID
-${isPlace && jsonData.portals && jsonData.portals.length > 0 ? '- Validation des portails liés' : ''}
-
----
-*Cette PR a été générée automatiquement après validation de l'issue. Vous pouvez la merger directement ou demander des modifications.*
-
-Ferme #${context.issue.number}`;
+### Created file: \`${filePath}\``;
 
         const { data: pullRequest } = await github.rest.pulls.create({
             owner: context.repo.owner,
@@ -178,6 +167,14 @@ Ferme #${context.issue.number}`;
             head: branchName,
             base: repo.default_branch,
             body: prBody
+        });
+        
+        // Add the same labels as the issue
+        await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: pullRequest.number,
+            labels: ['community-contribution', isPlace ? 'place' : 'portal']
         });
         
         console.log(`✅ Created pull request: #${pullRequest.number}`);
