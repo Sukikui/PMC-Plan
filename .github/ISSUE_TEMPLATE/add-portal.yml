@@ -71,8 +71,8 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Description
-      description: Une brève description de ce portail (optionnel). Si le portail que vous souhaitez ajouter se trouve coté Nether et que son portail lié coté Overworld est déjà inscrit sur PMC Plan, inutile d'ajouter une description.
+      label: Description (optionnel)
+      description: Une brève description de ce portail. Si le portail que vous souhaitez ajouter se trouve coté Nether et que son portail lié coté Overworld est déjà inscrit sur PMC Plan, inutile d'ajouter une description.
       placeholder: "Donne l'accès sur l'entrée principale du village de Suki."
 
   - type: checkboxes

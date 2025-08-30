@@ -378,25 +378,41 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             if (line.startsWith('### ')) {
-                if (inField && currentValue.trim()) {
-                    fieldMatches.push(currentValue.trim());
+                if (inField) {
+                    // Handle empty fields (GitHub puts "_No response_")
+                    const cleanValue = currentValue.trim();
+                    if (cleanValue === '' || cleanValue === '_No response_') {
+                        fieldMatches.push('');
+                    } else {
+                        fieldMatches.push(cleanValue);
+                    }
                 }
                 inField = true;
                 currentValue = '';
-            } else if (inField && line.trim() && !line.startsWith('_') && !line.startsWith('-')) {
+            } else if (inField && line.trim() && !line.startsWith('-') && !line.startsWith('##')) {
                 if (currentValue) currentValue += ' ';
                 currentValue += line.trim();
             } else if (line.startsWith('### ') || line.startsWith('## ')) {
-                if (inField && currentValue.trim()) {
-                    fieldMatches.push(currentValue.trim());
+                if (inField) {
+                    const cleanValue = currentValue.trim();
+                    if (cleanValue === '' || cleanValue === '_No response_') {
+                        fieldMatches.push('');
+                    } else {
+                        fieldMatches.push(cleanValue);
+                    }
                     currentValue = '';
                 }
                 inField = line.startsWith('### ');
             }
         }
         
-        if (inField && currentValue.trim()) {
-            fieldMatches.push(currentValue.trim());
+        if (inField) {
+            const cleanValue = currentValue.trim();
+            if (cleanValue === '' || cleanValue === '_No response_') {
+                fieldMatches.push('');
+            } else {
+                fieldMatches.push(cleanValue);
+            }
         }
         
         return fieldMatches;
