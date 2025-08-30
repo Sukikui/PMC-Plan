@@ -2,11 +2,15 @@ name: Validate Community Contributions
 
 on:
   pull_request:
-    types: [opened, edited, labeled, synchronize]
+    paths:
+      - 'public/data/places/*.json'
+      - 'public/data/portals/*.json'
+  issues:
+    types: [opened, edited]
 
 jobs:
   validate-pr-files:
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'place') && !contains(github.event.pull_request.labels.*.name, 'portal')
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     name: Validate JSON Files in PR
     
@@ -63,16 +67,14 @@ jobs:
         run: |
           .github/scripts/validate-portals.sh "${{ steps.filter-files.outputs.portal_files }}"
 
-  validate-pr-template:
-    if: github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'place') || contains(github.event.pull_request.labels.*.name, 'portal'))
+  validate-issue:
+    if: github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'place') || contains(github.event.issue.labels.*.name, 'portal'))
     runs-on: ubuntu-latest
-    name: Validate PR Template Data and Generate Files
+    name: Validate Issue Template Data and Create PR
     
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -83,10 +85,9 @@ jobs:
         run: |
           npm install -g ajv-cli
           
-      - name: Extract and validate data from PR template
+      - name: Extract and validate JSON from issue
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { validatePRData } = require('./.github/scripts/validate-pr.js');
-            await validatePRData(github, context);
+            const { validateIssueData } = require('./.github/scripts/validate-issue.js');
+            await validateIssueData(github, context);

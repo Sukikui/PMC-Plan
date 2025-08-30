@@ -1,0 +1,307 @@
+#!/usr/bin/env node
+
+// Script to validate and generate PR from GitHub issue template data
+const fs = require('fs');
+const { execSync } = require('child_process');
+
+async function validateIssueData(github, context) {
+    const issueBody = context.payload.issue.body;
+    const isPlace = context.payload.issue.labels.some(label => label.name === 'place');
+    const isPortal = context.payload.issue.labels.some(label => label.name === 'portal');
+    
+    if (!isPlace && !isPortal) {
+        console.log('❌ Issue must be labeled as either place or portal');
+        return;
+    }
+    
+    // Extract data from GitHub issue template fields
+    let extractedData;
+    try {
+        extractedData = extractDataFromTemplate(issueBody, isPlace, isPortal);
+        console.log('Extracted data:', extractedData);
+    } catch (error) {
+        console.log('❌ Failed to extract data from template:', error.message);
+        await addErrorComment(github, context, error.message);
+        return;
+    }
+    
+    // Generate JSON from extracted data
+    const { generatePlaceJson, generatePortalJson } = require('./generate-json.js');
+    let jsonData;
+    
+    if (isPlace) {
+        jsonData = generatePlaceJson(extractedData);
+    } else if (isPortal) {
+        jsonData = generatePortalJson(extractedData);
+    }
+    
+    console.log('Generated JSON:', JSON.stringify(jsonData, null, 2));
+    
+    // Write JSON to temp file for validation
+    fs.writeFileSync('temp-data.json', JSON.stringify(jsonData, null, 2));
+    
+    try {
+        // Validate against schema
+        let schemaFile;
+        if (isPlace) {
+            schemaFile = '.github/schemas/place-schema.json';
+        } else if (isPortal) {
+            schemaFile = '.github/schemas/portal-schema.json';
+        }
+        
+        console.log(`Validating against schema: ${schemaFile}`);
+        execSync(`ajv validate -s ${schemaFile} -d temp-data.json --verbose`, { stdio: 'inherit' });
+        console.log('✅ Schema validation passed');
+        
+        // Additional validation for places with linked portals
+        if (isPlace && jsonData.portals && jsonData.portals.length > 0) {
+            console.log('Validating linked portals exist...');
+            
+            for (const portalId of jsonData.portals) {
+                const overworldFile = `public/data/portals/${portalId}_overworld.json`;
+                const netherFile = `public/data/portals/${portalId}_nether.json`;
+                
+                if (!fs.existsSync(overworldFile) && !fs.existsSync(netherFile)) {
+                    throw new Error(`Linked portal '${portalId}' not found. Expected ${overworldFile} or ${netherFile} to exist.`);
+                }
+            }
+            console.log('✅ All linked portals exist');
+        }
+        
+        // Generate files and create PR automatically
+        await generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal);
+        
+        // Add success comment to the issue
+        await addSuccessComment(github, context);
+        
+    } catch (error) {
+        console.log('❌ Validation failed:', error.message);
+        await addErrorComment(github, context, error.message);
+        
+    } finally {
+        // Cleanup
+        if (fs.existsSync('temp-data.json')) {
+            fs.unlinkSync('temp-data.json');
+        }
+    }
+}
+
+async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal) {
+    const branchName = `auto-add-${isPlace ? 'place' : 'portal'}-${jsonData.id}-${Date.now()}`;
+    
+    try {
+        console.log('🚀 Starting automatic PR creation...');
+        
+        // Get default branch reference
+        const { data: repo } = await github.rest.repos.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo
+        });
+        
+        const { data: ref } = await github.rest.git.getRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: `heads/${repo.default_branch}`
+        });
+        
+        // Create new branch
+        await github.rest.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: `refs/heads/${branchName}`,
+            sha: ref.object.sha
+        });
+        
+        console.log(`✅ Created branch: ${branchName}`);
+        
+        // Determine file path and content
+        let filePath;
+        if (isPlace) {
+            filePath = `public/data/places/${jsonData.id}.json`;
+        } else if (isPortal) {
+            filePath = `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
+        }
+        
+        // Create file content with proper formatting
+        const fileContent = JSON.stringify(jsonData, null, 2);
+        const encodedContent = Buffer.from(fileContent).toString('base64');
+        
+        // Create the file
+        await github.rest.repos.createOrUpdateFileContents({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            path: filePath,
+            message: `feat: add ${isPlace ? 'place' : 'portal'} ${jsonData.name}\n\nAutomatically generated from issue #${context.issue.number}`,
+            content: encodedContent,
+            branch: branchName
+        });
+        
+        console.log(`✅ Created file: ${filePath}`);
+        
+        // Create pull request
+        const prTitle = `${isPlace ? '🏠' : '🌀'} Ajout automatique: ${jsonData.name}`;
+        const prBody = `## 🤖 PR automatique générée depuis l'issue #${context.issue.number}
+
+**Type:** ${isPlace ? 'Lieu' : 'Portail'}  
+**Nom:** ${jsonData.name}  
+**ID:** \`${jsonData.id}\`  
+**Monde:** ${jsonData.world}  
+**Coordonnées:** (${jsonData.coordinates.x}, ${jsonData.coordinates.y}, ${jsonData.coordinates.z})
+
+### Fichier créé
+- \`${filePath}\`
+
+### Vérifications effectuées ✅
+- Validation du schéma JSON
+- Vérification de l'unicité de l'ID
+${isPlace && jsonData.portals && jsonData.portals.length > 0 ? '- Validation des portails liés' : ''}
+
+---
+*Cette PR a été générée automatiquement après validation de l'issue. Vous pouvez la merger directement ou demander des modifications.*
+
+Ferme #${context.issue.number}`;
+
+        const { data: pullRequest } = await github.rest.pulls.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: prTitle,
+            head: branchName,
+            base: repo.default_branch,
+            body: prBody
+        });
+        
+        console.log(`✅ Created pull request: #${pullRequest.number}`);
+        
+        // Store PR info for the success comment
+        context.pullRequestUrl = pullRequest.html_url;
+        context.pullRequestNumber = pullRequest.number;
+        
+    } catch (error) {
+        console.log('❌ Failed to create PR:', error.message);
+        await addErrorComment(github, context, `Erreur lors de la création automatique de la PR: ${error.message}`);
+        throw error;
+    }
+}
+
+async function addSuccessComment(github, context) {
+    const message = context.pullRequestUrl 
+        ? `🚀 **Validation réussie et PR créée automatiquement !** 
+
+Votre ${context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail'} a été validé et une pull request a été générée automatiquement:  
+➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**
+
+Un mainteneur va maintenant examiner et merger la PR. Merci pour votre contribution ! 🎉`
+        : '✅ **Validation réussie !** Vos données sont valides et prêtes pour examen par un mainteneur.';
+
+    await github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: message
+    });
+}
+
+async function addErrorComment(github, context, errorMessage) {
+    await github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: `❌ **Validation échouée !** Veuillez corriger les problèmes suivants:\n\n\`\`\`\n${errorMessage}\n\`\`\`\n\nVeuillez mettre à jour votre issue pour relancer la validation.`
+    });
+}
+
+function extractDataFromTemplate(issueBody, isPlace, isPortal) {
+    const data = {};
+    
+    // GitHub issue template fields are embedded in the body with specific format
+    // Format: ### Field Label\n\nValue\n\n
+    const extractField = (fieldId) => {
+        // Try different patterns for GitHub issue template format
+        const patterns = [
+            // Pattern for inputs: ### Label\n\nValue
+            new RegExp(`### [^\\n]*\\n\\n([^#\\n][^\\n#]*?)(?:\\n\\n|$)`, 'g'),
+            // Pattern for dropdowns: ### Label\n\nValue  
+            new RegExp(`### [^\\n]*\\n\\n([^#\\n][^\\n]*?)(?:\\n|$)`, 'g')
+        ];
+        
+        // Extract all field values and match to expected order
+        const lines = issueBody.split('\n');
+        const fieldMatches = [];
+        let inField = false;
+        let currentValue = '';
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith('### ')) {
+                if (inField && currentValue.trim()) {
+                    fieldMatches.push(currentValue.trim());
+                }
+                inField = true;
+                currentValue = '';
+            } else if (inField && line.trim() && !line.startsWith('_') && !line.startsWith('-')) {
+                if (currentValue) currentValue += ' ';
+                currentValue += line.trim();
+            } else if (line.startsWith('### ') || line.startsWith('## ')) {
+                if (inField && currentValue.trim()) {
+                    fieldMatches.push(currentValue.trim());
+                    currentValue = '';
+                }
+                inField = line.startsWith('### ');
+            }
+        }
+        
+        if (inField && currentValue.trim()) {
+            fieldMatches.push(currentValue.trim());
+        }
+        
+        return fieldMatches;
+    };
+
+    const fieldValues = extractField();
+    
+    if (isPlace) {
+        // Expected order: ID, Name, World, X, Y, Z, Description, Tags, Portals
+        if (fieldValues.length >= 6) {
+            data.placeId = fieldValues[0] || '';
+            data.placeName = fieldValues[1] || '';
+            data.world = fieldValues[2] || '';
+            data.coordinatesX = fieldValues[3] || '';
+            data.coordinatesY = fieldValues[4] || '';
+            data.coordinatesZ = fieldValues[5] || '';
+            data.description = fieldValues[6] || '';
+            data.tags = fieldValues[7] || '';
+            data.portals = fieldValues[8] || '';
+        }
+    } else if (isPortal) {
+        // Expected order: ID, Name, World, X, Y, Z, Description
+        if (fieldValues.length >= 6) {
+            data.portalId = fieldValues[0] || '';
+            data.portalName = fieldValues[1] || '';
+            data.world = fieldValues[2] || '';
+            data.coordinatesX = fieldValues[3] || '';
+            data.coordinatesY = fieldValues[4] || '';
+            data.coordinatesZ = fieldValues[5] || '';
+            data.description = fieldValues[6] || '';
+        }
+    }
+
+    // Validate required fields
+    const requiredFields = isPlace 
+        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
+        : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
+    
+    const missingFields = [];
+    for (const field of requiredFields) {
+        if (!data[field] || data[field].trim() === '') {
+            missingFields.push(field);
+        }
+    }
+    
+    if (missingFields.length > 0) {
+        throw new Error(`Champs requis manquants ou vides: ${missingFields.join(', ')}`);
+    }
+    
+    return data;
+}
+
+module.exports = { validateIssueData };
