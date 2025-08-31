@@ -1,0 +1,12 @@
+{
+  "id": "ferme_suki",
+  "name": "Ferme de Suki",
+  "world": "overworld",
+  "coordinates": {
+    "x": 8,
+    "y": 8,
+    "z": 8
+  },
+  "tags": [],
+  "portals": []
+}
