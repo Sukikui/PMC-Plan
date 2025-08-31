@@ -1,0 +1,12 @@
+{
+  "id": "nana",
+  "name": "nana",
+  "world": "overworld",
+  "coordinates": {
+    "x": 8,
+    "y": 8,
+    "z": 8
+  },
+  "tags": [],
+  "portals": []
+}
