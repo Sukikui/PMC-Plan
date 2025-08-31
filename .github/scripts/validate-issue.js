@@ -77,12 +77,27 @@ async function validateIssueData(github, context) {
 
         // Handle image download and validation for places
         if (isPlace && extractedData.image && extractedData.image.trim()) {
+            console.log('🖼️ Image field is present, fetching issue as HTML to get image URL...');
             try {
-                await handleImageDownload(github, context, extractedData.image.trim(), jsonData.id);
-                console.log('✅ Image download and validation completed');
+                const issueResponse = await github.request({
+                    url: context.payload.issue.url,
+                    headers: {
+                        accept: 'application/vnd.github.v3.html+json'
+                    }
+                });
+                const issueBodyHtml = issueResponse.data.body_html;
+                const imageUrlMatch = issueBodyHtml.match(/<img[^>]+src="([^">]+)"/);
+
+                if (imageUrlMatch && imageUrlMatch[1]) {
+                    const imageUrl = imageUrlMatch[1];
+                    console.log(`✅ Found image URL in HTML body: ${imageUrl}`);
+                    await handleImageDownload(github, context, imageUrl, jsonData.id);
+                    console.log('✅ Image download and validation completed');
+                } else {
+                    console.log('⚠️ Could not find image URL in HTML body.');
+                }
             } catch (error) {
                 console.log('⚠️ Image processing failed:', error.message);
-                // Continue without image - it's optional
             }
         }
 
@@ -341,13 +356,20 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     const data = {};
 
     // GitHub issue template fields are embedded in the body with specific format
-    // Format: ### Field Label\n\nValue\n\n
+    // Format: ### Field Label
+
+//Value
+
     const extractField = (fieldId) => {
         // Try different patterns for GitHub issue template format
         const patterns = [
-            // Pattern for inputs: ### Label\n\nValue
+            // Pattern for inputs: ### Label
+
+//Value
             new RegExp(`### [^\n]*\n\n([^#\n][^\n#]*?)(?:\n\n|$)`, 'g'),
-            // Pattern for dropdowns: ### Label\n\nValue
+            // Pattern for dropdowns: ### Label
+
+//Value
             new RegExp(`### [^\n]*\n\n([^#\n][^\n]*?)(?:\n|$)`, 'g')
         ];
 
@@ -420,36 +442,6 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
         // Expected order: ID, Name, World, X, Y, Z, Description
         if (fieldValues.length >= 6) {
             data.portalId = fieldValues[0] || '';
-            data.portalName = fieldValues[1] || '';
-            data.world = fieldValues[2] || '';
-            data.coordinatesX = fieldValues[3] || '';
-            data.coordinatesY = fieldValues[4] || '';
-            data.coordinatesZ = fieldValues[5] || '';
-            data.description = fieldValues[6] || '';
-        }
-    }
-
-    // Validate required fields
-    const requiredFields = isPlace
-        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
-        : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
-
-    const missingFields = [];
-    for (const field of requiredFields) {
-        if (!data[field] || data[field].trim() === '') {
-            missingFields.push(field);
-        }
-    }
-
-    if (missingFields.length > 0) {
-        throw new Error(`Champs requis manquants ou vides: ${missingFields.join(', ')}`);
-    }
-
-    return data;
-}
-
-module.exports = { validateIssueData };
-';
             data.portalName = fieldValues[1] || '';
             data.world = fieldValues[2] || '';
             data.coordinatesX = fieldValues[3] || '';
