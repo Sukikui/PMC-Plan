@@ -183,22 +183,14 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
         }
 
         const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
-        const headers = ['ID', 'World', 'Filename'];
-        const row = [`${jsonData.id}`, `${jsonData.world}`, `${filePath}`];
+        let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n`;
+        prBody += `- **id:** ${jsonData.id}`;
+        prBody += `- **world:** ${jsonData.world}`;
+        prBody += `- **filename:** ${filePath}`;
 
         if (context.imageData) {
-            headers.push('Image Filename');
-            row.push(`${context.imageData.path}`);
+            prBody += `- **image filename:** ${context.imageData.path}`;
         }
-
-        let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
-
-`;
-        prBody += `| ${headers.join(' | ')} |
-`;
-        prBody += `| ${headers.map(() => '---').join(' | ')} |
-`;
-        prBody += `| ${row.map(item => `\`${item}\``).join(' | ')} |`;
 
         const { data: pullRequest } = await github.rest.pulls.create({
             owner: context.repo.owner,
