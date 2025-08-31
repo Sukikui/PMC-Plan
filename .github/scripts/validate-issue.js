@@ -191,10 +191,14 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
             row.push(`${context.imageData.path}`);
         }
 
-        let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n`;
-        prBody += `| ${headers.join(' | ')} |\n`;
-        prBody += `| ${headers.map(() => '---').join(' | ')} |\n`;
-        prBody += `| ${row.join(' | ')} |`;
+        let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
+
+`;
+        prBody += `| ${headers.join(' | ')} |
+`;
+        prBody += `| ${headers.map(() => '---').join(' | ')} |
+`;
+        prBody += `| ${row.map(item => `\`${item}\``).join(' | ')} |`;
 
         const { data: pullRequest } = await github.rest.pulls.create({
             owner: context.repo.owner,
