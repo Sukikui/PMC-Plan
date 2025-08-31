@@ -11,7 +11,6 @@ async function validateIssueData(github, context) {
         return;
     }
 
-    // Extract data from GitHub issue template fields
     let extractedData;
     try {
         extractedData = extractDataFromTemplate(issueBody, isPlace, isPortal);
@@ -22,7 +21,6 @@ async function validateIssueData(github, context) {
         return;
     }
 
-    // Generate JSON from extracted data
     const { generatePlaceJson, generatePortalJson } = require('./generate-json.js');
     let jsonData;
 
@@ -34,11 +32,9 @@ async function validateIssueData(github, context) {
 
     console.log('Generated JSON:', JSON.stringify(jsonData, null, 2));
 
-    // Write JSON to temp file for validation
     fs.writeFileSync('temp-data.json', JSON.stringify(jsonData, null, 2));
 
     try {
-        // Validate against schema
         let schemaFile;
         if (isPlace) {
             schemaFile = '.github/schemas/place-schema.json';
@@ -50,9 +46,8 @@ async function validateIssueData(github, context) {
         execSync(`ajv validate -s ${schemaFile} -d temp-data.json --verbose`, { stdio: 'inherit' });
         console.log('✅ Schema validation passed');
 
-        // Check ID uniqueness
         const filePath = isPlace
-            ? `public/data/places/${jsonData.id}.json`
+            ? `public/data/places/${jsonData.id}.json` 
             : `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
 
         if (fs.existsSync(filePath)) {
@@ -60,7 +55,6 @@ async function validateIssueData(github, context) {
         }
         console.log('✅ ID uniqueness verified');
 
-        // Additional validation for places with linked portals
         if (isPlace && jsonData.portals && jsonData.portals.length > 0) {
             console.log('Validating linked portals exist...');
 
@@ -75,7 +69,6 @@ async function validateIssueData(github, context) {
             console.log('✅ All linked portals exist');
         }
 
-        // Handle image download and validation for places
         if (isPlace && extractedData.image && extractedData.image.trim()) {
             console.log('🖼️ Image field is present, fetching issue as HTML to get image URL...');
             try {
@@ -104,10 +97,8 @@ async function validateIssueData(github, context) {
             }
         }
 
-        // Generate files and create PR automatically
         await generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal);
 
-        // Add success comment to the issue
         await addSuccessComment(github, context);
 
     } catch (error) {
@@ -115,7 +106,6 @@ async function validateIssueData(github, context) {
         await addErrorComment(github, context, error.message);
 
     } finally {
-        // Cleanup
         if (fs.existsSync('temp-data.json')) {
             fs.unlinkSync('temp-data.json');
         }
@@ -128,7 +118,6 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
     try {
         console.log('🚀 Starting automatic PR creation...');
 
-        // Get default branch reference
         const { data: repo } = await github.rest.repos.get({
             owner: context.repo.owner,
             repo: context.repo.repo
@@ -140,7 +129,6 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
             ref: `heads/${repo.default_branch}`
         });
 
-        // Create new branch
         await github.rest.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -150,7 +138,6 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
 
         console.log(`✅ Created branch: ${branchName}`);
 
-        // Determine file path and content
         let filePath;
         if (isPlace) {
             filePath = `public/data/places/${jsonData.id}.json`;
@@ -158,25 +145,20 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
             filePath = `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
         }
 
-        // Create file content with proper formatting
         const fileContent = JSON.stringify(jsonData, null, 2);
         const encodedContent = Buffer.from(fileContent).toString('base64');
 
-        // Create the file
         await github.rest.repos.createOrUpdateFileContents({
             owner: context.repo.owner,
             repo: context.repo.repo,
             path: filePath,
-            message: `feat: add ${isPlace ? 'place' : 'portal'} ${jsonData.name}
-
-Automatically generated from issue #${context.issue.number}`,
+            message: `feat: add ${isPlace ? 'place' : 'portal'} ${jsonData.name}\n\nAutomatically generated from issue #${context.issue.number}`,
             content: encodedContent,
             branch: branchName
         });
 
         console.log(`✅ Created file: ${filePath}`);
 
-        // Upload image if present
         if (context.imageData) {
             console.log(`🖼️ Uploading image: ${context.imageData.path} (${context.imageData.size} bytes)`);
             const encodedImage = context.imageData.buffer.toString('base64');
@@ -187,9 +169,7 @@ Automatically generated from issue #${context.issue.number}`,
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     path: context.imageData.path,
-                    message: `feat: add image for place ${jsonData.name}
-
-Automatically uploaded from issue #${context.issue.number}`,
+                    message: `feat: add image for place ${jsonData.name}\n\nAutomatically uploaded from issue #${context.issue.number}`,
                     content: encodedImage,
                     branch: branchName
                 });
@@ -202,7 +182,6 @@ Automatically uploaded from issue #${context.issue.number}`,
             console.log('ℹ️ No image data found, skipping image upload');
         }
 
-        // Create pull request
         const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
         const headers = ['ID', 'World', 'Filename'];
         const row = [`${jsonData.id}`, `${jsonData.world}`, `${filePath}`];
@@ -212,13 +191,9 @@ Automatically uploaded from issue #${context.issue.number}`,
             row.push(`${context.imageData.path}`);
         }
 
-        let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
-
-`;
-        prBody += `| ${headers.join(' | ')} |
-`;
-        prBody += `| ${headers.map(() => '---').join(' | ')} |
-`;
+        let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n`;
+        prBody += `| ${headers.join(' | ')} |\n`;
+        prBody += `| ${headers.map(() => '---').join(' | ')} |\n`;
         prBody += `| ${row.join(' | ')} |`;
 
         const { data: pullRequest } = await github.rest.pulls.create({
@@ -230,7 +205,7 @@ Automatically uploaded from issue #${context.issue.number}`,
             body: prBody
         });
 
-        // Add the same labels as the issue
+        const labels = context.payload.issue.labels.map(label => label.name);
         await github.rest.issues.addLabels({
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -240,7 +215,6 @@ Automatically uploaded from issue #${context.issue.number}`,
 
         console.log(`✅ Created pull request: #${pullRequest.number}`);
 
-        // Store PR info for the success comment
         context.pullRequestUrl = pullRequest.html_url;
         context.pullRequestNumber = pullRequest.number;
 
@@ -252,25 +226,10 @@ Automatically uploaded from issue #${context.issue.number}`,
 }
 
 async function addSuccessComment(github, context) {
-    const type = context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail';
+    const type = context.payload.issue.labels.some(label => label.name === 'place') ? 'lieu' : 'portail';
     const message = context.pullRequestUrl
-        ? `✅ **Soumission acceptée !**
-
-Votre ${type} a été validé avec succès ! Une pull request a été créée automatiquement :
-➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**
-
-Merci pour votre contribution ! 🎉
-
-Cette issue va être fermée automatiquement car elle a été traitée.`
-        : `✅ **Soumission acceptée !**
-
-Votre ${type} a été validé avec succès ! 
-
-Un mainteneur va maintenant traiter votre demande. Vous serez notifié dès que c'est intégré à PMC Plan.
-
-Merci pour votre contribution ! 🎉
-
-Cette issue va être fermée automatiquement car elle a été traitée.`;
+        ? `✅ **Soumission acceptée !**\n\nVotre ${type} a été validé avec succès ! Une pull request a été créée automatiquement :\n➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**\n\nMerci pour votre contribution ! 🎉\n\nCette issue va être fermée automatiquement car elle a été traitée.`
+        : `✅ **Soumission acceptée !**\n\nVotre ${type} a été validé avec succès ! \n\nUn mainteneur va maintenant traiter votre demande. Vous serez notifié dès que c'est intégré à PMC Plan.\n\nMerci pour votre contribution ! 🎉\n\nCette issue va être fermée automatiquement car elle a été traitée.`;
 
     await github.rest.issues.createComment({
         issue_number: context.issue.number,
@@ -279,7 +238,6 @@ Cette issue va être fermée automatiquement car elle a été traitée.`;
         body: message
     });
 
-    // Add success check label and close the issue
     await github.rest.issues.addLabels({
         owner: context.repo.owner,
         repo: context.repo.repo,
@@ -297,7 +255,6 @@ Cette issue va être fermée automatiquement car elle a été traitée.`;
 }
 
 async function addErrorComment(github, context, errorMessage) {
-    // Parse common error types to provide user-friendly messages
     let userFriendlyMessage;
 
     if (errorMessage.includes('already exists')) {
@@ -312,20 +269,14 @@ async function addErrorComment(github, context, errorMessage) {
         userFriendlyMessage = `Il y a eu un problème avec votre soumission. Veuillez créer une nouvelle issue en vous assurant de bien remplir tous les champs.`;
     }
 
+    const type = context.payload.issue.labels.some(label => label.name === 'place') ? 'lieu' : 'portail';
     await github.rest.issues.createComment({
         issue_number: context.issue.number,
         owner: context.repo.owner,
         repo: context.repo.repo,
-        body: `❌ **Soumission non valide**
-
-${userFriendlyMessage}
-
-Pour soumettre votre ${context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail'}, veuillez créer une **nouvelle issue** en utilisant le bon template.
-
-Cette issue va être fermée automatiquement.`
+        body: `❌ **Soumission non valide**\n\n${userFriendlyMessage}\n\nPour soumettre votre ${type}, veuillez créer une **nouvelle issue** en utilisant le bon template.\n\nCette issue va être fermée automatiquement.`
     });
 
-    // Add failed check label and close the issue
     await github.rest.issues.addLabels({
         owner: context.repo.owner,
         repo: context.repo.repo,
