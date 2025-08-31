@@ -1,0 +1,12 @@
+{
+  "id": "petit_village",
+  "name": "Le petit village",
+  "world": "overworld",
+  "coordinates": {
+    "x": 8,
+    "y": 8,
+    "z": 8
+  },
+  "tags": [],
+  "portals": []
+}
