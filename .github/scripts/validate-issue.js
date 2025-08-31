@@ -329,7 +329,10 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
 
     return new Promise((resolve, reject) => {
         const options = {
-            headers: { 'Referer': referer }
+            headers: {
+                'Referer': referer,
+                'Authorization': `token ${process.env.GITHUB_TOKEN}`
+            }
         };
 
         https.get(url, options, (response) => {
