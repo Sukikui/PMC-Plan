@@ -330,34 +330,39 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
     return new Promise((resolve, reject) => {
         const options = {
             headers: {
-                'Referer': referer,
-                'Authorization': `token ${process.env.GITHUB_TOKEN}`
+                'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                'Accept': 'application/octet-stream'
             }
         };
 
-        https.get(url, options, (response) => {
-            if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-                console.log(`🔄 Redirecting to: ${response.headers.location}`);
-                resolve(downloadAndValidateImage(response.headers.location, referer, context, placeId, depth + 1));
+        const req = https.get(url, options, (res) => {
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                console.log(`🔄 Redirecting to: ${res.headers.location}`);
+                return resolve(downloadAndValidateImage(res.headers.location, referer, context, placeId, depth + 1));
+            }
+
+            if (res.statusCode < 200 || res.statusCode >= 300) {
+                let errorBody = '';
+                res.on('data', chunk => errorBody += chunk);
+                res.on('end', () => {
+                    console.error('Error response body:', errorBody);
+                    reject(new Error(`Failed to download image. Status: ${res.statusCode} ${res.statusMessage}`));
+                });
                 return;
             }
 
-            if (response.statusCode < 200 || response.statusCode >= 300) {
-                return reject(new Error(`Failed to download image. Status: ${response.statusCode} ${response.statusMessage}`));
-            }
-
-            const contentType = response.headers['content-type'];
+            const contentType = res.headers['content-type'];
             const extension = contentType.split('/')[1];
             if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
                 return reject(new Error(`Unsupported image type: ${contentType}`));
             }
 
             const chunks = [];
-            response.on('data', (chunk) => {
+            res.on('data', (chunk) => {
                 chunks.push(chunk);
             });
 
-            response.on('end', () => {
+            res.on('end', () => {
                 const imageBuffer = Buffer.concat(chunks);
                 const imagePath = `public/data/place_images/${placeId}.${extension}`;
                 const imageSize = imageBuffer.length;
@@ -371,7 +376,9 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
                 };
                 resolve();
             });
-        }).on('error', (err) => {
+        });
+
+        req.on('error', (err) => {
             reject(err);
         });
     });
