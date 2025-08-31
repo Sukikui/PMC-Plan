@@ -84,7 +84,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g ajv-cli
-          npm install node-fetch
+          npm install node-fetch@2
           
       - name: Extract and validate JSON from issue
         uses: actions/github-script@v7
