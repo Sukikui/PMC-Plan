@@ -1,6 +1,3 @@
-#!/usr/bin/env node
-
-// Script to validate and generate PR from GitHub issue template data
 const fs = require('fs');
 const { execSync } = require('child_process');
 
@@ -312,106 +309,60 @@ Cette issue va être fermée automatiquement.`
 }
 
 async function handleImageDownload(github, context, imageText, placeId) {
-    console.log('Processing image text:', imageText);
-    // Accept HTML <img>, Markdown image ![](), or a bare URL
-    let imageUrl = null;
-    const htmlMatch = imageText.match(/src="([^"]+)"/i);
-    const mdMatch = imageText.match(/!\[[^\]]*\]\(([^)]+)\)/);
-    const urlMatch = imageText.match(/https?:\/\/[^\s>)]+/i);
-    if (htmlMatch && htmlMatch[1]) imageUrl = htmlMatch[1];
-    else if (mdMatch && mdMatch[1]) imageUrl = mdMatch[1];
-    else if (urlMatch && urlMatch[0]) imageUrl = urlMatch[0];
-    if (!imageUrl) throw new Error('No image URL found. Please upload an image.');
-    console.log(`Found image URL: ${imageUrl}`);
-    const referer = context.payload.issue.html_url; // important pour user-attachments
-    return await downloadAndValidateImage(imageUrl, referer, context, placeId);
+    const imageUrl = imageText.match(/<img[^>]+src="([^">]+)"/);
+    if (!imageUrl || !imageUrl[1]) {
+        console.log('ℹ️ No image URL found in the issue body.');
+        return;
+    }
+
+    console.log(`🖼️ Found image URL: ${imageUrl[1]}`);
+    await downloadAndValidateImage(imageUrl[1], context.payload.issue.html_url, context, placeId);
 }
 
 async function downloadAndValidateImage(imageUrl, referer, context, placeId, depth = 0) {
-    if (depth > 5) throw new Error('Too many redirects while downloading image');
-
-    const https = require('https');
-    const http = require('http');
-    const { URL } = require('url');
-    const u = new URL(imageUrl);
-    const client = u.protocol === 'https:' ? https : http;
-
-    const headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Connection': 'keep-alive'
-    };
-
-    // ⚠️ user-attachments nécessite un Referer et refuse les tokens
-    const isUserAttachments = u.hostname === 'github.com' && u.pathname.startsWith('/user-attachments/');
-    if (isUserAttachments && referer) headers['Referer'] = referer;
-
-    // Pour les autres hôtes (CDN externes), pas de token par défaut.
-    // Si tu dois authentifier un domaine interne, gère-le explicitement ici.
-
-    // Force redirect for user-attachments by adding download=1 when not present
-    let path = u.pathname + (u.search || '');
-    if (isUserAttachments && (!u.search || !u.search.includes('download='))) {
-        path = `${u.pathname}?download=1`;
+    if (depth > 5) {
+        throw new Error('Too many redirects trying to download the image.');
     }
-    const options = { hostname: u.hostname, path, headers };
 
-    const { buffer, size, contentType } = await new Promise((resolve, reject) => {
-        const req = client.request(options, (res) => {
-            console.log(`Response status: ${res.statusCode} ${res.statusMessage}`);
-            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                const next = new URL(res.headers.location, `${u.protocol}//${u.host}`).toString();
-                console.log(`Following redirect to: ${next}`);
-                downloadAndValidateImage(next, referer, context, placeId, depth + 1).then(resolve).catch(reject);
-                return;
-            }
-            if (res.statusCode !== 200) {
-                // For user-attachments, retry once with explicit download=1 if initial GET returned 404
-                const is404 = res.statusCode === 404;
-                if (is404 && isUserAttachments && (!u.search || !u.search.includes('download='))) {
-                    const retryUrl = `${u.protocol}//${u.host}${u.pathname}?download=1`;
-                    console.log(`Retrying user-attachments with download=1: ${retryUrl}`);
-                    downloadAndValidateImage(retryUrl, referer, context, placeId, depth + 1).then(resolve).catch(reject);
-                    return;
-                }
-                reject(new Error(`Failed to download image: ${res.statusCode} ${res.statusMessage}`));
-                return;
-            }
-            const chunks = [];
-            res.on('data', c => chunks.push(c));
-            res.on('end', () => resolve({
-                buffer: Buffer.concat(chunks),
-                size: chunks.reduce((a,c)=>a+c.length,0),
-                contentType: res.headers['content-type'] || 'application/octet-stream'
-            }));
-        });
-        req.on('error', reject);
-        req.end();
+    const fetch = require('node-fetch');
+    const response = await fetch(imageUrl, {
+        headers: { 'Referer': referer },
+        redirect: 'manual'
     });
 
-    // Taille max 5MB
-    const maxSize = 5 * 1024 * 1024;
-    if (size > maxSize) throw new Error(`Image too large: ${(size/1024/1024).toFixed(1)}MB (>5MB)`);
+    if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
+        const redirectUrl = response.headers.get('location');
+        console.log(`🔄 Redirecting to: ${redirectUrl}`);
+        return downloadAndValidateImage(redirectUrl, referer, context, placeId, depth + 1);
+    }
 
-    // Déterminer l’extension depuis Content-Type
-    const ct = contentType.toLowerCase();
-    const ext = ct.includes('png') ? 'png'
-        : ct.includes('jpeg') ? 'jpg'
-            : ct.includes('jpg') ? 'jpg'
-                : ct.includes('webp') ? 'webp'
-                    : ct.includes('gif') ? 'gif'
-                        : 'png';
+    if (!response.ok) {
+        throw new Error(`Failed to download image. Status: ${response.status} ${response.statusText}`);
+    }
 
-    const imagePath = `public/data/place_images/${placeId}.${ext}`;
-    context.imageData = { buffer, path: imagePath, size };
-    console.log(`✅ Image prepared for upload: ${imagePath} (${(size/1024).toFixed(0)} KB)`);
-    return true;
+    const contentType = response.headers.get('content-type');
+    const extension = contentType.split('/')[1];
+    if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
+        throw new Error(`Unsupported image type: ${contentType}`);
+    }
+
+    const imageBuffer = await response.buffer();
+    const imagePath = `public/data/place_images/${placeId}.${extension}`;
+    const imageSize = imageBuffer.length;
+
+    console.log(`✅ Image downloaded successfully. Path: ${imagePath}, Size: ${imageSize} bytes`);
+
+    // Store image data in context for later use in PR creation
+    context.imageData = {
+        buffer: imageBuffer,
+        path: imagePath,
+        size: imageSize
+    };
 }
 
 function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     const data = {};
-    
+
     // GitHub issue template fields are embedded in the body with specific format
     // Format: ### Field Label\n\nValue\n\n
     const extractField = (fieldId) => {
@@ -419,10 +370,10 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
         const patterns = [
             // Pattern for inputs: ### Label\n\nValue
             new RegExp(`### [^\\n]*\\n\\n([^#\\n][^\\n#]*?)(?:\\n\\n|$)`, 'g'),
-            // Pattern for dropdowns: ### Label\n\nValue  
+            // Pattern for dropdowns: ### Label\n\nValue
             new RegExp(`### [^\\n]*\\n\\n([^#\\n][^\\n]*?)(?:\\n|$)`, 'g')
         ];
-        
+
         // Extract all field values and match to expected order
         const lines = issueBody.split('\n');
         const fieldMatches = [];
