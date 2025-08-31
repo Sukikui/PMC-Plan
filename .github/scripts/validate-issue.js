@@ -1,6 +1,11 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
+/**
+ * Validates issue data based on labels (place or portal) and generates a pull request.
+ * @param {object} github - The GitHub object.
+ * @param {object} context - The GitHub Actions context object.
+ */
 async function validateIssueData(github, context) {
     const issueBody = context.payload.issue.body;
     const isPlace = context.payload.issue.labels.some(label => label.name === 'place');
@@ -112,6 +117,14 @@ async function validateIssueData(github, context) {
     }
 }
 
+/**
+ * Generates files and creates a pull request.
+ * @param {object} github - The GitHub object.
+ * @param {object} context - The GitHub Actions context object.
+ * @param {object} jsonData - The JSON data for the place or portal.
+ * @param {boolean} isPlace - True if the data is for a place, false otherwise.
+ * @param {boolean} isPortal - True if the data is for a portal, false otherwise.
+ */
 async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal) {
     const branchName = `add-${isPlace ? 'place' : 'portal'}/${jsonData.id}`;
 
@@ -221,6 +234,11 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
     }
 }
 
+/**
+ * Adds a success comment to the issue and closes it.
+ * @param {object} github - The GitHub object.
+ * @param {object} context - The GitHub Actions context object.
+ */
 async function addSuccessComment(github, context) {
     const type = context.payload.issue.labels.some(label => label.name === 'place') ? 'lieu' : 'portail';
     const message = context.pullRequestUrl
@@ -250,6 +268,12 @@ async function addSuccessComment(github, context) {
     });
 }
 
+/**
+ * Adds an error comment to the issue and closes it.
+ * @param {object} github - The GitHub object.
+ * @param {object} context - The GitHub Actions context object.
+ * @param {string} errorMessage - The error message.
+ */
 async function addErrorComment(github, context, errorMessage) {
     let userFriendlyMessage;
 
@@ -288,11 +312,26 @@ async function addErrorComment(github, context, errorMessage) {
     });
 }
 
+/**
+ * Handles the download and validation of an image.
+ * @param {object} github - The GitHub object.
+ * @param {object} context - The GitHub Actions context object.
+ * @param {string} imageUrl - The URL of the image to download.
+ * @param {string} placeId - The ID of the place associated with the image.
+ */
 async function handleImageDownload(github, context, imageUrl, placeId) {
     console.log(`Downloading image from: ${imageUrl}`);
     await downloadAndValidateImage(imageUrl, context.payload.issue.html_url, context, placeId);
 }
 
+/**
+ * Downloads and validates an image from a given URL.
+ * @param {string} imageUrl - The URL of the image to download.
+ * @param {string} referer - The referer URL for the download request.
+ * @param {object} context - The GitHub Actions context object.
+ * @param {string} placeId - The ID of the place associated with the image.
+ * @param {number} depth - The current recursion depth for redirects.
+ */
 async function downloadAndValidateImage(imageUrl, referer, context, placeId, depth = 0) {
     if (depth > 5) {
         throw new Error('Too many redirects trying to download the image.');
@@ -328,7 +367,6 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
 
     console.log(`✅ Image downloaded successfully. Path: ${imagePath}, Size: ${imageSize} bytes`);
 
-    // Store image data in context for later use in PR creation
     context.imageData = {
         buffer: imageBuffer,
         path: imagePath,
@@ -336,28 +374,18 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
     };
 }
 
+/**
+ * Extracts data from the issue body based on whether it's a place or portal.
+ * @param {string} issueBody - The body of the GitHub issue.
+ * @param {boolean} isPlace - True if the issue is for a place, false otherwise.
+ * @param {boolean} isPortal - True if the issue is for a portal, false otherwise.
+ * @returns {object} The extracted data.
+ * @throws {Error} If required fields are missing or empty.
+ */
 function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     const data = {};
 
-    // GitHub issue template fields are embedded in the body with specific format
-    // Format: ### Field Label
-
-//Value
-
-    const extractField = (fieldId) => {
-        // Try different patterns for GitHub issue template format
-        const patterns = [
-            // Pattern for inputs: ### Label
-
-//Value
-            new RegExp(`### [^\n]*\n\n([^#\n][^\n#]*?)(?:\n\n|$)`, 'g'),
-            // Pattern for dropdowns: ### Label
-
-//Value
-            new RegExp(`### [^\n]*\n\n([^#\n][^\n]*?)(?:\n|$)`, 'g')
-        ];
-
-        // Extract all field values and match to expected order
+    const extractField = () => {
         const lines = issueBody.split('\n');
         const fieldMatches = [];
         let inField = false;
@@ -368,7 +396,6 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
             const line = lines[i];
             if (line.startsWith('### ')) {
                 if (inField) {
-                    // Handle empty fields (GitHub puts "_No response_")
                     const cleanValue = currentValue.trim();
                     if (cleanValue === '' || cleanValue === '_No response_') {
                         fieldMatches.push('');
@@ -410,7 +437,6 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     const fieldValues = extractField();
 
     if (isPlace) {
-        // Expected order: ID, Name, World, X, Y, Z, Description, Tags, Portals, Image
         if (fieldValues.length >= 6) {
             data.placeId = fieldValues[0] || '';
             data.placeName = fieldValues[1] || '';
@@ -424,7 +450,6 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
             data.image = fieldValues[9] || '';
         }
     } else if (isPortal) {
-        // Expected order: ID, Name, World, X, Y, Z, Description
         if (fieldValues.length >= 6) {
             data.portalId = fieldValues[0] || '';
             data.portalName = fieldValues[1] || '';
@@ -436,7 +461,6 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
         }
     }
 
-    // Validate required fields
     const requiredFields = isPlace
         ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
         : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];

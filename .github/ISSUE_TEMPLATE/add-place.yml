@@ -76,15 +76,15 @@ body:
   - type: input
     id: tags
     attributes:
-      label: Étiquettes
-      description: Étiquettes séparées par des virgules pour catégoriser ce lieu (optionnel)
+      label: Étiquettes (optionnel)
+      description: Étiquettes séparées par des virgules pour catégoriser ce lieu
       placeholder: "ferme, ville, magasin"
 
   - type: input
     id: portals
     attributes:
-      label: Portails liés
-      description: IDs des portails associés à ce lieu, séparés par des virgules (optionnel)
+      label: Portails liés (optionnel)
+      description: IDs des portails associés à ce lieu, séparés par des virgules
       placeholder: "portail_village_suki, portail_autre_lieu"
 
   - type: textarea
