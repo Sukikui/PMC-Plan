@@ -289,15 +289,9 @@ async function addErrorComment(github, context, errorMessage) {
     });
 }
 
-async function handleImageDownload(github, context, imageText, placeId) {
-    const imageUrl = imageText.match(/<img[^>]+src="([^">]+)"/);
-    if (!imageUrl || !imageUrl[1]) {
-        console.log('ℹ️ No image URL found in the issue body.');
-        return;
-    }
-
-    console.log(`🖼️ Found image URL: ${imageUrl[1]}`);
-    await downloadAndValidateImage(imageUrl[1], context.payload.issue.html_url, context, placeId);
+async function handleImageDownload(github, context, imageUrl, placeId) {
+    console.log(`Downloading image from: ${imageUrl}`);
+    await downloadAndValidateImage(imageUrl, context.payload.issue.html_url, context, placeId);
 }
 
 async function downloadAndValidateImage(imageUrl, referer, context, placeId, depth = 0) {
@@ -426,6 +420,36 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
         // Expected order: ID, Name, World, X, Y, Z, Description
         if (fieldValues.length >= 6) {
             data.portalId = fieldValues[0] || '';
+            data.portalName = fieldValues[1] || '';
+            data.world = fieldValues[2] || '';
+            data.coordinatesX = fieldValues[3] || '';
+            data.coordinatesY = fieldValues[4] || '';
+            data.coordinatesZ = fieldValues[5] || '';
+            data.description = fieldValues[6] || '';
+        }
+    }
+
+    // Validate required fields
+    const requiredFields = isPlace
+        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
+        : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
+
+    const missingFields = [];
+    for (const field of requiredFields) {
+        if (!data[field] || data[field].trim() === '') {
+            missingFields.push(field);
+        }
+    }
+
+    if (missingFields.length > 0) {
+        throw new Error(`Champs requis manquants ou vides: ${missingFields.join(', ')}`);
+    }
+
+    return data;
+}
+
+module.exports = { validateIssueData };
+';
             data.portalName = fieldValues[1] || '';
             data.world = fieldValues[2] || '';
             data.coordinatesX = fieldValues[3] || '';
