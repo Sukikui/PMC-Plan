@@ -22,15 +22,6 @@ async function validateIssueData(github, context) {
         return;
     }
 
-    // Extract image URL if present
-    if (isPlace && extractedData.image && extractedData.image.trim()) {
-        const imageUrlMatch = extractedData.image.match(/<img[^>]+src="([^">]+)"/);
-        if (imageUrlMatch && imageUrlMatch[1]) {
-            extractedData.imageUrl = imageUrlMatch[1];
-            console.log(`🖼️ Found image URL: ${extractedData.imageUrl}`);
-        }
-    }
-
     // Generate JSON from extracted data
     const { generatePlaceJson, generatePortalJson } = require('./generate-json.js');
     let jsonData;
@@ -82,6 +73,17 @@ async function validateIssueData(github, context) {
                 }
             }
             console.log('✅ All linked portals exist');
+        }
+
+        // Handle image download and validation for places
+        if (isPlace && extractedData.image && extractedData.image.trim()) {
+            try {
+                await handleImageDownload(github, context, extractedData.image.trim(), jsonData.id);
+                console.log('✅ Image download and validation completed');
+            } catch (error) {
+                console.log('⚠️ Image processing failed:', error.message);
+                // Continue without image - it's optional
+            }
         }
 
         // Generate files and create PR automatically
@@ -154,17 +156,40 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
 
         console.log(`✅ Created file: ${filePath}`);
 
+        // Upload image if present
+        if (context.imageData) {
+            console.log(`🖼️ Uploading image: ${context.imageData.path} (${context.imageData.size} bytes)`);
+            const encodedImage = context.imageData.buffer.toString('base64');
+            console.log(`🔄 Base64 encoded image size: ${encodedImage.length} characters`);
+
+            try {
+                await github.rest.repos.createOrUpdateFileContents({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: context.imageData.path,
+                    message: `feat: add image for place ${jsonData.name}\n\nAutomatically uploaded from issue #${context.issue.number}`,
+                    content: encodedImage,
+                    branch: branchName
+                });
+                console.log(`✅ Successfully uploaded image: ${context.imageData.path}`);
+            } catch (error) {
+                console.error(`❌ Failed to upload image:`, error.message);
+                throw error;
+            }
+        } else {
+            console.log('ℹ️ No image data found, skipping image upload');
+        }
+
         // Create pull request
         const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
         const prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n**ID:** 
-${jsonData.id}
-  
+${jsonData.id}  
 **World:** 
-${jsonData.world}
- 
+${jsonData.world} 
 **Created file:** 
-${filePath}${jsonData.imageUrl ? `\n**Image URL:** ${jsonData.imageUrl}` : ''}`;
-
+${filePath}${context.imageData ? `
+**Image:** 
+${context.imageData.path} (${(context.imageData.size / 1024 / 1024).toFixed(1)}MB)` : ''}`;
         const { data: pullRequest } = await github.rest.pulls.create({
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -262,6 +287,60 @@ async function addErrorComment(github, context, errorMessage) {
         repo: context.repo.repo,
         state: 'closed'
     });
+}
+
+async function handleImageDownload(github, context, imageText, placeId) {
+    const imageUrl = imageText.match(/<img[^>]+src="([^">]+)"/);
+    if (!imageUrl || !imageUrl[1]) {
+        console.log('ℹ️ No image URL found in the issue body.');
+        return;
+    }
+
+    console.log(`🖼️ Found image URL: ${imageUrl[1]}`);
+    await downloadAndValidateImage(imageUrl[1], context.payload.issue.html_url, context, placeId);
+}
+
+async function downloadAndValidateImage(imageUrl, referer, context, placeId, depth = 0) {
+    if (depth > 5) {
+        throw new Error('Too many redirects trying to download the image.');
+    }
+
+    const fetch = require('node-fetch');
+    const response = await fetch(imageUrl, {
+        headers: { 'Referer': referer },
+        redirect: 'manual'
+    });
+
+    if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
+        const redirectUrl = response.headers.get('location');
+        console.log(`🔄 Redirecting to: ${redirectUrl}`);
+        return downloadAndValidateImage(redirectUrl, referer, context, placeId, depth + 1);
+    }
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Error response body:', errorBody);
+        throw new Error(`Failed to download image. Status: ${response.status} ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    const extension = contentType.split('/')[1];
+    if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
+        throw new Error(`Unsupported image type: ${contentType}`);
+    }
+
+    const imageBuffer = await response.buffer();
+    const imagePath = `public/data/place_images/${placeId}.${extension}`;
+    const imageSize = imageBuffer.length;
+
+    console.log(`✅ Image downloaded successfully. Path: ${imagePath}, Size: ${imageSize} bytes`);
+
+    // Store image data in context for later use in PR creation
+    context.imageData = {
+        buffer: imageBuffer,
+        path: imagePath,
+        size: imageSize
+    };
 }
 
 function extractDataFromTemplate(issueBody, isPlace, isPortal) {
