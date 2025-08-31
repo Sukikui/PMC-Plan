@@ -1,0 +1,13 @@
+{
+  "id": "haha",
+  "name": "Haha",
+  "world": "overworld",
+  "coordinates": {
+    "x": 6,
+    "y": 7,
+    "z": 7
+  },
+  "tags": [],
+  "description": "erty",
+  "portals": []
+}
