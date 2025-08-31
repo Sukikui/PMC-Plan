@@ -1,0 +1,15 @@
+{
+  "id": "gaga",
+  "name": "Gaga",
+  "world": "overworld",
+  "coordinates": {
+    "x": 8,
+    "y": 8,
+    "z": 8
+  },
+  "tags": [
+    "ferme"
+  ],
+  "description": "azer",
+  "portals": []
+}
