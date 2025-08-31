@@ -313,9 +313,15 @@ Cette issue va être fermée automatiquement.`
 
 async function handleImageDownload(github, context, imageText, placeId) {
     console.log('Processing image text:', imageText);
-    const srcMatch = imageText.match(/src="([^"]+)"/i);
-    if (!srcMatch) throw new Error('No image src found. Please upload an image.');
-    const imageUrl = srcMatch[1];
+    // Accept HTML <img>, Markdown image ![](), or a bare URL
+    let imageUrl = null;
+    const htmlMatch = imageText.match(/src="([^"]+)"/i);
+    const mdMatch = imageText.match(/!\[[^\]]*\]\(([^)]+)\)/);
+    const urlMatch = imageText.match(/https?:\/\/[^\s>)]+/i);
+    if (htmlMatch && htmlMatch[1]) imageUrl = htmlMatch[1];
+    else if (mdMatch && mdMatch[1]) imageUrl = mdMatch[1];
+    else if (urlMatch && urlMatch[0]) imageUrl = urlMatch[0];
+    if (!imageUrl) throw new Error('No image URL found. Please upload an image.');
     console.log(`Found image URL: ${imageUrl}`);
     const referer = context.payload.issue.html_url; // important pour user-attachments
     return await downloadAndValidateImage(imageUrl, referer, context, placeId);
@@ -331,8 +337,10 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
     const client = u.protocol === 'https:' ? https : http;
 
     const headers = {
-        'User-Agent': 'GitHub-Actions',
-        'Accept': 'image/*'
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Connection': 'keep-alive'
     };
 
     // ⚠️ user-attachments nécessite un Referer et refuse les tokens
@@ -342,7 +350,12 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
     // Pour les autres hôtes (CDN externes), pas de token par défaut.
     // Si tu dois authentifier un domaine interne, gère-le explicitement ici.
 
-    const options = { hostname: u.hostname, path: u.pathname + u.search, headers };
+    // Force redirect for user-attachments by adding download=1 when not present
+    let path = u.pathname + (u.search || '');
+    if (isUserAttachments && (!u.search || !u.search.includes('download='))) {
+        path = `${u.pathname}?download=1`;
+    }
+    const options = { hostname: u.hostname, path, headers };
 
     const { buffer, size, contentType } = await new Promise((resolve, reject) => {
         const req = client.request(options, (res) => {
@@ -354,6 +367,14 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
                 return;
             }
             if (res.statusCode !== 200) {
+                // For user-attachments, retry once with explicit download=1 if initial GET returned 404
+                const is404 = res.statusCode === 404;
+                if (is404 && isUserAttachments && (!u.search || !u.search.includes('download='))) {
+                    const retryUrl = `${u.protocol}//${u.host}${u.pathname}?download=1`;
+                    console.log(`Retrying user-attachments with download=1: ${retryUrl}`);
+                    downloadAndValidateImage(retryUrl, referer, context, placeId, depth + 1).then(resolve).catch(reject);
+                    return;
+                }
                 reject(new Error(`Failed to download image: ${res.statusCode} ${res.statusMessage}`));
                 return;
             }
