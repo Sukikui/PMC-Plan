@@ -184,9 +184,9 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
 
         const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
         let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n`;
-        prBody += `- **id:** ${jsonData.id}\n`;
-        prBody += `- **world:** ${jsonData.world}\n`;
-        prBody += `- **filename:** ${filePath}\n`;
+        prBody += `- **id:** \`${jsonData.id}\`\n`;
+        prBody += `- **world:** \`${jsonData.world}\`\n`;
+        prBody += `- **filename:** \`${filePath}\`\n`;
 
         if (context.imageData) {
             prBody += `- **image filename:** ${context.imageData.path}`;
