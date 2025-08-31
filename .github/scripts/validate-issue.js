@@ -324,40 +324,54 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
         throw new Error('Too many redirects trying to download the image.');
     }
 
-    const fetch = require('node-fetch');
-    const response = await fetch(imageUrl, {
-        headers: { 'Referer': referer },
-        redirect: 'manual'
+    const https = require('https');
+    const url = new URL(imageUrl);
+
+    return new Promise((resolve, reject) => {
+        const options = {
+            headers: { 'Referer': referer }
+        };
+
+        https.get(url, options, (response) => {
+            if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+                console.log(`🔄 Redirecting to: ${response.headers.location}`);
+                resolve(downloadAndValidateImage(response.headers.location, referer, context, placeId, depth + 1));
+                return;
+            }
+
+            if (response.statusCode < 200 || response.statusCode >= 300) {
+                return reject(new Error(`Failed to download image. Status: ${response.statusCode} ${response.statusMessage}`));
+            }
+
+            const contentType = response.headers['content-type'];
+            const extension = contentType.split('/')[1];
+            if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
+                return reject(new Error(`Unsupported image type: ${contentType}`));
+            }
+
+            const chunks = [];
+            response.on('data', (chunk) => {
+                chunks.push(chunk);
+            });
+
+            response.on('end', () => {
+                const imageBuffer = Buffer.concat(chunks);
+                const imagePath = `public/data/place_images/${placeId}.${extension}`;
+                const imageSize = imageBuffer.length;
+
+                console.log(`✅ Image downloaded successfully. Path: ${imagePath}, Size: ${imageSize} bytes`);
+
+                context.imageData = {
+                    buffer: imageBuffer,
+                    path: imagePath,
+                    size: imageSize
+                };
+                resolve();
+            });
+        }).on('error', (err) => {
+            reject(err);
+        });
     });
-
-    if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
-        const redirectUrl = response.headers.get('location');
-        console.log(`🔄 Redirecting to: ${redirectUrl}`);
-        return downloadAndValidateImage(redirectUrl, referer, context, placeId, depth + 1);
-    }
-
-    if (!response.ok) {
-        throw new Error(`Failed to download image. Status: ${response.status} ${response.statusText}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    const extension = contentType.split('/')[1];
-    if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
-        throw new Error(`Unsupported image type: ${contentType}`);
-    }
-
-    const imageBuffer = await response.buffer();
-    const imagePath = `public/data/place_images/${placeId}.${extension}`;
-    const imageSize = imageBuffer.length;
-
-    console.log(`✅ Image downloaded successfully. Path: ${imagePath}, Size: ${imageSize} bytes`);
-
-    // Store image data in context for later use in PR creation
-    context.imageData = {
-        buffer: imageBuffer,
-        path: imagePath,
-        size: imageSize
-    };
 }
 
 function extractDataFromTemplate(issueBody, isPlace, isPortal) {
