@@ -1,10 +1,6 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 
-// =============================================================================
-// Main Validation Function
-// =============================================================================
-
 /**
  * Main function to validate the issue and trigger the PR creation.
  */
@@ -19,25 +15,31 @@ async function validateIssueData(github, context) {
         return;
     }
 
+    let extractedData;
+    try {
+        extractedData = extractDataFromTemplate(issueBody, { isPlace, isPortal });
+        console.log('Extracted data:', extractedData);
+    } catch (error) {
+        console.log(`❌ Failed to extract data from template: ${error.message}`);
+        await addErrorComment(github, context, error.message);
+        return;
+    }
+
+    const { generatePlaceJson, generatePortalJson } = require('./generate-json.js');
+    const jsonData = isPlace ? generatePlaceJson(extractedData) : generatePortalJson(extractedData);
+    console.log('Generated JSON:', JSON.stringify(jsonData, null, 2));
+
     const tempJsonPath = 'temp-data.json';
+    fs.writeFileSync(tempJsonPath, JSON.stringify(jsonData, null, 2));
 
     try {
-        const extractedData = extractDataFromTemplate(issueBody, { isPlace });
-        console.log('Extracted data:', extractedData);
-
-        const { generatePlaceJson, generatePortalJson } = require('./generate-json.js');
-        const jsonData = isPlace ? generatePlaceJson(extractedData) : generatePortalJson(extractedData);
-        console.log('Generated JSON:', JSON.stringify(jsonData, null, 2));
-
-        fs.writeFileSync(tempJsonPath, JSON.stringify(jsonData, null, 2));
-
         validateJsonData(jsonData, { isPlace });
 
         if (isPlace && extractedData.image) {
             await processImage(github, context, jsonData.id);
         }
 
-        await generateFilesAndCreatePR(github, context, jsonData, { isPlace });
+        await generateFilesAndCreatePR(github, context, jsonData, { isPlace, isPortal });
         await addSuccessComment(github, context);
 
     } catch (error) {
@@ -50,62 +52,6 @@ async function validateIssueData(github, context) {
     }
 }
 
-// =============================================================================
-// Data Extraction and Validation
-// =============================================================================
-
-/**
- * Extracts structured data from the issue body using robust regex.
- */
-function extractDataFromTemplate(issueBody, { isPlace }) {
-    const data = {};
-
-    const extractField = (fieldName) => {
-        const regex = new RegExp(`###\s*${fieldName}\s*\n+([\s\S]*?)(?=\n###|$)`);
-        const match = issueBody.match(regex);
-        if (match && match[1]) {
-            const value = match[1].trim();
-            if (value && value !== '_No response_') {
-                return value;
-            }
-        }
-        return '';
-    };
-
-    if (isPlace) {
-        data.placeId = extractField('ID du lieu');
-        data.placeName = extractField('Nom du lieu');
-        data.world = extractField('Monde');
-        data.coordinatesX = extractField('Coordonnée X');
-        data.coordinatesY = extractField('Coordonnée Y');
-        data.coordinatesZ = extractField('Coordonnée Z');
-        data.description = extractField('Description \(optionnel\)');
-        data.tags = extractField('Étiquettes');
-        data.portals = extractField('Portails liés');
-        data.image = extractField('Image du lieu \(optionnel\)');
-    } else { // isPortal
-        data.portalId = extractField('ID du portail');
-        data.portalName = extractField('Nom du portail');
-        data.world = extractField('Monde');
-        data.coordinatesX = extractField('Coordonnée X');
-        data.coordinatesY = extractField('Coordonnée Y');
-        data.coordinatesZ = extractField('Coordonnée Z');
-        data.description = extractField('Description \(optionnel\)');
-    }
-
-    const requiredFields = isPlace
-        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
-        : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
-
-    for (const field of requiredFields) {
-        if (!data[field]) {
-            throw new Error(`Champs requis manquants ou vides: ${field}`);
-        }
-    }
-
-    return data;
-}
-
 /**
  * Validates the extracted JSON data against the schema and business rules.
  */
@@ -115,12 +61,12 @@ function validateJsonData(jsonData, { isPlace }) {
     execSync(`ajv validate -s ${schemaFile} -d temp-data.json --verbose`, { stdio: 'inherit' });
     console.log('✅ Schema validation passed');
 
-    const filePath = isPlace
-        ? `public/data/places/${jsonData.id}.json` 
-        : `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
+    const id = jsonData.id;
+    const world = jsonData.world;
+    const filePath = isPlace ? `public/data/places/${id}.json` : `public/data/portals/${id}_${world}.json`;
 
     if (fs.existsSync(filePath)) {
-        throw new Error(`ID '${jsonData.id}' already exists at ${filePath}. Please choose a unique identifier.`);
+        throw new Error(`ID '${id}' already exists at ${filePath}. Please choose a unique identifier.`);
     }
     console.log('✅ ID uniqueness verified');
 
@@ -137,10 +83,6 @@ function validateJsonData(jsonData, { isPlace }) {
     }
 }
 
-// =============================================================================
-// Image Processing
-// =============================================================================
-
 /**
  * Fetches the issue as HTML and triggers the image download.
  */
@@ -149,17 +91,21 @@ async function processImage(github, context, placeId) {
     try {
         const issueResponse = await github.request({
             url: context.payload.issue.url,
-            headers: { accept: 'application/vnd.github.v3.html+json' }
+            headers: {
+                accept: 'application/vnd.github.v3.html+json'
+            }
         });
         const issueBodyHtml = issueResponse.data.body_html;
-        console.log('📄 Fetched HTML body of the issue (first 500 chars):');
+        console.log('📄 Fetched HTML body of the issue.');
+        // For debugging, let's log the first 500 chars of the HTML body
         console.log(issueBodyHtml.substring(0, 500));
 
         const imageUrlMatch = issueBodyHtml.match(/<img[^>]+src="([^"]+)"/);
+
         if (imageUrlMatch && imageUrlMatch[1]) {
             const imageUrl = imageUrlMatch[1];
             console.log(`✅ Found image URL in HTML body: ${imageUrl}`);
-            await downloadAndValidateImage(context, imageUrl, placeId);
+            await handleImageDownload(context, imageUrl, placeId);
             console.log('✅ Image download and validation completed');
         } else {
             console.log('⚠️ Could not find image URL in HTML body. Regex did not match.');
@@ -170,50 +116,9 @@ async function processImage(github, context, placeId) {
 }
 
 /**
- * Downloads and validates the image from the given URL.
- */
-async function downloadAndValidateImage(context, imageUrl, placeId, depth = 0) {
-    if (depth > 5) throw new Error('Too many redirects trying to download the image.');
-
-    const fetch = require('node-fetch');
-    const response = await fetch(imageUrl, {
-        headers: { 'Referer': context.payload.issue.html_url },
-        redirect: 'manual'
-    });
-
-    if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
-        const redirectUrl = response.headers.get('location');
-        console.log(`🔄 Redirecting to: ${redirectUrl}`);
-        return downloadAndValidateImage(context, redirectUrl, placeId, depth + 1);
-    }
-
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Error response body:', errorBody);
-        throw new Error(`Failed to download image. Status: ${response.status} ${response.statusText}`);
-    }
-
-    const contentType = response.headers.get('content-type');
-    const extension = contentType.split('/')[1];
-    if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
-        throw new Error(`Unsupported image type: ${contentType}`);
-    }
-
-    context.imageData = {
-        buffer: await response.buffer(),
-        path: `public/data/place_images/${placeId}.${extension}`,
-        size: response.headers.get('content-length') || -1
-    };
-}
-
-// =============================================================================
-// PR and Commenting Functions
-// =============================================================================
-
-/**
  * Orchestrates the PR creation process.
  */
-async function generateFilesAndCreatePR(github, context, jsonData, { isPlace }) {
+async function generateFilesAndCreatePR(github, context, jsonData, { isPlace, isPortal }) {
     const branchName = `add-${isPlace ? 'place' : 'portal'}/${jsonData.id}`;
     console.log(`🚀 Starting automatic PR creation on branch ${branchName}...`);
 
@@ -233,7 +138,7 @@ async function generateFilesAndCreatePR(github, context, jsonData, { isPlace }) 
     console.log(`✅ Created branch: ${branchName}`);
 
     const jsonFilePath = isPlace
-        ? `public/data/places/${jsonData.id}.json` 
+        ? `public/data/places/${jsonData.id}.json`
         : `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
 
     await commitFile(github, context, jsonFilePath, JSON.stringify(jsonData, null, 2), `feat: add ${isPlace ? 'place' : 'portal'} ${jsonData.name}`, branchName);
@@ -243,12 +148,13 @@ async function generateFilesAndCreatePR(github, context, jsonData, { isPlace }) 
     }
 
     const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
+
     const headers = ['ID', 'World', 'Filename'];
-    const row = [`\`${jsonData.id}\``, `\`${jsonData.world}\``, `\`${jsonFilePath}\``];
+    const row = [`${jsonData.id}`, `${jsonData.world}`, `${jsonFilePath}`];
 
     if (context.imageData) {
         headers.push('Image Filename');
-        row.push(`\`${context.imageData.path}\``);
+        row.push(`${context.imageData.path}`);
     }
 
     let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n`;
@@ -299,7 +205,14 @@ async function commitFile(github, context, path, content, message, branch) {
  */
 async function addSuccessComment(github, context) {
     const type = context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail';
-    const message = `✅ **Soumission acceptée !**\n\nVotre ${type} a été validé avec succès ! Une pull request a été créée automatiquement :\n➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**\n\nMerci pour votre contribution ! 🎉\n\nCette issue va être fermée automatiquement car elle a été traitée.`;
+    const message = `✅ **Soumission acceptée !**
+
+Votre ${type} a été validé avec succès ! Une pull request a été créée automatiquement :
+➡️ **[Pull Request #${context.pullRequestNumber}](${context.pullRequestUrl})**
+
+Merci pour votre contribution ! 🎉
+
+Cette issue va être fermée automatiquement car elle a été traitée.`;
 
     await github.rest.issues.createComment({
         issue_number: context.issue.number,
@@ -365,6 +278,100 @@ async function addErrorComment(github, context, errorMessage) {
         repo: context.repo.repo,
         state: 'closed'
     });
+}
+
+/**
+ * Downloads the image from the given URL.
+ */
+async function handleImageDownload(context, imageUrl, placeId) {
+    console.log(`Downloading image from: ${imageUrl}`);
+    await downloadAndValidateImage(imageUrl, context.payload.issue.html_url, context, placeId);
+}
+
+async function downloadAndValidateImage(imageUrl, referer, context, placeId, depth = 0) {
+    if (depth > 5) throw new Error('Too many redirects trying to download the image.');
+
+    const fetch = require('node-fetch');
+    const response = await fetch(imageUrl, {
+        headers: { 'Referer': referer },
+        redirect: 'manual'
+    });
+
+    if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
+        const redirectUrl = response.headers.get('location');
+        console.log(`🔄 Redirecting to: ${redirectUrl}`);
+        return downloadAndValidateImage(redirectUrl, referer, context, placeId, depth + 1);
+    }
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Error response body:', errorBody);
+        throw new Error(`Failed to download image. Status: ${response.status} ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    const extension = contentType.split('/')[1];
+    if (!['png', 'jpg', 'jpeg', 'gif'].includes(extension)) {
+        throw new Error(`Unsupported image type: ${contentType}`);
+    }
+
+    context.imageData = {
+        buffer: await response.buffer(),
+        path: `public/data/place_images/${placeId}.${extension}`,
+        size: response.headers.get('content-length') || -1
+    };
+}
+
+/**
+ * Extracts structured data from the issue body.
+ */
+function extractDataFromTemplate(issueBody, { isPlace, isPortal }) {
+    const data = {};
+
+    const extractField = (fieldName) => {
+        const regex = new RegExp(`###\\s*${fieldName}\\s*\\n+([\\s\\S]*?)(?=\\n###|$)`);
+        const match = issueBody.match(regex);
+        if (match && match[1]) {
+            const value = match[1].trim();
+            if (value !== '_No response_') {
+                return value;
+            }
+        }
+        return '';
+    };
+
+    if (isPlace) {
+        data.placeId = extractField('ID du lieu');
+        data.placeName = extractField('Nom du lieu');
+        data.world = extractField('Monde');
+        data.coordinatesX = extractField('Coordonnée X');
+        data.coordinatesY = extractField('Coordonnée Y');
+        data.coordinatesZ = extractField('Coordonnée Z');
+        data.description = extractField('Description (optionnel)');
+        data.tags = extractField('Étiquettes');
+        data.portals = extractField('Portails liés');
+        data.image = extractField('Image du lieu (optionnel)');
+    } else if (isPortal) {
+        data.portalId = extractField('ID du portail');
+        data.portalName = extractField('Nom du portail');
+        data.world = extractField('Monde');
+        data.coordinatesX = extractField('Coordonnée X');
+        data.coordinatesY = extractField('Coordonnée Y');
+        data.coordinatesZ = extractField('Coordonnée Z');
+        data.description = extractField('Description (optionnel)');
+    }
+
+    const requiredFields = isPlace
+        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
+        : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
+
+    for (const field of requiredFields) {
+        if (!data[field]) {
+            throw new Error(`Champs requis manquants ou vides: ${field}`);
+        }
+    }
+
+    return data;
 }
 
 module.exports = { validateIssueData };
