@@ -202,7 +202,7 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
         prBody += `- **filename:** \`${filePath}\`\n`;
 
         if (context.imageData) {
-            prBody += `- **image filename:** ${context.imageData.path}`;
+            prBody += `- **image filename:** \`${context.imageData.path}\``;
         }
 
         const { data: pullRequest } = await github.rest.pulls.create({
