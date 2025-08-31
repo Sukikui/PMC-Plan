@@ -96,7 +96,11 @@ async function processImage(github, context, placeId) {
             }
         });
         const issueBodyHtml = issueResponse.data.body_html;
-        const imageUrlMatch = issueBodyHtml.match(/<img[^>]+src=\"([^\">]+)\"/);
+        console.log('📄 Fetched HTML body of the issue.');
+        // For debugging, let's log the first 500 chars of the HTML body
+        console.log(issueBodyHtml.substring(0, 500));
+
+        const imageUrlMatch = issueBodyHtml.match(/<img[^>]+src="([^"]+)"/);
 
         if (imageUrlMatch && imageUrlMatch[1]) {
             const imageUrl = imageUrlMatch[1];
@@ -104,7 +108,7 @@ async function processImage(github, context, placeId) {
             await handleImageDownload(context, imageUrl, placeId);
             console.log('✅ Image download and validation completed');
         } else {
-            console.log('⚠️ Could not find image URL in HTML body.');
+            console.log('⚠️ Could not find image URL in HTML body. Regex did not match.');
         }
     } catch (error) {
         console.log(`⚠️ Image processing failed: ${error.message}`);
@@ -153,13 +157,9 @@ async function generateFilesAndCreatePR(github, context, jsonData, { isPlace, is
         row.push(`${context.imageData.path}`);
     }
 
-    let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
-
-`;
-    prBody += `| ${headers.join(' | ')} |
-`;
-    prBody += `| ${headers.map(() => '---').join(' | ')} |
-`;
+    let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}\n\n`;
+    prBody += `| ${headers.join(' | ')} |\n`;
+    prBody += `| ${headers.map(() => '---').join(' | ')} |\n`;
     prBody += `| ${row.join(' | ')} |`;
 
     const { data: pullRequest } = await github.rest.pulls.create({
