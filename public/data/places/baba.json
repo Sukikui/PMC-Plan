@@ -1,0 +1,15 @@
+{
+  "id": "baba",
+  "name": "Baba",
+  "world": "overworld",
+  "coordinates": {
+    "x": 7,
+    "y": 7,
+    "z": 7
+  },
+  "tags": [
+    "ferme"
+  ],
+  "description": "aze",
+  "portals": []
+}
