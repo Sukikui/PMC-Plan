@@ -140,7 +140,7 @@ async function generateFilesAndCreatePR(github, context, jsonData, { isPlace, is
     await commitFile(github, context, jsonFilePath, JSON.stringify(jsonData, null, 2), `feat: add ${isPlace ? 'place' : 'portal'} ${jsonData.name}`, branchName);
 
     if (context.imageData) {
-        await commitFile(github, context, context.imageData.path, context.imageData.buffer, `feat: add image for place ${jsonData.name}`, branchName, 'base64');
+        await commitFile(github, context, context.imageData.path, context.imageData.buffer, `feat: add image for place ${jsonData.name}`, branchName);
     }
 
     const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
@@ -187,15 +187,14 @@ ${context.imageData.path} (${(context.imageData.size / 1024).toFixed(1)} KB)`;
 /**
  * Commits a file to the repository.
  */
-async function commitFile(github, context, path, content, message, branch, encoding = 'utf-8') {
+async function commitFile(github, context, path, content, message, branch) {
+    const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf-8');
     await github.rest.repos.createOrUpdateFileContents({
         owner: context.repo.owner,
         repo: context.repo.repo,
         path,
-        message: `${message}
-
-Automatically generated from issue #${context.issue.number}`,
-        content: Buffer.from(content).toString(encoding),
+        message: `${message}\n\nAutomatically generated from issue #${context.issue.number}`,
+        content: buffer.toString('base64'),
         branch
     });
     console.log(`✅ Committed file: ${path}`);
