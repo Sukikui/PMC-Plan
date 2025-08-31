@@ -33,6 +33,10 @@ function generatePlaceJson(data) {
     place.portals = [];
   }
 
+  if (data.imageUrl && data.imageUrl.trim()) {
+    place.imageUrl = data.imageUrl.trim();
+  }
+
   return place;
 }
 
