@@ -144,23 +144,23 @@ async function generateFilesAndCreatePR(github, context, jsonData, { isPlace, is
     }
 
     const prTitle = `${isPlace ? '🏠 Add new place' : '🌀 Add new portal'}: ${jsonData.name}`;
-    let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
 
-` +
-                 `**ID:** 
-${jsonData.id}
-` +
-                 `**World:** 
-${jsonData.world}
-` +
-                 `**Created file:** 
-${jsonFilePath}`;
+    const headers = ['ID', 'World', 'Filename'];
+    const row = [`${jsonData.id}`, `${jsonData.world}`, `${jsonFilePath}`];
 
     if (context.imageData) {
-        prBody += `
-**Image:** 
-${context.imageData.path} (${(context.imageData.size / 1024).toFixed(1)} KB)`;
+        headers.push('Image Filename');
+        row.push(`${context.imageData.path}`);
     }
+
+    let prBody = `## 🤖 Automatic PR generated from issue #${context.issue.number}
+
+`;
+    prBody += `| ${headers.join(' | ')} |
+`;
+    prBody += `| ${headers.map(() => '---').join(' | ')} |
+`;
+    prBody += `| ${row.join(' | ')} |`;
 
     const { data: pullRequest } = await github.rest.pulls.create({
         owner: context.repo.owner,
@@ -241,22 +241,28 @@ Cette issue va être fermée automatiquement car elle a été traitée.`;
  * Posts an error comment and closes the issue.
  */
 async function addErrorComment(github, context, errorMessage) {
+    // Parse common error types to provide user-friendly messages
+    let userFriendlyMessage;
+
+    if (errorMessage.includes('already exists')) {
+        userFriendlyMessage = `L\'ID que vous avez choisi existe déjà. Veuillez créer une nouvelle issue avec un identifiant unique.`;
+    } else if (errorMessage.includes('Champs requis manquants') || errorMessage.includes('Required field missing')) {
+        userFriendlyMessage = `Certains champs obligatoires sont manquants dans votre soumission. Veuillez créer une nouvelle issue en remplissant tous les champs requis.`;
+    } else if (errorMessage.includes('Linked portal') && errorMessage.includes('not found')) {
+        userFriendlyMessage = `Un des portails liés que vous avez mentionné n\'existe pas. Veuillez vérifier les IDs des portails et créer une nouvelle issue.`;
+    } else if (errorMessage.includes('validation failed') || errorMessage.includes('invalid')) {
+        userFriendlyMessage = `Les données fournies ne respectent pas le format attendu. Veuillez créer une nouvelle issue en suivant attentivement le template.`;
+    } else {
+        userFriendlyMessage = `Il y a eu un problème avec votre soumission. Veuillez créer une nouvelle issue en vous assurant de bien remplir tous les champs.`;
+    }
+
     const type = context.payload.issue.labels.some(l => l.name === 'place') ? 'lieu' : 'portail';
-    const userFriendlyMessage = `Il y a eu un problème avec votre soumission. Veuillez créer une nouvelle issue en vous assurant de bien remplir tous les champs.
-Erreur: 
-${errorMessage}`;
 
     await github.rest.issues.createComment({
         issue_number: context.issue.number,
         owner: context.repo.owner,
         repo: context.repo.repo,
-        body: `❌ **Soumission non valide**
-
-${userFriendlyMessage}
-
-Pour soumettre votre ${type}, veuillez créer une **nouvelle issue** en utilisant le bon template.
-
-Cette issue va être fermée automatiquement.`
+        body: `❌ **Soumission non valide**\n\n${userFriendlyMessage}\n\nPour soumettre votre ${type}, veuillez créer une **nouvelle issue** en utilisant le bon template.\n\nCette issue va être fermée automatiquement.`
     });
 
     await github.rest.issues.addLabels({
