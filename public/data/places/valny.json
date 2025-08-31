@@ -1,0 +1,15 @@
+{
+  "id": "valny",
+  "name": "Valny",
+  "world": "overworld",
+  "coordinates": {
+    "x": 9,
+    "y": 9,
+    "z": 9
+  },
+  "tags": [
+    "ville"
+  ],
+  "description": "dfghjk",
+  "portals": []
+}
