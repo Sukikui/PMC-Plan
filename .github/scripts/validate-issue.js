@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { validate } = require('./validate-data.js');
+const { validateSchema, checkIdUniqueness, checkLinkedPortals } = require('./validate-data.js');
 
 /**
  * Validates issue data based on labels (place or portal) and generates a pull request.
@@ -39,29 +39,14 @@ async function validateIssueData(github, context) {
 
     try {
         const type = isPlace ? 'place' : 'portal';
-        validate(type, jsonData);
+        validateSchema(type, jsonData);
         console.log('✅ Schema validation passed');
 
-        const filePath = isPlace
-            ? `public/data/places/${jsonData.id}.json`
-            : `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
-
-        if (fs.existsSync(filePath)) {
-            throw new Error(`ID '${jsonData.id}' already exists at ${filePath}. Please choose a unique identifier.`);
-        }
+        checkIdUniqueness(type, jsonData.id);
         console.log('✅ ID uniqueness verified');
 
-        if (isPlace && jsonData.portals && jsonData.portals.length > 0) {
-            console.log('Validating linked portals exist...');
-
-            for (const portalId of jsonData.portals) {
-                const overworldFile = `public/data/portals/${portalId}_overworld.json`;
-                const netherFile = `public/data/portals/${portalId}_nether.json`;
-
-                if (!fs.existsSync(overworldFile) && !fs.existsSync(netherFile)) {
-                    throw new Error(`Linked portal '${portalId}' not found. Expected ${overworldFile} or ${netherFile} to exist.`);
-                }
-            }
+        if (isPlace) {
+            checkLinkedPortals(jsonData);
             console.log('✅ All linked portals exist');
         }
 

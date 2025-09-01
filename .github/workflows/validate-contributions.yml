@@ -34,6 +34,8 @@ jobs:
             
       - name: Validate Changed Files
         if: steps.changed-files.outputs.any_changed == 'true'
+        env:
+          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
         run: |
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             node .github/scripts/validate-data.js "$file"
