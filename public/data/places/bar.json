@@ -1,0 +1,14 @@
+{
+  "id": "bar",
+  "name": "LE bar",
+  "world": "overworld",
+  "coordinates": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "tags": [],
+  "portals": [
+    "portail_village_suki"
+  ]
+}
