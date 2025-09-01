@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { validate } = require('./validate-data.js');
 
 /**
  * Validates issue data based on labels (place or portal) and generates a pull request.
@@ -37,22 +37,13 @@ async function validateIssueData(github, context) {
 
     console.log('Generated JSON:', JSON.stringify(jsonData, null, 2));
 
-    fs.writeFileSync('temp-data.json', JSON.stringify(jsonData, null, 2));
-
     try {
-        let schemaFile;
-        if (isPlace) {
-            schemaFile = '.github/schemas/place-schema.json';
-        } else if (isPortal) {
-            schemaFile = '.github/schemas/portal-schema.json';
-        }
-
-        console.log(`Validating against schema: ${schemaFile}`);
-        execSync(`ajv validate -s ${schemaFile} -d temp-data.json --verbose`, { stdio: 'inherit' });
+        const type = isPlace ? 'place' : 'portal';
+        validate(type, jsonData);
         console.log('✅ Schema validation passed');
 
         const filePath = isPlace
-            ? `public/data/places/${jsonData.id}.json` 
+            ? `public/data/places/${jsonData.id}.json`
             : `public/data/portals/${jsonData.id}_${jsonData.world}.json`;
 
         if (fs.existsSync(filePath)) {
@@ -103,17 +94,11 @@ async function validateIssueData(github, context) {
         }
 
         await generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal);
-
         await addSuccessComment(github, context);
 
     } catch (error) {
         console.log('❌ Validation failed:', error.message);
         await addErrorComment(github, context, error.message);
-
-    } finally {
-        if (fs.existsSync('temp-data.json')) {
-            fs.unlinkSync('temp-data.json');
-        }
     }
 }
 
