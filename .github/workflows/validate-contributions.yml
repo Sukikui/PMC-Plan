@@ -2,9 +2,6 @@ name: Validate Community Contributions
 
 on:
   pull_request:
-    paths:
-      - 'public/data/places/*.json'
-      - 'public/data/portals/*.json'
   issues:
     types: [opened, edited]
 
@@ -32,14 +29,26 @@ jobs:
         uses: tj-actions/changed-files@v41
         with:
           files: |
-            public/data/places/*.json
-            public/data/portals/*.json
+            public/data/places/**/*.json
+            public/data/portals/**/*.json
             
       - name: Validate Changed Files
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             node .github/scripts/validate-data.js "$file"
           done
+
+      - name: Get changed images
+        id: changed-images
+        uses: tj-actions/changed-files@v41
+        with:
+          files: public/data/place_images/**/*.{png,jpg,jpeg,gif}
+
+      - name: Validate Image Filenames
+        if: steps.changed-images.outputs.any_changed == 'true'
+        run: |
+          node .github/scripts/validate-images.js ${{ steps.changed-images.outputs.all_changed_files }}
 
   validate-issue:
     if: github.event_name == 'issues' && (contains(github.event.issue.labels.*.name, 'place') || contains(github.event.issue.labels.*.name, 'portal'))
