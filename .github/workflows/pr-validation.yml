@@ -15,30 +15,33 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+
       - name: 📦 Install dependencies
         run: npm install ajv
-      - name: "🐞 Debug: List all files"
-        run: ls -R
-      - name: "🐞 Debug: Show git history"
-        run: git log --oneline --graph --all
-      - name: "🐞 Debug: Run broad git diff"
-        run: git diff --name-only ${{ github.event.before }} ${{ github.event.after }}
+
       - name: 🔍 Get changed files
         id: changed-files
         run: |
-          echo "json_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} -- 'public/data/places/**/*.json' 'public/data/portals/**/*.json')" >> $GITHUB_OUTPUT
-          echo "image_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} -- 'public/data/place_images/**/*.{png,jpg,jpeg,gif}')" >> $GITHUB_OUTPUT
-      - name: "✅ Validate Changed JSON Files"
+          # Trouver le point de divergence avec main ou utiliser le commit initial
+          BASE_SHA=$(git merge-base origin/main HEAD 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          HEAD_SHA=$(git rev-parse HEAD)
+          
+          echo "json_files=$(git diff --name-only $BASE_SHA $HEAD_SHA -- 'public/data/places/**/*.json' 'public/data/portals/**/*.json')" >> $GITHUB_OUTPUT
+          echo "image_files=$(git diff --name-only $BASE_SHA $HEAD_SHA -- 'public/data/place_images/**/*.{png,jpg,jpeg,gif}')" >> $GITHUB_OUTPUT
+
+      - name: ✅ Validate Changed JSON Files
         if: steps.changed-files.outputs.json_files
         run: |
           for file in ${{ steps.changed-files.outputs.json_files }}; do
             node .github/scripts/validate-data.js "$file"
           done
-      - name: "✅ Validate Changed Image Files"
+
+      - name: ✅ Validate Changed Image Files
         if: steps.changed-files.outputs.image_files
         run: |
           for file in ${{ steps.changed-files.outputs.image_files }}; do
