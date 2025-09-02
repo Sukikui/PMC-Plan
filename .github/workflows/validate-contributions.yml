@@ -4,12 +4,18 @@ on:
   pull_request:
   issues:
     types: [opened, edited]
+  workflow_run:
+    workflows: ["Validate Community Contributions"]
+    types: [completed]
+    branches: [main]
 
 jobs:
   validate-pr-files:
-    if: github.event_name == 'pull_request'
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
-    name: Validate JSON Files in PR
+    name: Validate Files in PR
     
     steps:
       - name: Checkout code
