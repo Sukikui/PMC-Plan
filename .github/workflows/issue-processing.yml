@@ -28,9 +28,4 @@ jobs:
             const { branchName, prNumber } = await validateIssueData(github, context);
             core.setOutput('branch', branchName);
             core.setOutput('pr_number', prNumber);
-      - name: 🚀 Trigger PR validation
-        if: steps.create_pr.outputs.branch
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh workflow run "pr-validation.yml" -f branch=${{ steps.create_pr.outputs.branch }} -f pr_number=${{ steps.create_pr.outputs.pr_number }} --ref ${{ github.ref }}
+      

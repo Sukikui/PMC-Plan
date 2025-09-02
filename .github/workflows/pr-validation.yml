@@ -5,14 +5,7 @@ on:
     branches:
       - 'add-place/**'
       - 'add-portal/**'
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'The branch to validate'
-        required: true
-      pr_number:
-        description: 'The PR number'
-        required: true
+  
 
 jobs:
   validate_pr_files:
@@ -21,8 +14,6 @@ jobs:
     steps:
       - name: 📂 Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch || github.head_ref }}
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -31,23 +22,19 @@ jobs:
         run: npm install ajv
       - name: 🔍 Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v41
-        with:
-          files: |
-            public/data/places/**/*.json
-            public/data/portals/**/*.json
-      - name: ✅ Validate Changed Files
-        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+          git fetch origin ${{ github.base_ref }} --depth=1
+          echo "json_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'public/data/places/**/*.json' 'public/data/portals/**/*.json')" >> $GITHUB_OUTPUT
+          echo "image_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'public/data/place_images/**/*.{png,jpg,jpeg,gif}')" >> $GITHUB_OUTPUT
+      - name: ✅ Validate Changed JSON Files
+        if: steps.changed-files.outputs.json_files
+        run: |
+          for file in ${{ steps.changed-files.outputs.json_files }}; do
             node .github/scripts/validate-data.js "$file"
           done
-      - name: 🖼️ Get changed images
-        id: changed-images
-        uses: tj-actions/changed-files@v41
-        with:
-          files: public/data/place_images/**/*.{png,jpg,jpeg,gif}
-      - name: ✅ Validate Image Filenames
-        if: steps.changed-images.outputs.any_changed == 'true'
+      - name: ✅ Validate Changed Image Files
+        if: steps.changed-files.outputs.image_files
         run: |
-          node .github/scripts/validate-images.js ${{ steps.changed-images.outputs.all_changed_files }}
+          for file in ${{ steps.changed-files.outputs.image_files }}; do
+            node .github/scripts/validate-images.js "$file"
+          done
