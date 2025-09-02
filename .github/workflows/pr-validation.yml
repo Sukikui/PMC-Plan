@@ -21,6 +21,12 @@ jobs:
           node-version: '18'
       - name: 📦 Install dependencies
         run: npm install ajv
+      - name: 🐞 Debug: List all files
+        run: ls -R
+      - name: 🐞 Debug: Show git history
+        run: git log --oneline --graph --all
+      - name: 🐞 Debug: Run broad git diff
+        run: git diff --name-only ${{ github.event.before }} ${{ github.event.after }}
       - name: 🔍 Get changed files
         id: changed-files
         run: |
