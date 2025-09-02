@@ -5,7 +5,10 @@ on:
     branches:
       - 'add-place/**'
       - 'add-portal/**'
-  
+  push:
+    branches:
+      - 'add-place/**'
+      - 'add-portal/**'
 
 jobs:
   validate_pr_files:
