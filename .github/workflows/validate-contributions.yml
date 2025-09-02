@@ -2,12 +2,16 @@ name: Validate Community Contributions
 
 on:
   pull_request:
+  push:
+    branches:
+      - 'add-place/**'
+      - 'add-portal/**'
   issues:
     types: [opened, edited]
 
 jobs:
   validate-pr-files:
-    if: github.event_name == 'pull_request'
+    if: (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'place') || contains(github.event.pull_request.labels.*.name, 'portal'))) || (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/add-place/') || startsWith(github.ref, 'refs/heads/add-portal/')))
     runs-on: ubuntu-latest
     name: Validate Files in PR
     
