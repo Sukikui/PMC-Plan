@@ -49,7 +49,6 @@ interface TravelPlanProps {
 
 export default function TravelPlan({
                                        selectedPlaceId,
-                                       selectedPlaceType,
                                        playerPosition,
                                        manualCoords
                                    }: TravelPlanProps) {
@@ -212,16 +211,6 @@ export default function TravelPlan({
         }
     };
 
-    const getLocationDisplay = (location: Step['from'] | Step['to']) => {
-        if (location.name) {
-            return location.name;
-        }
-        if (location.coordinates) {
-            return `${location.coordinates.x}, ${location.coordinates.y}, ${location.coordinates.z}`;
-        }
-        return 'Position inconnue';
-    };
-
     const getLocationDisplayForStep = (location: Step['from'] | Step['to'], stepType: string) => {
         // If it's a portal/place (has id), prioritize name (but check if name is meaningful)
         if (location.id && location.name && location.name !== 'none') {
@@ -251,7 +240,7 @@ export default function TravelPlan({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
                         </svg>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Planification d'itinéraire</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Planification d&apos;itinéraire</h2>
                     <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                         Sélectionnez une destination dans le panneau de gauche
                     </p>
