@@ -98,4 +98,4 @@ body:
         3. Un mainteneur examinera votre soumission
         4. Une fois approuvé, votre portail sera ajouté à PMC Plan !
         
-        **Emplacement du fichier :** Votre portail sera sauvegardé comme `public/data/portals/{id-portail}_{monde}.json`
+        Votre portail sera sauvegardé comme `public/data/portals/{id-portail}_{monde}.json`.

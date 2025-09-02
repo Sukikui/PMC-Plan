@@ -119,4 +119,5 @@ body:
         3. Un mainteneur examinera votre soumission
         4. Une fois approuvé, votre lieu sera ajouté à PMC Plan !
         
-        **Emplacement du fichier :** Votre lieu sera sauvegardé comme `public/data/places/{place-id}.json`
+        Votre lieu sera sauvegardé comme `public/data/places/{place-id}.json`.
+        De même, si vous avez fourni une image, elle sera sauvegardée comme `public/data/place_images/{place-id}.png`.

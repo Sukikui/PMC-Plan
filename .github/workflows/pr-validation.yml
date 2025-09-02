@@ -21,24 +21,24 @@ jobs:
           node-version: '18'
       - name: 📦 Install dependencies
         run: npm install ajv
-      - name: 🐞 Debug: List all files
+      - name: "🐞 Debug: List all files"
         run: ls -R
-      - name: 🐞 Debug: Show git history
+      - name: "🐞 Debug: Show git history"
         run: git log --oneline --graph --all
-      - name: 🐞 Debug: Run broad git diff
+      - name: "🐞 Debug: Run broad git diff"
         run: git diff --name-only ${{ github.event.before }} ${{ github.event.after }}
       - name: 🔍 Get changed files
         id: changed-files
         run: |
           echo "json_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} -- 'public/data/places/**/*.json' 'public/data/portals/**/*.json')" >> $GITHUB_OUTPUT
           echo "image_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} -- 'public/data/place_images/**/*.{png,jpg,jpeg,gif}')" >> $GITHUB_OUTPUT
-      - name: ✅ Validate Changed JSON Files
+      - name: "✅ Validate Changed JSON Files"
         if: steps.changed-files.outputs.json_files
         run: |
           for file in ${{ steps.changed-files.outputs.json_files }}; do
             node .github/scripts/validate-data.js "$file"
           done
-      - name: ✅ Validate Changed Image Files
+      - name: "✅ Validate Changed Image Files"
         if: steps.changed-files.outputs.image_files
         run: |
           for file in ${{ steps.changed-files.outputs.image_files }}; do
