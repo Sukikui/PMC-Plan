@@ -40,7 +40,7 @@ jobs:
               - public/data/place_images/**/*.jpeg
               - public/data/place_images/**/*.gif
 
-      - name: ✅ Validate Changed JSON Files
+      - name: ✅ Validate changed JSON files
         if: ${{ steps.cf.outputs.json_any_changed == 'true' }}
         shell: bash
         run: |
@@ -50,7 +50,7 @@ jobs:
             node .github/scripts/validate-data.js "$file"
           done
 
-      - name: 🖼️ Validate Changed Image Files
+      - name: 🖼️ Validate changed image files
         if: ${{ steps.cf.outputs.images_any_changed == 'true' }}
         shell: bash
         run: |
