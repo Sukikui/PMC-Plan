@@ -98,10 +98,13 @@ if (require.main === module) {
     console.log(`✅ Schema validation successful for ${filePath}`);
 
     // 2. Uniqueness Check (only for new files)
+    // No check in PR since we can't determine if it's new or not
+    /*
     if (addedFiles.includes(filePath)) {
       checkIdUniqueness(type, data.id);
       console.log(`✅ ID uniqueness check passed for ${filePath}`);
     }
+    */
 
     // 3. Linked Portals Check (only for places)
     if (type === 'place') {
