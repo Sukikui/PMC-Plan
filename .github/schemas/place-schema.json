@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "title": "PMC Map Place Schema",
-  "description": "Schema for validating place data in the PMC Map project",
+  "title": "PMC Plan Place Schema",
+  "description": "Schema for validating place data in the PMC Plan project",
   "required": ["id", "name", "world", "coordinates"],
   "properties": {
     "id": {

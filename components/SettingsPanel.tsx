@@ -6,33 +6,37 @@ const SettingsPanel = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [theme, setTheme] = useState('light');
 
+    const applyTheme = (selectedTheme: string) => {
+        const root = document.documentElement;
+        
+        if (selectedTheme === 'dark') {
+            root.classList.add('dark');
+        } else if (selectedTheme === 'light') {
+            root.classList.remove('dark');
+        } else if (selectedTheme === 'system') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+        }
+    };
+
     useEffect(() => {
         const savedTheme = localStorage.getItem('pmc-plan-theme');
         if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
             setTheme(savedTheme);
+            applyTheme(savedTheme);
+        } else {
+            setTheme('light');
+            applyTheme('light');
+            localStorage.setItem('pmc-plan-theme', 'light');
         }
     }, []);
 
     const handleThemeChange = (newTheme: string) => {
         setTheme(newTheme);
-        
-        const applyTheme = (selectedTheme: string) => {
-            const root = document.documentElement;
-            
-            if (selectedTheme === 'dark') {
-                root.classList.add('dark');
-            } else if (selectedTheme === 'light') {
-                root.classList.remove('dark');
-            } else if (selectedTheme === 'system') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (prefersDark) {
-                    root.classList.add('dark');
-                } else {
-                    root.classList.remove('dark');
-                }
-            }
-        };
-
         applyTheme(newTheme);
         localStorage.setItem('pmc-plan-theme', newTheme);
     };

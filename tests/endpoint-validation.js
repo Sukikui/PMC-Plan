@@ -213,7 +213,7 @@ async function validateEndpoint(testName, config) {
 }
 
 async function runAllTests() {
-  console.log('🚀 Running PMC Map API endpoint validation tests...\n');
+  console.log('🚀 Running PMC Plan API endpoint validation tests...\n');
   
   let passedTests = 0;
   let totalTests = Object.keys(EXPECTED_RESULTS).length;

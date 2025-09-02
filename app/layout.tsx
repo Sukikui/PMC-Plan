@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'PMC Plan',
-  description: 'Navigate the Minecraft server with intelligent pathfinding through the Nether',
+  description: 'Application de navigation et annuaire du serveur Play-MC.fr !',
   keywords: 'minecraft, pathfinding, nether, portal, navigation, map',
 };
 

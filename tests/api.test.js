@@ -3,7 +3,7 @@ const { describe, test, expect, beforeAll, afterAll } = require('@jest/globals')
 // Base URL for API tests
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
 
-describe('PMC Map API Tests', () => {
+describe('PMC Plan API Tests', () => {
   
   describe('GET /api/nether-address', () => {
     test('should return Nord-2-gauche address', async () => {

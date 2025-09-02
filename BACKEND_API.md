@@ -1,4 +1,4 @@
-# PMC Map Backend API Documentation
+# PMC Plan Backend API Documentation
 
 ## Base URL
 
