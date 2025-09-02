@@ -1,10 +1,6 @@
 name: PR Validation
 
 on:
-  pull_request:
-    branches:
-      - 'add-place/**'
-      - 'add-portal/**'
   push:
     branches:
       - 'add-place/**'
@@ -26,9 +22,8 @@ jobs:
       - name: 🔍 Get changed files
         id: changed-files
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          echo "json_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'public/data/places/**/*.json' 'public/data/portals/**/*.json')" >> $GITHUB_OUTPUT
-          echo "image_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'public/data/place_images/**/*.{png,jpg,jpeg,gif}')" >> $GITHUB_OUTPUT
+          echo "json_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} -- 'public/data/places/**/*.json' 'public/data/portals/**/*.json')" >> $GITHUB_OUTPUT
+          echo "image_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} -- 'public/data/place_images/**/*.{png,jpg,jpeg,gif}')" >> $GITHUB_OUTPUT
       - name: ✅ Validate Changed JSON Files
         if: steps.changed-files.outputs.json_files
         run: |
