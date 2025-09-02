@@ -1,0 +1,36 @@
+name: Issue Processing
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  validate_issue:
+    if: contains(github.event.issue.labels.*.name, 'place') || contains(github.event.issue.labels.*.name, 'portal')
+    runs-on: ubuntu-latest
+    name: Validate Issue and Create PR
+    steps:
+      - name: 📂 Checkout code
+        uses: actions/checkout@v4
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: 📦 Install dependencies
+        run: |
+          npm install ajv node-fetch@2
+      - name: 📝 Extract, validate, and create PR
+        id: create_pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { validateIssueData } = require('./.github/scripts/validate-issue.js');
+            const { branchName, prNumber } = await validateIssueData(github, context);
+            core.setOutput('branch', branchName);
+            core.setOutput('pr_number', prNumber);
+      - name: 🚀 Trigger PR validation
+        if: steps.create_pr.outputs.branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run "pr-validation.yml" -f branch=${{ steps.create_pr.outputs.branch }} -f pr_number=${{ steps.create_pr.outputs.pr_number }} --ref ${{ github.ref }}

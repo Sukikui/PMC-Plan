@@ -78,8 +78,10 @@ async function validateIssueData(github, context) {
             }
         }
 
-        await generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal);
+        const { branchName, prNumber } = await generateFilesAndCreatePR(github, context, jsonData, isPlace, isPortal);
         await addSuccessComment(github, context);
+
+        return { branchName, prNumber };
 
     } catch (error) {
         console.log('❌ Validation failed:', error.message);
@@ -196,6 +198,8 @@ async function generateFilesAndCreatePR(github, context, jsonData, isPlace, isPo
 
         context.pullRequestUrl = pullRequest.html_url;
         context.pullRequestNumber = pullRequest.number;
+
+        return { branchName, prNumber: pullRequest.number };
 
     } catch (error) {
         console.log('❌ Failed to create PR:', error.message);
