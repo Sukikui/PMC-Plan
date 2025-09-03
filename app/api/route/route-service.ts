@@ -72,7 +72,7 @@ export class RouteService {
       portal1Address = await callNetherAddress(portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z);
     } else {
       const theoreticalCoords = convertOverworldToNether(portal1.coordinates.x, portal1.coordinates.z);
-      portal1NetherCoords = { x: theoreticalCoords.x, y: 70, z: theoreticalCoords.z };
+      portal1NetherCoords = { x: theoreticalCoords.x, y: theoreticalCoords.y, z: theoreticalCoords.z };
       portal1Address = await callNetherAddress(portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z);
     }
     
@@ -244,7 +244,7 @@ export class RouteService {
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     } else {
       const theoreticalCoords = convertOverworldToNether(portal.coordinates.x, portal.coordinates.z);
-      portalNetherCoords = { x: theoreticalCoords.x, y: 70, z: theoreticalCoords.z };
+      portalNetherCoords = { x: theoreticalCoords.x, y: theoreticalCoords.y, z: theoreticalCoords.z };
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     }
     
@@ -334,7 +334,7 @@ export class RouteService {
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     } else {
       const theoreticalCoords = convertOverworldToNether(portal.coordinates.x, portal.coordinates.z);
-      portalNetherCoords = { x: theoreticalCoords.x, y: 70, z: theoreticalCoords.z };
+      portalNetherCoords = { x: theoreticalCoords.x, y: theoreticalCoords.y, z: theoreticalCoords.z };
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     }
     

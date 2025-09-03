@@ -72,7 +72,7 @@ Finds nearest portals from a location, ordered by distance.
 
 **Parameters:**
 - `x` (number) - X coordinate of location
-- `y` (number, optional) - Y coordinate of location (default: 70)
+- `y` (number, optional) - Y coordinate of location
 - `z` (number) - Z coordinate of location
 - `max_distance` (number, optional) - Maximum distance filter in blocks
 - `world` (string, optional) - World to search in (`overworld` or `nether`, default: `overworld`)
@@ -168,12 +168,12 @@ Calculates the optimal route between two locations using the full routing algori
 
 **Parameters:**
 - `from_x` (number, optional) - Source X coordinate
-- `from_y` (number, optional) - Source Y coordinate (default: 70)
+- `from_y` (number, optional) - Source Y coordinate
 - `from_z` (number, optional) - Source Z coordinate
 - `from_world` (string, optional) - Source world (`overworld` or `nether`, default: `overworld`)
 - `from_place_id` (string, optional) - Source place ID from places.json
 - `to_x` (number, optional) - Destination X coordinate
-- `to_y` (number, optional) - Destination Y coordinate (default: 70)
+- `to_y` (number, optional) - Destination Y coordinate
 - `to_z` (number, optional) - Destination Z coordinate
 - `to_world` (string, optional) - Destination world (`overworld` or `nether`, default: `overworld`)
 - `to_place_id` (string, optional) - Destination place ID from places.json

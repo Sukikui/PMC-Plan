@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       fromPoint = {
         coordinates: {
           x: params.from_x!,
-          y: params.from_y || 70,
+          y: params.from_y,
           z: params.from_z!
         },
         world: params.from_world!
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       toPoint = {
         coordinates: {
           x: params.to_x!,
-          y: params.to_y || 70,
+          y: params.to_y,
           z: params.to_z!
         },
         world: params.to_world!
