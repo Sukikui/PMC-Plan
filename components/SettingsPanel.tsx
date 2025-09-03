@@ -142,7 +142,7 @@ const SettingsPanel = () => {
                             </a>
                             
                             <a 
-                                href="https://github.com/Sukikui/PMC-Plan/issues" 
+                                href="https://github.com/Sukikui/PMC-Plan/issues/new/choose"
                                 target="_blank" 
                                 rel="noopener noreferrer" 
                                 className="flex items-center gap-2 text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-2 rounded-full transition-all duration-300"
