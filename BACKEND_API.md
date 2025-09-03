@@ -209,90 +209,93 @@ Calculates the optimal route between two locations using the full routing algori
 ```json
 {
   "player_from": {
-    "coordinates": {"x": 1000, "y": 65, "z": -500},
+    "coordinates": {"x": -200, "y": 70, "z": 0},
     "world": "overworld"
   },
-  "total_distance": 298.5,
+  "total_distance": 1323.7269871905,
   "steps": [
     {
       "type": "overworld_transport",
-      "distance": 125.3,
-      "from": {"x": 1000, "y": 65, "z": -500},
+      "distance": 243.310501211929,
+      "from": {"x": -200, "y": 70, "z": 0},
       "to": {
-        "id": "portal_spawn",
-        "name": "Portail Spawn",
-        "coordinates": {"x": 950, "y": 65, "z": -480}
+        "id": "portail_spawn",
+        "name": "Portail du Spawn",
+        "coordinates": {"x": -160, "y": 70, "z": 240}
       }
     },
     {
       "type": "portal",
       "from": {
-        "id": "portal_spawn",
-        "name": "Portail Spawn",
-        "coordinates": {"x": 950, "y": 65, "z": -480},
+        "id": "portail_spawn",
+        "name": "Portail du Spawn",
+        "coordinates": {"x": -160, "y": 70, "z": 240},
         "world": "overworld"
       },
       "to": {
-        "id": "portal_spawn_nether",
-        "name": "Portail Spawn (Nether)",
-        "coordinates": {"x": 119, "y": 65, "z": -60},
+        "id": "portail_spawn",
+        "name": "Portail du Spawn",
+        "coordinates": {"x": -20, "y": 70, "z": 29},
         "world": "nether",
-        "address": "Nord 4 gauche"
+        "address": "Spawn"
       }
     },
     {
       "type": "nether_transport",
-      "distance": 150.0,
+      "distance": 600,
       "from": {
-        "id": "portal_spawn_nether",
-        "coordinates": {"x": 119, "y": 65, "z": -60},
-        "address": "Nord 4 gauche"
+        "id": "portail_spawn",
+        "name": "Portail du Spawn",
+        "coordinates": {"x": -20, "y": 70, "z": 29},
+        "address": "Spawn"
       },
       "to": {
-        "id": "portal_base_nether",
-        "coordinates": {"x": 150, "y": 65, "z": -38},
-        "address": "Sud 2"
+        "id": "portail_village_suki",
+        "name": "Portail du village de Suki",
+        "coordinates": {"x": 563, "y": 60, "z": 34},
+        "address": "Est 7 gauche"
       }
     },
     {
       "type": "portal",
       "from": {
-        "id": "portal_base_nether",
-        "name": "Portail Base (Nether)",
-        "coordinates": {"x": 150, "y": 65, "z": -38},
+        "id": "portail_village_suki",
+        "name": "Portail du village de Suki",
+        "coordinates": {"x": 563, "y": 60, "z": 34},
         "world": "nether",
-        "address": "Sud 2"
+        "address": "Est 7 gauche"
       },
       "to": {
-        "id": "portal_base",
-        "name": "Portail Base",
-        "coordinates": {"x": 1200, "y": 70, "z": -300},
+        "id": "portail_village_suki",
+        "name": "Portail du village de Suki",
+        "coordinates": {"x": 4520, "y": 70, "z": 280},
         "world": "overworld"
       }
     },
     {
       "type": "overworld_transport",
-      "distance": 23.2,
+      "distance": 480.416485978573,
       "from": {
-        "id": "portal_base",
-        "name": "Portail Base",
-        "coordinates": {"x": 1200, "y": 70, "z": -300}
+        "id": "portail_village_suki",
+        "name": "Portail du village de Suki",
+        "coordinates": {"x": 4520, "y": 70, "z": 280}
       },
       "to": {
-        "id": "village_commerce",
-        "name": "Village Commerce",
-        "coordinates": {"x": 1200, "y": 70, "z": -300}
+        "id": "village_suki",
+        "name": "Village de Suki",
+        "coordinates": {"x": 5000, "y": 70, "z": 300}
       }
     }
   ]
 }
 ```
 
-**Logic:**
-- **Overworld to Overworld**: Compares direct route vs nether route, chooses optimal
-- **Nether to Nether**: Uses nether network transport with address calculation
-- **Overworld to Nether**: Finds nearest portal and calculates route via nether
-- **Nether to Overworld**: Uses nether network to nearest portal, then overworld transport
+#### Internal Logic
+
+- **`Overworld to Overworld`** Compares direct route vs nether route, chooses optimal
+- **`Nether to Nether`** Uses nether network transport with address calculation
+- **`Overworld to Nether`** Finds nearest portal and calculates route via nether
+- **`Nether to Overworld`** Calculates route from Nether start to the Overworld portal nearest to the Overworld destination, then overworld transport to the final destination.
 - Includes nether addresses for all nether positions
 - Handles theoretical portal coordinates when linked portals don't exist
 
