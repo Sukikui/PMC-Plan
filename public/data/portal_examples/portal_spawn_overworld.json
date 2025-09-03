@@ -3,9 +3,9 @@
   "name": "Portail du Spawn",
   "world": "overworld",
   "coordinates": {
-    "x": 0,
-    "y": 65,
-    "z": -0
+    "x": -160,
+    "y": 70,
+    "z": 240
   },
-  "description": "Portail du spawn principal du serveur."
+  "description": ""
 }
