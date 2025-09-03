@@ -177,14 +177,16 @@ export default function PositionPanel({
 
       {/* Server Logo */}
       <div className="p-4 flex justify-center bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-t-xl border-b border-gray-200/30 dark:border-gray-800/50 transition-colors duration-300">
-        <img 
-          src="/pmc_logo.png" 
-          alt="Server Logo" 
-          className="h-12 w-auto object-contain"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
+        <a href="https://play-mc.fr" target="_blank" rel="noopener noreferrer">
+          <img 
+            src="/pmc_logo.png" 
+            alt="Server Logo" 
+            className="h-12 w-auto object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </a>
       </div>
       
       {/* Header with sync button */}
