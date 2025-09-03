@@ -355,7 +355,7 @@ curl "http://localhost:3000/api/places"
 Returns a list of all available portals from the data files.
 
 **Parameters:**
-- `merge-nether-portals` (boolean, optional) - If `true`, merges overworld portals with their corresponding nether portals, adding a `nether-associate` field to the overworld portal objects.
+- `merge-nether-portals` (boolean, optional) - If `true`, links Overworld portals with their corresponding Nether portals by matching their `id`. The matched Nether portal is added as a `nether-associate` object to the Overworld portal, and the original Nether portal is removed from the list to avoid redundancy.
 
 **Response:**
 ```json
@@ -368,11 +368,11 @@ Returns a list of all available portals from the data files.
     "description": "Portail près du village de départ"
   },
   {
-    "id": "portal_village_start_nether",
-    "name": "Portail du Village (Nether)",
+    "id": "portal_village_start",
+    "name": "Portail du Village",
     "world": "nether",
     "coordinates": {"x": -15, "y": 70, "z": -28},
-    "description": "Côté nether du portail du village, près de Nord-2-gauche"
+    "description": ""
   }
 ]
 ```
@@ -396,17 +396,9 @@ curl "http://localhost:3000/api/portals?merge-nether-portals=true"
     "coordinates": {"x": -120, "y": 65, "z": -220},
     "description": "Portail près du village de départ",
     "nether-associate": {
-      "id": "portal_village_start_nether",
       "coordinates": {"x": -15, "y": 70, "z": -28},
-      "address": "Nord 2 gauche"
+      "description": ""
     }
-  },
-  {
-    "id": "portal_village_start_nether",
-    "name": "Portail du Village",
-    "world": "nether",
-    "coordinates": {"x": -15, "y": 70, "z": -28},
-    "description": "Côté nether du portail du village, près de Nord-2-gauche"
   }
 ]
 ```
