@@ -13,17 +13,20 @@ interface Place {
   description?: string;
 }
 
+interface NetherAssociate {
+  name: string;
+  coordinates: { x: number; y: number; z: number };
+  description?: string;
+  address?: string;
+}
+
 interface Portal {
   id: string;
   name: string;
   world: 'overworld' | 'nether';
   coordinates: { x: number; y: number; z: number };
   description?: string;
-  'nether-associate'?: {
-    id: string;
-    coordinates: { x: number; y: number; z: number };
-    address: string;
-  };
+  'nether-associate'?: NetherAssociate;
 }
 
 interface DestinationPanelProps {
@@ -39,6 +42,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [tagFilterLogic, setTagFilterLogic] = useState<'OR' | 'AND'>('OR');
+  const [netherAddresses, setNetherAddresses] = useState<Record<string, string>>({});
 
   const toggleTagFilterLogic = () => {
     setTagFilterLogic(prev => prev === 'OR' ? 'AND' : 'OR');
@@ -66,6 +70,33 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
         if (portalsResponse.ok) {
           const portalsData = await portalsResponse.json();
           setPortals(portalsData);
+
+          const fetchedAddresses: Record<string, string> = {};
+          for (const p of portalsData) {
+            let coordsToFetch = null;
+            let portalId = p.id;
+
+            if (p.world === 'nether') {
+              coordsToFetch = p.coordinates;
+            } else if (p['nether-associate']) {
+              coordsToFetch = p['nether-associate'].coordinates;
+            }
+
+            if (coordsToFetch) {
+              try {
+                const addressResponse = await fetch(`/api/nether-address?x=${coordsToFetch.x}&y=${coordsToFetch.y}&z=${coordsToFetch.z}`);
+                if (addressResponse.ok) {
+                  const addressData = await addressResponse.json();
+                  fetchedAddresses[portalId] = addressData.address; // Assuming the API returns { address: "..." }
+                } else {
+                  console.error(`Failed to fetch nether address for portal ${portalId}`);
+                }
+              } catch (error) {
+                console.error(`Network error fetching nether address for portal ${portalId}:`, error);
+              }
+            }
+          }
+          setNetherAddresses(fetchedAddresses);
         } else {
           const portalsError = await portalsResponse.json().catch(() => ({}));
           console.error('Portals API error:', portalsError);
@@ -83,8 +114,6 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   // Get all available tags from places
   const allTags = Array.from(new Set(places.flatMap(place => place.tags || [])));
 
-  const associatedPortalIds = new Set(portals.map(p => p['nether-associate']?.id).filter(Boolean));
-
   // Filter places by enabled tags and search query
   const filteredPlaces = places.filter(place => {
     // Filter by tags
@@ -93,22 +122,19 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
         ? place.tags?.some(tag => enabledTags.has(tag))
         : Array.from(enabledTags).every(enabledTag => place.tags?.includes(enabledTag))
     );
-    
+
     // Filter by search query
     const searchMatch = searchQuery === '' || 
       place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       place.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       place.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
       place.world.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return tagMatch && searchMatch;
   });
 
   // Filter portals by search query
   const filteredPortals = portals.filter(portal => {
-    if (associatedPortalIds.has(portal.id)) {
-        return false;
-    }
     return searchQuery === '' || 
       portal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       portal.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -244,7 +270,9 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
               <div className="flex flex-col items-center justify-center py-12 text-gray-500 text-center space-y-4">
                 <p>Aucun résultat. (｡•́︿•̀｡)</p>
                 <a href="https://github.com/Sukikui/PMC-Plan/issues/new/choose" target="_blank" rel="noopener noreferrer" className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 pl-3 pr-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2">
-                  <PlusIcon className="w-5 h-5" />
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
+                  </svg>
                   Ajouter un lieu ou un portail
                 </a>
               </div>
@@ -267,6 +295,13 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                           <div className="flex items-start justify-between">
                             <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {place.name}
+                              {selectedId === place.id && place.description && (
+                                <div className="mt-2 mb-2">
+                                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                                    {place.description.length > 80 ? `${place.description.substring(0, 80)}...` : place.description}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                             <button
                               onClick={(e) => handleInfoClick(e, place, 'place')}
@@ -284,13 +319,6 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               {place.coordinates.x}, {place.coordinates.y}, {place.coordinates.z}
                             </span>
                           </div>
-                          {selectedId === place.id && place.description && (
-                            <div className="mt-2">
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {place.description.length > 80 ? `${place.description.substring(0, 80)}...` : place.description}
-                              </p>
-                            </div>
-                          )}
                           {place.tags && place.tags.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               {place.tags.map(tag => (
@@ -326,6 +354,21 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                           <div className="flex items-start justify-between">
                             <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {portal.name}
+                              {(() => {
+                                const displayDescription = (portal.description && portal.description.trim() !== '')
+                                  ? portal.description
+                                  : (portal['nether-associate']?.description && portal['nether-associate'].description.trim() !== '')
+                                    ? portal['nether-associate'].description
+                                    : undefined;
+
+                                return selectedId === portal.id && displayDescription && (
+                                  <div className="mt-2 mb-2">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                      {displayDescription.length > 80 ? `${displayDescription.substring(0, 80)}...` : displayDescription}
+                                    </p>
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <button
                               onClick={(e) => handleInfoClick(e, portal, 'portal')}
@@ -342,6 +385,11 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
                               {portal.coordinates.x}, {portal.coordinates.y}, {portal.coordinates.z}
                             </span>
+                            {portal.world === 'nether' && netherAddresses[portal.id] && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
+                                    {netherAddresses[portal.id]}
+                                </span>
+                            )}
                           </div>
                           {portal['nether-associate'] && (
                             <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/80 transition-colors duration-300">
@@ -349,24 +397,17 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                                     <span className={getWorldBadge('nether')}>
                                     nether
                                     </span>
-                                    <div className="flex items-center justify-between w-full">
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                                            {portal['nether-associate'].coordinates.x}, {portal['nether-associate'].coordinates.y}, {portal['nether-associate'].coordinates.z}
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                        {portal['nether-associate'].coordinates.x}, {portal['nether-associate'].coordinates.y}, {portal['nether-associate'].coordinates.z}
+                                    </span>
+                                    {netherAddresses[portal.id] && (
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
+                                            {netherAddresses[portal.id]}
                                         </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                                            {portal['nether-associate'].address}
-                                        </span>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                             )}
-                          {selectedId === portal.id && portal.description && (
-                            <div className="mt-2">
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {portal.description.length > 80 ? `${portal.description.substring(0, 80)}...` : portal.description}
-                              </p>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>

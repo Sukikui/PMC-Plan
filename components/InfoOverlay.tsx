@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import CrossIcon from './icons/CrossIcon';
 
 interface Place {
@@ -13,6 +13,13 @@ interface Place {
   owner?: string;
 }
 
+interface NetherAssociate {
+  name: string;
+  coordinates: { x: number; y: number; z: number };
+  address?: string; // Make address optional as it might be fetched
+  description?: string;
+}
+
 interface Portal {
   id: string;
   name: string;
@@ -20,11 +27,7 @@ interface Portal {
   coordinates: { x: number; y: number; z: number };
   description?: string;
   owner?: string;
-  'nether-associate'?: {
-    id: string;
-    coordinates: { x: number; y: number; z: number };
-    address: string;
-  };
+  'nether-associate'?: NetherAssociate;
 }
 
 interface InfoOverlayProps {
@@ -35,6 +38,8 @@ interface InfoOverlayProps {
 }
 
 export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlayProps) {
+  const [fetchedNetherAddress, setFetchedNetherAddress] = useState<string | null>(null);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -45,13 +50,46 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+
+      if (item && type === 'portal') {
+        let coordsToFetch = null;
+        if (item.world === 'nether') {
+          coordsToFetch = item.coordinates;
+        } else if ('nether-associate' in item && item['nether-associate']) {
+          coordsToFetch = item['nether-associate'].coordinates;
+        }
+
+        if (coordsToFetch) {
+          const fetchAddress = async () => {
+            try {
+              const addressResponse = await fetch(`/api/nether-address?x=${coordsToFetch.x}&y=${coordsToFetch.y}&z=${coordsToFetch.z}`);
+              if (addressResponse.ok) {
+                const addressData = await addressResponse.json();
+                setFetchedNetherAddress(addressData.address);
+              } else {
+                console.error(`Failed to fetch nether address for coordinates:`, coordsToFetch);
+                setFetchedNetherAddress(null);
+              }
+            } catch (error) {
+              console.error(`Network error fetching nether address for coordinates:`, coordsToFetch, error);
+              setFetchedNetherAddress(null);
+            }
+          };
+          fetchAddress();
+        } else {
+          setFetchedNetherAddress(null);
+        }
+      } else {
+        setFetchedNetherAddress(null);
+      }
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
+      setFetchedNetherAddress(null);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, item, type]);
 
   if (!isOpen || !item) return null;
 
@@ -112,6 +150,11 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                 <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
                   {item.coordinates.x}, {item.coordinates.y}, {item.coordinates.z}
                 </span>
+                {item.world === 'nether' && fetchedNetherAddress && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
+                    {fetchedNetherAddress}
+                  </span>
+                )}
               </div>
               {'nether-associate' in item && item['nether-associate'] && (
                 <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/50 transition-colors duration-300">
@@ -124,7 +167,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                                 {item['nether-associate'].coordinates.x}, {item['nether-associate'].coordinates.y}, {item['nether-associate'].coordinates.z}
                             </span>
                             <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                                {item['nether-associate'].address}
+                                {fetchedNetherAddress || item['nether-associate'].address}
                             </span>
                         </div>
                     </div>
