@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import BigPlusIcon from './icons/BigPlusIcon';
+import PlusIcon from './icons/PlusIcon';
+import CrossIcon from './icons/CrossIcon';
 
 const SettingsPanel = () => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -56,9 +59,7 @@ const SettingsPanel = () => {
                     }}
                     aria-label="Ouvrir les paramètres"
                 >
-                    <span className="w-6 h-6 flex items-center justify-center text-gray-400 dark:text-gray-400 text-base transition-colors duration-300">
-                        +
-                    </span>
+                    <BigPlusIcon className="w-6 h-6 text-gray-400 dark:text-gray-400" />
                 </button>
             ) : (
                 <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl dark:shadow-black/65 rounded-xl border border-gray-200/50 dark:border-gray-800/50 transition-colors duration-300">
@@ -72,9 +73,7 @@ const SettingsPanel = () => {
                                 className="p-1 rounded-full bg-white hover:bg-white/90 hover:border-gray-300 border border-gray-200/70 shadow-sm transition-all duration-200 dark:bg-gray-900 dark:border-gray-800/80 dark:hover:border-gray-700 dark:shadow-black/65"
                                 aria-label="Fermer"
                             >
-                                <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm">
-                                    ×
-                                </span>
+                                <CrossIcon className="w-4 h-4 text-gray-400 dark:text-gray-400" />
                             </button>
                         </div>
                     </div>
@@ -147,9 +146,7 @@ const SettingsPanel = () => {
                                 rel="noopener noreferrer" 
                                 className="flex items-center gap-2 text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-2 rounded-full transition-all duration-300"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
+                                <PlusIcon className="w-4 h-4" />
                                 Ajouter un lieu ou un portail
                             </a>
                             

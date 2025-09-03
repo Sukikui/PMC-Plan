@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import CrossIcon from './icons/CrossIcon';
 
 interface Place {
   id: string;
@@ -136,9 +137,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
               className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/80 shadow-sm dark:shadow-black/65 transition-all duration-200 flex-shrink-0"
               aria-label="Fermer"
             >
-              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm transition-colors duration-300">
-                ×
-              </span>
+              <CrossIcon className="w-4 h-4 text-gray-400 dark:text-gray-400" />
             </button>
           </div>
         </div>

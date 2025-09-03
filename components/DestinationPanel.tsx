@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CloseIcon from './icons/CloseIcon';
+import ClearIcon from './icons/ClearIcon';
+import PlusIcon from './icons/PlusIcon';
 
 interface Place {
   id: string;
@@ -191,7 +192,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                 className="flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300"
                 aria-label="Effacer les tags"
               >
-                <CloseIcon className="w-4 h-4" />
+                <ClearIcon className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -213,7 +214,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-300"
               >
-                <CloseIcon className="w-4 h-4" />
+                <ClearIcon className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -243,9 +244,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
               <div className="flex flex-col items-center justify-center py-12 text-gray-500 text-center space-y-4">
                 <p>Aucun résultat. (｡•́︿•̀｡)</p>
                 <a href="https://github.com/Sukikui/PMC-Plan/issues/new/choose" target="_blank" rel="noopener noreferrer" className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 pl-3 pr-4 py-2 rounded-full transition-all duration-300 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
+                  <PlusIcon className="w-5 h-5" />
                   Ajouter un lieu ou un portail
                 </a>
               </div>
@@ -274,9 +273,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/95 shadow-sm dark:shadow-black/65 transition-all duration-300 flex-shrink-0"
                               aria-label="Plus d'informations"
                             >
-                              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm transition-colors duration-300">
-                                +
-                              </span>
+                              <PlusIcon className="w-4 h-4 text-gray-400 dark:text-gray-400" />
                             </button>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
@@ -335,9 +332,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/95 shadow-sm dark:shadow-black/65 transition-all duration-300 flex-shrink-0"
                               aria-label="Plus d'informations"
                             >
-                              <span className="w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-400 text-sm transition-colors duration-300">
-                                +
-                              </span>
+                              <PlusIcon className="w-4 h-4 text-gray-400 dark:text-gray-400" />
                             </button>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
