@@ -36,6 +36,11 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const [enabledTags, setEnabledTags] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [tagFilterLogic, setTagFilterLogic] = useState<'OR' | 'AND'>('OR');
+
+  const toggleTagFilterLogic = () => {
+    setTagFilterLogic(prev => prev === 'OR' ? 'AND' : 'OR');
+  };
 
   // Load places and portals
   useEffect(() => {
@@ -81,7 +86,11 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   // Filter places by enabled tags and search query
   const filteredPlaces = places.filter(place => {
     // Filter by tags
-    const tagMatch = enabledTags.size === 0 || place.tags?.some(tag => enabledTags.has(tag));
+    const tagMatch = enabledTags.size === 0 || (
+      tagFilterLogic === 'OR'
+        ? place.tags?.some(tag => enabledTags.has(tag))
+        : Array.from(enabledTags).every(enabledTag => place.tags?.includes(enabledTag))
+    );
     
     // Filter by search query
     const searchMatch = searchQuery === '' || 
@@ -145,6 +154,23 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
         <div className="mt-2">
           <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide transition-colors duration-300">Filtrer par tags</div>
           <div className="flex flex-wrap gap-1">
+            <button
+              onClick={toggleTagFilterLogic}
+              className="w-10 py-1 px-2 rounded-full border transition-colors duration-300 font-semibold flex items-center justify-center
+                bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700"
+            >
+              {tagFilterLogic === 'OR' ? (
+                <svg className="w-4 h-4" viewBox="-2 0 28 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="5" cy="12" r="6" />
+                  <circle cx="19" cy="12" r="6" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" viewBox="-2 0 28 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="12" r="6" />
+                  <circle cx="16" cy="12" r="6" />
+                </svg>
+              )}
+            </button>
             {allTags.map(tag => (
               <button
                 key={tag}
