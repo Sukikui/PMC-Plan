@@ -206,7 +206,7 @@ export default function TravelPlan({
         }
     };
 
-    const getLocationDisplayForStep = (location: Step['from'] | Step['to'], stepType: string) => {
+    const getLocationDisplayForStep = (location: Step['from'] | Step['to']) => {
         // Prioriser le nom s'il existe et est significatif
         if (location.name && location.name !== 'none') {
             return location.name;
@@ -341,7 +341,7 @@ export default function TravelPlan({
                                                             ? "Portail inconnu" // Case: Portal with ID but no name
                                                             : (index === 0 && (!step.from.name && !step.from.coordinates)
                                                                 ? "Position du joueur" // Case: Player's starting position
-                                                                : getLocationDisplayForStep(step.from, step.type))
+                                                                : getLocationDisplayForStep(step.from))
                                                         }
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -385,7 +385,7 @@ export default function TravelPlan({
                                                             ? "text-red-700 dark:text-red-300"
                                                             // Default text color
                                                             : "text-gray-900"
-                                                    }`} title={getLocationDisplayForStep(step.to, step.type)}>
+                                                    }`} title={getLocationDisplayForStep(step.to)}>
                                                         {/* Display logic */}
                                                         {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === ''))
                                                             ? "Portail inconnu" // Case: Portal with ID but no name
@@ -393,7 +393,7 @@ export default function TravelPlan({
                                                                 // Case: Portal without ID, displaying coordinates
                                                                 (step.type === 'portal' && (step.to.id === undefined || step.to.id === null || step.to.id === '') && step.to.coordinates)
                                                                     ? `~ ${step.to.coordinates.x}, ${step.to.coordinates.y}, ${step.to.coordinates.z}${(step.type === 'nether_transport' && step.to.address) ? `  ${step.to.address}` : ''}`
-                                                                    : getLocationDisplayForStep(step.to, step.type) // All other cases
+                                                                    : getLocationDisplayForStep(step.to) // All other cases
                                                             )
                                                         }
                                                     </div>
