@@ -5,6 +5,7 @@ import ClearIcon from './icons/ClearIcon';
 import PlusIcon from './icons/PlusIcon';
 
 import { Portal, Place } from '../app/api/utils/shared';
+import { getWorldBadge } from '../lib/ui-utils';
 
 interface DestinationPanelProps {
   onPlaceSelect: (id: string, type: 'place' | 'portal') => void;
@@ -62,22 +63,22 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   }, []);
 
   // Get all available tags from places
-  const allTags = Array.from(new Set(places.flatMap(place => place.tags || [])));
+  const allTags = Array.from(new Set(places.flatMap(place => place.tags)));
 
   // Filter places by enabled tags and search query
   const filteredPlaces = places.filter(place => {
     // Filter by tags
     const tagMatch = enabledTags.size === 0 || (
       tagFilterLogic === 'OR'
-        ? place.tags?.some(tag => enabledTags.has(tag))
-        : Array.from(enabledTags).every(enabledTag => place.tags?.includes(enabledTag))
+        ? place.tags.some(tag => enabledTags.has(tag))
+        : Array.from(enabledTags).every(enabledTag => place.tags.includes(enabledTag))
     );
 
     // Filter by search query
     const searchMatch = searchQuery === '' || 
       place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      place.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      place.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      place.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
       place.world.toLowerCase().includes(searchQuery.toLowerCase());
 
     return tagMatch && searchMatch;
@@ -87,7 +88,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const filteredPortals = portals.filter(portal => {
     return searchQuery === '' || 
       portal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      portal.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      portal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       portal.world.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -114,15 +115,6 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
     onInfoClick(item, type);
   };
 
-  const getWorldBadge = (world: string) => {
-    const baseClasses = "inline-block text-xs px-2 py-1 rounded-full font-medium transition-colors duration-300";
-    if (world === 'overworld') {
-      return `${baseClasses} bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300`;
-    } else if (world === 'nether') {
-      return `${baseClasses} bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300`;
-    }
-    return `${baseClasses} bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400`;
-  };
 
   return (
     <div className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-96 bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl dark:shadow-black/65 rounded-xl border border-gray-200/50 dark:border-gray-800/50 z-50 flex flex-col transition-colors duration-300">
@@ -245,7 +237,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                           <div className="flex items-start justify-between">
                             <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {place.name}
-                              {selectedId === place.id && place.description && (
+                              {selectedId === place.id && place.description.trim() !== '' && (
                                 <div className="mt-2 mb-2">
                                   <p className="text-xs text-gray-600 dark:text-gray-400">
                                     {place.description.length > 80 ? `${place.description.substring(0, 80)}...` : place.description}
@@ -269,7 +261,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               {place.coordinates.x}, {place.coordinates.y}, {place.coordinates.z}
                             </span>
                           </div>
-                          {place.tags && place.tags.length > 0 && (
+                          {place.tags.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               {place.tags.map(tag => (
                                 <span 
@@ -305,11 +297,11 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 flex-1 transition-colors duration-300">
                               {portal.name}
                               {(() => {
-                                const displayDescription = (portal.description && portal.description.trim() !== '')
+                                const displayDescription = portal.description.trim() !== ''
                                   ? portal.description
-                                  : (portal['nether-associate']?.description && portal['nether-associate'].description.trim() !== '')
+                                  : (portal['nether-associate'] && portal['nether-associate'].description.trim() !== '')
                                     ? portal['nether-associate'].description
-                                    : undefined;
+                                    : '';
 
                                 return selectedId === portal.id && displayDescription && (
                                   <div className="mt-2 mb-2">
@@ -350,7 +342,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                                     <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
                                         {portal['nether-associate'].coordinates.x}, {portal['nether-associate'].coordinates.y}, {portal['nether-associate'].coordinates.z}
                                     </span>
-                                    {portal['nether-associate']?.address && (
+                                    {portal['nether-associate'].address && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
                                             {portal['nether-associate'].address}
                                         </span>

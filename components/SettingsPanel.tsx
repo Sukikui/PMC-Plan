@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import BigPlusIcon from './icons/BigPlusIcon';
-import PlusIcon from './icons/PlusIcon';
 import CrossIcon from './icons/CrossIcon';
 import { useTheme } from '../lib/useTheme';
 

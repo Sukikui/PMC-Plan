@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import CrossIcon from './icons/CrossIcon';
 
 import { Place, Portal } from '../app/api/utils/shared';
+import { getWorldBadgeLarge } from '../lib/ui-utils';
 
 interface InfoOverlayProps {
   isOpen: boolean;
@@ -66,15 +67,6 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
     return null;
   })();
 
-  const getWorldBadge = (world: string) => {
-    const baseClasses = "inline-block text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300";
-    if (world === 'overworld') {
-      return `${baseClasses} bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300`;
-    } else if (world === 'nether') {
-      return `${baseClasses} bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300`;
-    }
-    return `${baseClasses} bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300`;
-  };
 
   const getTypeStyles = () => {
     if (type === 'place') {
@@ -117,7 +109,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
               </div>
               
               <div className="flex items-center gap-3">
-                <span className={getWorldBadge(item.world)}>
+                <span className={getWorldBadgeLarge(item.world)}>
                   {item.world}
                 </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
@@ -129,10 +121,10 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                   </span>
                 )}
               </div>
-              {'nether-associate' in item && item['nether-associate']?.address && (
+              {'nether-associate' in item && item['nether-associate'] && item['nether-associate'].address && (
                 <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/80 transition-colors duration-300">
                     <div className="flex items-center gap-2">
-                        <span className={getWorldBadge('nether')}>
+                        <span className={getWorldBadgeLarge('nether')}>
                         nether
                         </span>
                         <div className="flex items-center justify-between w-full">
