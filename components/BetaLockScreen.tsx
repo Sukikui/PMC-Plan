@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useTheme } from '../lib/useTheme';
 
 interface BetaLockScreenProps {
   onUnlock: () => void;
@@ -10,29 +11,8 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
   const [password, setPassword] = useState('');
   const [isShaking, setIsShaking] = useState(false);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('pmc-plan-theme');
-    const theme = savedTheme && ['light', 'dark', 'system'].includes(savedTheme) ? savedTheme : 'system';
-    
-    const applyTheme = (selectedTheme: string) => {
-      const root = document.documentElement;
-      
-      if (selectedTheme === 'dark') {
-        root.classList.add('dark');
-      } else if (selectedTheme === 'light') {
-        root.classList.remove('dark');
-      } else if (selectedTheme === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-          root.classList.add('dark');
-        } else {
-          root.classList.remove('dark');
-        }
-      }
-    };
-
-    applyTheme(theme);
-  }, []);
+  // The useTheme hook handles theme loading and application
+  useTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

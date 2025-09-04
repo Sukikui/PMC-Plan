@@ -1,48 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import BigPlusIcon from './icons/BigPlusIcon';
 import PlusIcon from './icons/PlusIcon';
 import CrossIcon from './icons/CrossIcon';
+import { useTheme } from '../lib/useTheme';
 
 const SettingsPanel = () => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [theme, setTheme] = useState('system');
-
-    const applyTheme = (selectedTheme: string) => {
-        const root = document.documentElement;
-        
-        if (selectedTheme === 'dark') {
-            root.classList.add('dark');
-        } else if (selectedTheme === 'light') {
-            root.classList.remove('dark');
-        } else if (selectedTheme === 'system') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                root.classList.add('dark');
-            } else {
-                root.classList.remove('dark');
-            }
-        }
-    };
-
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('pmc-plan-theme');
-        if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
-            setTheme(savedTheme);
-            applyTheme(savedTheme);
-        } else {
-            setTheme('system');
-            applyTheme('system');
-            localStorage.setItem('pmc-plan-theme', 'system');
-        }
-    }, []);
-
-    const handleThemeChange = (newTheme: string) => {
-        setTheme(newTheme);
-        applyTheme(newTheme);
-        localStorage.setItem('pmc-plan-theme', newTheme);
-    };
+    const { theme, changeTheme: handleThemeChange } = useTheme();
 
     return (
         <div className={`fixed bottom-4 right-4 z-50 transition-all duration-500 ease-out ${
