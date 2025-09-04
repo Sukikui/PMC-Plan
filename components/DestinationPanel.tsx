@@ -71,23 +71,21 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
           const portalsData = await portalsResponse.json();
           setPortals(portalsData);
 
-          const fetchedAddresses: Record<string, string> = {};
+          const addresses: Record<string, string> = {};
           for (const p of portalsData) {
-            let coordsToFetch = null;
-            let portalId = p.id;
+            const portalId = p.id;
 
-            if (p.world === 'nether') {
-              coordsToFetch = p.coordinates;
-            } else if (p['nether-associate']) {
-              coordsToFetch = p['nether-associate'].coordinates;
-            }
-
-            if (coordsToFetch) {
+            // If it's an Overworld portal with a linked Nether portal, use the address from the API
+            if (p['nether-associate']?.address) {
+              addresses[portalId] = p['nether-associate'].address;
+            } 
+            // If it's a standalone Nether portal, fetch its address
+            else if (p.world === 'nether') {
               try {
-                const addressResponse = await fetch(`/api/nether-address?x=${coordsToFetch.x}&y=${coordsToFetch.y}&z=${coordsToFetch.z}`);
+                const addressResponse = await fetch(`/api/nether-address?x=${p.coordinates.x}&y=${p.coordinates.y}&z=${p.coordinates.z}`);
                 if (addressResponse.ok) {
                   const addressData = await addressResponse.json();
-                  fetchedAddresses[portalId] = addressData.address; // Assuming the API returns { address: "..." }
+                  addresses[portalId] = addressData.address;
                 } else {
                   console.error(`Failed to fetch nether address for portal ${portalId}`);
                 }
@@ -96,7 +94,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
               }
             }
           }
-          setNetherAddresses(fetchedAddresses);
+          setNetherAddresses(addresses);
         } else {
           const portalsError = await portalsResponse.json().catch(() => ({}));
           console.error('Portals API error:', portalsError);

@@ -38,7 +38,7 @@ interface InfoOverlayProps {
 }
 
 export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlayProps) {
-  const [fetchedNetherAddress, setFetchedNetherAddress] = useState<string | null>(null);
+  const [netherPortalAddress, setNetherPortalAddress] = useState<string | null>(null);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -51,43 +51,31 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
 
-      if (item && type === 'portal') {
-        let coordsToFetch = null;
-        if (item.world === 'nether') {
-          coordsToFetch = item.coordinates;
-        } else if ('nether-associate' in item && item['nether-associate']) {
-          coordsToFetch = item['nether-associate'].coordinates;
-        }
+      // Always reset address on open/item change
+      setNetherPortalAddress(null);
 
-        if (coordsToFetch) {
-          const fetchAddress = async () => {
-            try {
-              const addressResponse = await fetch(`/api/nether-address?x=${coordsToFetch.x}&y=${coordsToFetch.y}&z=${coordsToFetch.z}`);
-              if (addressResponse.ok) {
-                const addressData = await addressResponse.json();
-                setFetchedNetherAddress(addressData.address);
-              } else {
-                console.error(`Failed to fetch nether address for coordinates:`, coordsToFetch);
-                setFetchedNetherAddress(null);
-              }
-            } catch (error) {
-              console.error(`Network error fetching nether address for coordinates:`, coordsToFetch, error);
-              setFetchedNetherAddress(null);
+      // Fetch address ONLY if the item is a standalone Nether portal
+      if (item && type === 'portal' && item.world === 'nether') {
+        const fetchAddress = async () => {
+          try {
+            const addressResponse = await fetch(`/api/nether-address?x=${item.coordinates.x}&y=${item.coordinates.y}&z=${item.coordinates.z}`);
+            if (addressResponse.ok) {
+              const addressData = await addressResponse.json();
+              setNetherPortalAddress(addressData.address);
+            } else {
+              console.error(`Failed to fetch nether address for coordinates:`, item.coordinates);
             }
-          };
-          fetchAddress();
-        } else {
-          setFetchedNetherAddress(null);
-        }
-      } else {
-        setFetchedNetherAddress(null);
+          } catch (error) {
+            console.error(`Network error fetching nether address for coordinates:`, item.coordinates, error);
+          }
+        };
+        fetchAddress();
       }
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
-      setFetchedNetherAddress(null);
     };
   }, [isOpen, onClose, item, type]);
 
@@ -150,14 +138,14 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                 <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
                   {item.coordinates.x}, {item.coordinates.y}, {item.coordinates.z}
                 </span>
-                {item.world === 'nether' && fetchedNetherAddress && (
+                {item.world === 'nether' && netherPortalAddress && (
                   <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
-                    {fetchedNetherAddress}
+                    {netherPortalAddress}
                   </span>
                 )}
               </div>
-              {'nether-associate' in item && item['nether-associate'] && (
-                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/50 transition-colors duration-300">
+              {'nether-associate' in item && item['nether-associate']?.address && (
+                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/80 transition-colors duration-300">
                     <div className="flex items-center gap-2">
                         <span className={getWorldBadge('nether')}>
                         nether
@@ -167,7 +155,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                                 {item['nether-associate'].coordinates.x}, {item['nether-associate'].coordinates.y}, {item['nether-associate'].coordinates.z}
                             </span>
                             <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                                {fetchedNetherAddress || item['nether-associate'].address}
+                                {item['nether-associate'].address}
                             </span>
                         </div>
                     </div>
