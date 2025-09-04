@@ -1,34 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import CrossIcon from './icons/CrossIcon';
 
-interface Place {
-  id: string;
-  name: string;
-  tags: string[];
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-  owner?: string;
-}
-
-interface NetherAssociate {
-  name: string;
-  coordinates: { x: number; y: number; z: number };
-  address?: string; // Make address optional as it might be fetched
-  description?: string;
-}
-
-interface Portal {
-  id: string;
-  name: string;
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-  owner?: string;
-  'nether-associate'?: NetherAssociate;
-}
+import { Place, Portal } from '../app/api/utils/shared';
 
 interface InfoOverlayProps {
   isOpen: boolean;
@@ -38,8 +13,6 @@ interface InfoOverlayProps {
 }
 
 export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlayProps) {
-  const [netherPortalAddress, setNetherPortalAddress] = useState<string | null>(null);
-
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -50,36 +23,48 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-
-      // Always reset address on open/item change
-      setNetherPortalAddress(null);
-
-      // Fetch address ONLY if the item is a standalone Nether portal
-      if (item && type === 'portal' && item.world === 'nether') {
-        const fetchAddress = async () => {
-          try {
-            const addressResponse = await fetch(`/api/nether-address?x=${item.coordinates.x}&y=${item.coordinates.y}&z=${item.coordinates.z}`);
-            if (addressResponse.ok) {
-              const addressData = await addressResponse.json();
-              setNetherPortalAddress(addressData.address);
-            } else {
-              console.error(`Failed to fetch nether address for coordinates:`, item.coordinates);
-            }
-          } catch (error) {
-            console.error(`Network error fetching nether address for coordinates:`, item.coordinates, error);
-          }
-        };
-        fetchAddress();
-      }
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose, item, type]);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !item) return null;
+
+  const renderDescription = typeof item.description === 'string' && item.description.length > 0 ? (
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Description</h3>
+      <p className="text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
+        {(item.description as string)}
+      </p>
+    </div>
+  ) : null;
+
+  const renderTags = (() => {
+    if (type === 'place' && item) {
+      const placeItem = item as Place;
+      if (Array.isArray(placeItem.tags) && placeItem.tags.length > 0) {
+        return (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {placeItem.tags.map(tag => (
+                <span 
+                  key={tag} 
+                  className="bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      }
+    }
+    return null;
+  })();
 
   const getWorldBadge = (world: string) => {
     const baseClasses = "inline-block text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300";
@@ -138,9 +123,9 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                 <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
                   {item.coordinates.x}, {item.coordinates.y}, {item.coordinates.z}
                 </span>
-                {item.world === 'nether' && netherPortalAddress && (
+                {type === 'portal' && item.world === 'nether' && (item as Portal).address && (
                   <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
-                    {netherPortalAddress}
+                    {(item as Portal).address}
                   </span>
                 )}
               </div>
@@ -189,42 +174,10 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
             </div>
           )}
           
-          {/* Description */}
-          {item.description && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Description</h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
-                {item.description}
-              </p>
-            </div>
-          )}
-
-          {/* Owner/Manager */}
-          {item.owner && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Propriétaire / Gérant</h3>
-              <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
-                <span className="text-gray-800 dark:text-gray-200 font-medium transition-colors duration-300">{item.owner}</span>
-              </div>
-            </div>
-          )}
+          {renderDescription}
 
           {/* Tags (only for places) */}
-          {'tags' in item && item.tags && item.tags.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {item.tags.map(tag => (
-                  <span 
-                    key={tag} 
-                    className="bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {renderTags} {/* Reintroduce renderDescription */}
         </div>
       </div>
     </div>

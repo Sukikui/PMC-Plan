@@ -4,30 +4,7 @@ import { useState, useEffect } from 'react';
 import ClearIcon from './icons/ClearIcon';
 import PlusIcon from './icons/PlusIcon';
 
-interface Place {
-  id: string;
-  name: string;
-  tags: string[];
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-}
-
-interface NetherAssociate {
-  name: string;
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-  address?: string;
-}
-
-interface Portal {
-  id: string;
-  name: string;
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-  'nether-associate'?: NetherAssociate;
-}
+import { Portal, Place } from '../app/api/utils/shared';
 
 interface DestinationPanelProps {
   onPlaceSelect: (id: string, type: 'place' | 'portal') => void;
@@ -42,7 +19,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [tagFilterLogic, setTagFilterLogic] = useState<'OR' | 'AND'>('OR');
-  const [netherAddresses, setNetherAddresses] = useState<Record<string, string>>({});
+  
 
   const toggleTagFilterLogic = () => {
     setTagFilterLogic(prev => prev === 'OR' ? 'AND' : 'OR');
@@ -70,31 +47,6 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
         if (portalsResponse.ok) {
           const portalsData = await portalsResponse.json();
           setPortals(portalsData);
-
-          const addresses: Record<string, string> = {};
-          for (const p of portalsData) {
-            const portalId = p.id;
-
-            // If it's an Overworld portal with a linked Nether portal, use the address from the API
-            if (p['nether-associate']?.address) {
-              addresses[portalId] = p['nether-associate'].address;
-            } 
-            // If it's a standalone Nether portal, fetch its address
-            else if (p.world === 'nether') {
-              try {
-                const addressResponse = await fetch(`/api/nether-address?x=${p.coordinates.x}&y=${p.coordinates.y}&z=${p.coordinates.z}`);
-                if (addressResponse.ok) {
-                  const addressData = await addressResponse.json();
-                  addresses[portalId] = addressData.address;
-                } else {
-                  console.error(`Failed to fetch nether address for portal ${portalId}`);
-                }
-              } catch (error) {
-                console.error(`Network error fetching nether address for portal ${portalId}:`, error);
-              }
-            }
-          }
-          setNetherAddresses(addresses);
         } else {
           const portalsError = await portalsResponse.json().catch(() => ({}));
           console.error('Portals API error:', portalsError);
@@ -383,9 +335,9 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
                               {portal.coordinates.x}, {portal.coordinates.y}, {portal.coordinates.z}
                             </span>
-                            {portal.world === 'nether' && netherAddresses[portal.id] && (
+                            {portal.world === 'nether' && portal.address && (
                                 <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
-                                    {netherAddresses[portal.id]}
+                                    {portal.address}
                                 </span>
                             )}
                           </div>
@@ -398,9 +350,9 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                                     <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
                                         {portal['nether-associate'].coordinates.x}, {portal['nether-associate'].coordinates.y}, {portal['nether-associate'].coordinates.z}
                                     </span>
-                                    {netherAddresses[portal.id] && (
+                                    {portal['nether-associate']?.address && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
-                                            {netherAddresses[portal.id]}
+                                            {portal['nether-associate'].address}
                                         </span>
                                     )}
                                 </div>
