@@ -129,8 +129,8 @@ export class RouteService {
               world: "overworld"
             },
             to: {
-              id: linkedPortal1?.id || `${portal1.id}_nether`,
-              name: linkedPortal1?.name || `${portal1.name} (Nether)`,
+              id: linkedPortal1?.id || ``,
+              name: linkedPortal1?.name || ``,
               coordinates: portal1NetherCoords,
               world: "nether",
               address: portal1Address.address
@@ -140,8 +140,8 @@ export class RouteService {
             type: "nether_transport",
             distance: netherDistance,
             from: {
-              id: linkedPortal1?.id || `${portal1.id}_nether`,
-              name: linkedPortal1?.name || `${portal1.name} (Nether)`,
+              id: linkedPortal1?.id || ``,
+              name: linkedPortal1?.name || ``,
               coordinates: portal1NetherCoords,
               address: portal1Address.address
             },
@@ -285,8 +285,8 @@ export class RouteService {
             coordinates: portal.coordinates
           },
           to: {
-            id: linkedPortal?.id || `${portal.id}_nether`,
-            name: linkedPortal?.name || `${portal.name} (Nether)`,
+            id: linkedPortal?.id || ``,
+            name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
             address: portalAddress.address
           }
@@ -295,8 +295,8 @@ export class RouteService {
           type: "nether_transport",
           distance: netherDistance,
           from: {
-            id: linkedPortal?.id || `${portal.id}_nether`,
-            name: linkedPortal?.name || `${portal.name} (Nether)`,
+            id: linkedPortal?.id || ``,
+            name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
             address: portalAddress.address
           },
@@ -365,8 +365,8 @@ export class RouteService {
             address: fromAddress.address
           },
           to: {
-            id: linkedPortal?.id || `${portal.id}_nether`,
-            name: linkedPortal?.name || `${portal.name} (Nether)`,
+            id: linkedPortal?.id || ``,
+            name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
             address: portalAddress.address
           }
@@ -374,8 +374,8 @@ export class RouteService {
         {
           type: "portal",
           from: {
-            id: linkedPortal?.id || `${portal.id}_nether`,
-            name: linkedPortal?.name || `${portal.name} (Nether)`,
+            id: linkedPortal?.id || ``,
+            name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
             address: portalAddress.address
           },

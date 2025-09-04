@@ -61,7 +61,7 @@ export default function TravelPlan({
 
         // Determine source coordinates
         let fromParams = '';
-        console.log('Player position:', playerPosition);
+        
         console.log('Manual coords:', manualCoords);
 
         if (playerPosition) {
@@ -80,39 +80,34 @@ export default function TravelPlan({
 
             fromParams = `from_x=${x}&from_y=${y}&from_z=${z}&from_world=${manualCoords.world}`;
         } else {
-            console.log('No valid coordinates available');
+            
             return;
         }
 
-        console.log('From params:', fromParams);
+        
 
         setLoading(true);
         setError(null);
 
         try {
             const url = `/api/route?${fromParams}&to_place_id=${selectedPlaceId}`;
-            console.log('Route request URL:', url);
+            
 
             const response = await fetch(url);
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Route API error:', response.status, errorText);
+                
                 throw new Error(`Erreur ${response.status}: ${errorText || 'Impossible de calculer l\'itinéraire'}`);
             }
 
             const data: RouteData = await response.json();
-            console.log('Route response:', data);
+            
             // Log all step data to understand structure
-            data.steps.forEach((step, i) => {
-                console.log(`Step ${i} (${step.type}):`, {
-                    from: step.from,
-                    to: step.to
-                });
-            });
+            
             setRoute(data);
         } catch (err) {
-            console.error('Route calculation error:', err);
+            
             setError(err instanceof Error ? err.message : 'Erreur inconnue');
             setRoute(null);
         } finally {
@@ -212,19 +207,11 @@ export default function TravelPlan({
     };
 
     const getLocationDisplayForStep = (location: Step['from'] | Step['to'], stepType: string) => {
-        // If it's a portal/place (has id), prioritize name (but check if name is meaningful)
-        if (location.id && location.name && location.name !== 'none') {
-            return location.name;
-        }
-        // For nether transport, use address if available and no meaningful name
-        if (stepType === 'nether_transport' && location.address) {
-            return location.address;
-        }
-        // If it has a meaningful name without id (fallback)
+        // Prioriser le nom s'il existe et est significatif
         if (location.name && location.name !== 'none') {
             return location.name;
         }
-        // If no name but has coordinates, show coordinates
+        // Si pas de nom significatif, utiliser les coordonnées
         if (location.coordinates) {
             return `${location.coordinates.x}, ${location.coordinates.y}, ${location.coordinates.z}`;
         }
@@ -336,41 +323,46 @@ export default function TravelPlan({
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">De</div>
-                                                    {/* Show nether address for nether transport - bigger and more prominent at top */}
-                                                    {step.type === 'nether_transport' && step.from.address && (
-                                                        <div className="text-sm text-purple-700 font-medium mb-1">
-                                                            📍 {step.from.address}
-                                                        </div>
-                                                    )}
+                                                    
+                                                    
+                                                    
                                                     <div className={`font-medium mb-1 ${
-                                                        index === 0 && (!step.from.name && !step.from.coordinates)
-                                                            ? "text-green-600"
-                                                            : "text-gray-900"
+                                                        // Condition for "Portail inconnu" (red text)
+                                                        (step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === ''))
+                                                            ? "text-red-700 dark:text-red-300"
+                                                            // Condition for "Position du joueur" (green text)
+                                                            : (index === 0 && (!step.from.name && !step.from.coordinates)
+                                                                ? "text-green-600"
+                                                                // Default text color
+                                                                : "text-gray-900")
                                                     }`}>
-                                                        {/* For first step, use player starting point if step.from is empty */}
-                                                        {index === 0 && (!step.from.name && !step.from.coordinates)
-                                                            ? "Position du joueur"
-                                                            : getLocationDisplayForStep(step.from, step.type)
+                                                        {/* Display logic */}
+                                                        {(step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === ''))
+                                                            ? "Portail inconnu" // Case: Portal with ID but no name
+                                                            : (index === 0 && (!step.from.name && !step.from.coordinates)
+                                                                ? "Position du joueur" // Case: Player's starting position
+                                                                : getLocationDisplayForStep(step.from, step.type))
                                                         }
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {/* For first step, use player world if step.from.world is missing */}
-                                                        {(step.from.world || (index === 0 && route.player_from.world)) && (
+                                                        {step.from.world && (
                                                             <span className={`px-2 py-1 text-xs rounded-full border ${
-                                                                (step.from.world || route.player_from.world) === 'overworld'
+                                                                step.from.world === 'overworld'
                                                                     ? 'bg-green-100 text-green-700 border-green-100'
                                                                     : 'bg-red-100 text-red-700 border-red-100'
                                                             }`}>
-                                {step.from.world || route.player_from.world}
+                                {step.from.world}
                               </span>
                                                         )}
                                                         {/* For first step, use player coordinates if step.from.coordinates is missing */}
                                                         {(step.from.coordinates || (index === 0 && route.player_from.coordinates)) && (
                                                             <span className="text-xs text-gray-500">
-                                {step.from.coordinates
+                                {(step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === '')) ? '~ ' : ''}{step.from.coordinates
                                     ? `${Math.floor(step.from.coordinates.x)}, ${Math.floor(step.from.coordinates.y)}, ${Math.floor(step.from.coordinates.z)}`
                                     : `${Math.floor(route.player_from.coordinates.x)}, ${Math.floor(route.player_from.coordinates.y)}, ${Math.floor(route.player_from.coordinates.z)}`
                                 }
+                                {(step.type === 'nether_transport' && step.from.address) && <span className="ml-4">{step.from.address}</span>}
                               </span>
                                                         )}
                                                     </div>
@@ -384,14 +376,26 @@ export default function TravelPlan({
 
                                                 <div className="flex-1 min-w-0 text-right">
                                                     <div className="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">À</div>
-                                                    {/* Show nether address for nether transport - bigger and more prominent at top */}
-                                                    {step.type === 'nether_transport' && step.to.address && (
-                                                        <div className="text-sm text-purple-700 font-medium mb-1 text-right">
-                                                            📍 {step.to.address}
-                                                        </div>
-                                                    )}
-                                                    <div className="text-gray-900 font-medium mb-1" title={getLocationDisplayForStep(step.to, step.type)}>
-                                                        {getLocationDisplayForStep(step.to, step.type)}
+                                                    
+                                                    
+                                                    
+                                                    <div className={`font-medium mb-1 ${
+                                                        // Condition for "Portail inconnu" (red text)
+                                                        (step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === ''))
+                                                            ? "text-red-700 dark:text-red-300"
+                                                            // Default text color
+                                                            : "text-gray-900"
+                                                    }`} title={getLocationDisplayForStep(step.to, step.type)}>
+                                                        {/* Display logic */}
+                                                        {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === ''))
+                                                            ? "Portail inconnu" // Case: Portal with ID but no name
+                                                            : (
+                                                                // Case: Portal without ID, displaying coordinates
+                                                                (step.type === 'portal' && (step.to.id === undefined || step.to.id === null || step.to.id === '') && step.to.coordinates)
+                                                                    ? `~ ${step.to.coordinates.x}, ${step.to.coordinates.y}, ${step.to.coordinates.z}${(step.type === 'nether_transport' && step.to.address) ? `  ${step.to.address}` : ''}`
+                                                                    : getLocationDisplayForStep(step.to, step.type) // All other cases
+                                                            )
+                                                        }
                                                     </div>
                                                     <div className="flex items-center justify-end gap-2">
                                                         {step.to.world && (
@@ -405,7 +409,8 @@ export default function TravelPlan({
                                                         )}
                                                         {step.to.coordinates && (
                                                             <span className="text-xs text-gray-500">
-                                {step.to.coordinates.x}, {step.to.coordinates.y}, {step.to.coordinates.z}
+                                {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === '')) ? '~ ' : ''}{step.to.coordinates.x}, {step.to.coordinates.y}, {step.to.coordinates.z}
+                                {(step.type === 'nether_transport' && step.to.address) && <span className="ml-4">{step.to.address}</span>}
                               </span>
                                                         )}
                                                     </div>
