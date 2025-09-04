@@ -17,6 +17,12 @@ Calculates the nether address for a portal location based on X and Z coordinates
 - `y` (number, optional) - Y coordinate in the nether (for future use)
 - `z` (number) - Z coordinate in the nether
 
+**Note on `direction` output field:** 
+The `direction` field is included in the response only when the calculated distance
+to the nearest axis stop is greater than 10 blocks.
+If the location is very close to an axis stop (within 10 blocks),
+a specific direction is not considered meaningful, and the `direction` field will be omitted.
+
 **Response:**
 
 *When nearest location is spawn:*
@@ -180,6 +186,15 @@ Calculates the optimal route between two locations using the full routing algori
 
 **Note:** You must provide either coordinates (`x`, `z`) or `place_id` for both source and destination.
 
+#### Internal Logic
+
+- **`Overworld to Overworld`** Compares direct route vs nether route, chooses optimal
+- **`Nether to Nether`** Uses nether network transport with address calculation
+- **`Overworld to Nether`** Finds nearest portal and calculates route via nether
+- **`Nether to Overworld`** Calculates route from Nether start to the Overworld portal nearest to the Overworld destination, then overworld transport to the final destination.
+- Includes nether addresses for all nether positions
+- Handles theoretical portal coordinates when linked portals don't exist
+
 **Response:**
 
 *Route with direct overworld transport:*
@@ -289,15 +304,6 @@ Calculates the optimal route between two locations using the full routing algori
   ]
 }
 ```
-
-#### Internal Logic
-
-- **`Overworld to Overworld`** Compares direct route vs nether route, chooses optimal
-- **`Nether to Nether`** Uses nether network transport with address calculation
-- **`Overworld to Nether`** Finds nearest portal and calculates route via nether
-- **`Nether to Overworld`** Calculates route from Nether start to the Overworld portal nearest to the Overworld destination, then overworld transport to the final destination.
-- Includes nether addresses for all nether positions
-- Handles theoretical portal coordinates when linked portals don't exist
 
 **Examples:**
 ```bash
