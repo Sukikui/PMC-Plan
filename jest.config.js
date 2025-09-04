@@ -5,11 +5,10 @@ module.exports = {
   testTimeout: 30000,
   collectCoverageFrom: [
     'app/api/**/*.{js,ts}',
-    'app/api/utils/**/*.{js,ts}',
-    'lib/**/*.{js,ts}',
-    '!app/api/**/route.{js,ts}',
     '!**/*.d.ts',
-    '!**/node_modules/**'
+    '!**/node_modules/**',
+    '!**/.next/**',
+    '!**/coverage/**'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
