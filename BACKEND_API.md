@@ -17,6 +17,9 @@ Calculates the nether address for a portal location based on X and Z coordinates
 - `y` (number, optional) - Y coordinate in the nether (for future use)
 - `z` (number) - Z coordinate in the nether
 
+#### Key Functions Used
+- `calculateNetherAddress()` in `app/api/utils/shared.ts`
+
 **Note on `direction` output field:** 
 The `direction` field is included in the response only when the calculated distance
 to the nearest axis stop is greater than 10 blocks.
@@ -78,10 +81,13 @@ Finds nearest portals from a location, ordered by distance.
 
 **Parameters:**
 - `x` (number) - X coordinate of location
-- `y` (number, optional) - Y coordinate of location
+- `y` (number) - Y coordinate of location
 - `z` (number) - Z coordinate of location
 - `max_distance` (number, optional) - Maximum distance filter in blocks
 - `world` (string, optional) - World to search in (`overworld` or `nether`, default: `overworld`)
+
+#### Key Functions Used
+- `findNearestPortals()` in `app/api/utils/shared.ts`
 
 **Response:**
 ```json
@@ -128,6 +134,9 @@ Finds the linked portal in the opposite dimension using Minecraft's 8:1 conversi
 - `from_y` (number) - Y coordinate of source portal
 - `from_z` (number) - Z coordinate of source portal
 - `from_world` (string) - World of the source portal (`overworld` or `nether`)
+
+#### Key Functions Used
+- `callLinkedPortal()` in `app/api/route/route-utils.ts`
 
 **Response:**
 
@@ -183,6 +192,18 @@ Calculates the optimal route between two locations using the full routing algori
 - `to_z` (number, optional) - Destination Z coordinate
 - `to_world` (string, optional) - Destination world (`overworld` or `nether`, default: `overworld`)
 - `to_place_id` (string, optional) - Destination place ID from places.json
+
+#### Key Functions Used
+- **`route.ts` (Handler):**
+    - `normalizeWorldName()` in `lib/world-utils.ts`
+    - `loadPlaces()` in `app/api/utils/shared.ts`
+    - `loadPortals()` in `app/api/utils/shared.ts`
+    - `RouteService` class in `app/api/route/route-service.ts`
+- **`route-service.ts` (Service):**
+    - `callNearestPortals()` in `app/api/route/route-utils.ts`
+    - `callLinkedPortal()` in `app/api/route/route-utils.ts`
+    - `callNetherAddress()` in `app/api/route/route-utils.ts`
+    - `calculateNetherNetworkDistance()` in `app/api/route/route-utils.ts`
 
 **Note:** You must provide either coordinates (`x`, `z`) or `place_id` for both source and destination.
 
@@ -329,6 +350,9 @@ Returns a list of all available places from the data files.
 **Parameters:**
 None
 
+#### Key Functions Used
+- `loadPlaces()` in `app/api/utils/shared.ts`
+
 **Response:**
 ```json
 [
@@ -365,6 +389,23 @@ Returns a list of all available portals from the data files.
 
 **Parameters:**
 - `merge-nether-portals` (boolean, optional) - If `true`, links Overworld portals with their corresponding Nether portals by matching their `id`. The matched Nether portal is added as a `nether-associate` object to the Overworld portal, and the original Nether portal is removed from the list to avoid redundancy.
+
+#### Key Functions Used
+- `loadPortals()` in `app/api/utils/shared.ts`
+- `callLinkedPortal()` in `app/api/route/route-utils.ts` (only in merge mode)
+- `callNetherAddress()` in `app/api/route/route-utils.ts` (only in merge mode)
+
+#### Internal Logic
+
+- **Default Mode**: Returns a raw list of all portals from data files.
+- **Merge Mode (`merge-nether-portals=true`)**:
+    - Links Overworld and Nether portals only if **both** of these conditions are met:
+        1. They share the **same `id`**.
+        2. The Nether portal is the "official" linked portal according to Minecraft's mechanics (verified using the `/api/linked-portal` logic).
+    - For linked portals, a `nether-associate` object is added to the Overworld portal.
+    - This object contains the Nether portal's `coordinates`, `address`, and `description`.
+    - The original Nether portal is removed from the main list to avoid duplicates.
+    - Nether portals without a matching Overworld portal (orphans) are kept in the list.
 
 **Response:**
 ```json
@@ -406,6 +447,7 @@ curl "http://localhost:3000/api/portals?merge-nether-portals=true"
     "description": "Portail près du village de départ",
     "nether-associate": {
       "coordinates": {"x": -15, "y": 70, "z": -28},
+      "address": "Ouest 2",
       "description": ""
     }
   }

@@ -5,7 +5,7 @@ import {
   convertOverworldToNether, 
   Portal 
 } from '../utils/shared';
-import { callNetherAddress } from '../route/route-utils';
+import { callNetherAddress, callLinkedPortal } from '../route/route-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,24 +20,41 @@ export async function GET(request: NextRequest) {
       const netherPortalsMap = new Map(netherPortals.map(p => [p.id, p]));
 
       const processedPortals: Portal[] = await Promise.all(overworldPortals.map(async owPortal => {
-        const linkedPortal = netherPortalsMap.get(owPortal.id);
-        if (linkedPortal) {
-          netherPortalsMap.delete(owPortal.id);
-          // Calculate address for the linked nether portal
-          const netherAddress = await callNetherAddress(
-            linkedPortal.coordinates.x,
-            linkedPortal.coordinates.y,
-            linkedPortal.coordinates.z
-          );
-          return {
-            ...owPortal,
-            'nether-associate': {
-              id: linkedPortal.id,
-              coordinates: linkedPortal.coordinates,
-              address: netherAddress.address || 'Unknown' // Use 'Unknown' if address is not available
+        // Condition 1: Find candidate portal by shared ID
+        const candidatePortal = netherPortalsMap.get(owPortal.id);
+
+        if (candidatePortal) {
+            // Condition 2: Check if it's the "official" linked portal
+            const officialLinkedPortal = await callLinkedPortal(
+                owPortal.coordinates.x,
+                owPortal.coordinates.y,
+                owPortal.coordinates.z,
+                'overworld'
+            );
+
+            // Check if both conditions are met (same ID and recognized as linked)
+            if (officialLinkedPortal && officialLinkedPortal.id === candidatePortal.id) {
+                // If yes, associate them
+                netherPortalsMap.delete(owPortal.id);
+
+                const netherAddress = await callNetherAddress(
+                    candidatePortal.coordinates.x,
+                    candidatePortal.coordinates.y,
+                    candidatePortal.coordinates.z
+                );
+
+                return {
+                    ...owPortal,
+                    'nether-associate': {
+                        coordinates: candidatePortal.coordinates,
+                        address: netherAddress.address || 'Unknown',
+                        description: candidatePortal.description
+                    }
+                };
             }
-          };
         }
+        
+        // If conditions are not met, return the overworld portal as is
         return owPortal;
       }));
 

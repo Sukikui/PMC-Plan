@@ -4,7 +4,7 @@ import { findNearestPortals } from '../utils/shared';
 
 const QuerySchema = z.object({
   x: z.coerce.number(),
-  y: z.coerce.number().optional(),
+  y: z.coerce.number(),
   z: z.coerce.number(),
   max_distance: z.coerce.number().optional(),
   world: z.enum(['overworld', 'nether']).default('overworld'),
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const { x, y, z, max_distance, world } = QuerySchema.parse({
       x: searchParams.get('x'),
-      y: searchParams.get('y') || undefined,
+      y: searchParams.get('y'),
       z: searchParams.get('z'),
       max_distance: searchParams.get('max_distance') || undefined,
       world: searchParams.get('world') || 'overworld',

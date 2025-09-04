@@ -12,13 +12,13 @@ export interface Portal {
   };
   description?: string;
   "nether-associate"?: {
-    id: string;
     coordinates: {
         x: number;
         y: number;
         z: number;
     },
     address: string;
+    description?: string;
   }
 }
 
