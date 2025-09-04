@@ -8,14 +8,14 @@ import {
   convertOverworldToNether 
 } from '../utils/shared';
 
-interface NetherAddress {
+export interface NetherAddress {
   address: string;
   nearestStop: {
     axis: string;
     level: number | null;
     coordinates: {
       x: number;
-      y: number;
+      y: number | undefined;
       z: number;
     };
     distance: number;
@@ -23,7 +23,7 @@ interface NetherAddress {
   direction?: string;
 }
 
-interface NearestStop {
+export interface NearestStop {
   axisName: string;
   stop: {
     x: number;
@@ -34,11 +34,11 @@ interface NearestStop {
   distance: number;
 }
 
-export async function callNetherAddress(x: number, y: number, z: number): Promise<NetherAddress> {
+export async function callNetherAddress(x: number, y: number | undefined, z: number): Promise<NetherAddress> {
   const netherData = await loadNetherData();
   
   const nearestStop = findNearestStop(x, z, netherData);
-  const spawnDistance = calculateEuclideanDistance(x, z, 0, netherData.spawn.x, netherData.spawn.z, 0);
+  const spawnDistance = calculateEuclideanDistance(x, y, z, netherData.spawn.x, netherData.spawn.y, netherData.spawn.z);
   
   if (spawnDistance < nearestStop.distance) {
     return {
@@ -52,7 +52,7 @@ export async function callNetherAddress(x: number, y: number, z: number): Promis
     };
   }
   
-  const distance = calculateEuclideanDistance(x, z, 0, nearestStop.stop.x, nearestStop.stop.z, 0);
+  const distance = calculateEuclideanDistance(x, y, z, nearestStop.stop.x, nearestStop.stop.y, nearestStop.stop.z);
   
   if (distance <= 10) {
     return {
@@ -85,7 +85,7 @@ export function findNearestStop(x: number, z: number, data: NetherData): Nearest
   
   Object.entries(data.axes).forEach(([axisName, stops]) => {
     stops.forEach(stop => {
-      const distance = calculateEuclideanDistance(x, z, 0, stop.x, stop.z, 0);
+      const distance = calculateEuclideanDistance(x, undefined, z, stop.x, stop.y, stop.z);
       if (!nearestStop || distance < nearestStop.distance) {
         nearestStop = {
           axisName,
@@ -99,7 +99,7 @@ export function findNearestStop(x: number, z: number, data: NetherData): Nearest
   return nearestStop!;
 }
 
-export async function callNearestPortals(x: number, y: number, z: number, world: string, maxDistance?: number): Promise<(Portal & {distance: number})[]> {
+export async function callNearestPortals(x: number, y: number | undefined, z: number, world: string, maxDistance?: number): Promise<(Portal & {distance: number})[]> {
   const allPortals = await loadPortals();
   const worldPortals = allPortals.filter(portal => portal.world === world);
   
@@ -118,7 +118,7 @@ export async function callNearestPortals(x: number, y: number, z: number, world:
     : portalsWithDistance;
 }
 
-export async function callLinkedPortal(x: number, y: number, z: number, fromWorld: string): Promise<(Portal & {distance: number}) | null> {
+export async function callLinkedPortal(x: number, y: number | undefined, z: number, fromWorld: string): Promise<(Portal & {distance: number}) | null> {
   const allPortals = await loadPortals();
   const targetWorld = fromWorld === 'overworld' ? 'nether' : 'overworld';
   const searchCoords = fromWorld === 'overworld' 
@@ -137,7 +137,7 @@ export async function callLinkedPortal(x: number, y: number, z: number, fromWorl
     .map(portal => ({
       ...portal,
       distance: calculateEuclideanDistance(
-        searchCoords.x, y, searchCoords.z,
+        searchCoords.x, fromWorld === 'overworld' ? undefined : y, searchCoords.z,
         portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
       )
     }))

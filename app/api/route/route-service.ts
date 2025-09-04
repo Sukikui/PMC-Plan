@@ -7,7 +7,8 @@ import {
   convertOverworldToNether 
 } from '../utils/shared';
 import { callNetherAddress, callNearestPortals, callLinkedPortal, calculateNetherNetworkDistance } from './route-utils';
-import { RoutePoint, NetherAddress, NearestStop } from './route-types';
+import { RoutePoint } from './route-types';
+import { NetherAddress, NearestStop } from './route-utils';
 
 export class RouteService {
 
@@ -72,7 +73,7 @@ export class RouteService {
       portal1Address = await callNetherAddress(portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z);
     } else {
       const theoreticalCoords = convertOverworldToNether(portal1.coordinates.x, portal1.coordinates.z);
-      portal1NetherCoords = { x: theoreticalCoords.x, y: theoreticalCoords.y, z: theoreticalCoords.z };
+      portal1NetherCoords = { x: theoreticalCoords.x, y: undefined, z: theoreticalCoords.z };
       portal1Address = await callNetherAddress(portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z);
     }
     
@@ -244,7 +245,7 @@ export class RouteService {
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     } else {
       const theoreticalCoords = convertOverworldToNether(portal.coordinates.x, portal.coordinates.z);
-      portalNetherCoords = { x: theoreticalCoords.x, y: theoreticalCoords.y, z: theoreticalCoords.z };
+      portalNetherCoords = { x: theoreticalCoords.x, y: undefined, z: theoreticalCoords.z };
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     }
     
@@ -334,7 +335,7 @@ export class RouteService {
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     } else {
       const theoreticalCoords = convertOverworldToNether(portal.coordinates.x, portal.coordinates.z);
-      portalNetherCoords = { x: theoreticalCoords.x, y: theoreticalCoords.y, z: theoreticalCoords.z };
+      portalNetherCoords = { x: theoreticalCoords.x, y: undefined, z: theoreticalCoords.z };
       portalAddress = await callNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
     }
     

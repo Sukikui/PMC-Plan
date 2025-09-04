@@ -16,7 +16,7 @@ export const QuerySchema = z.object({
 export interface RoutePoint {
   coordinates: {
     x: number;
-    y: number;
+    y: number | undefined;
     z: number;
   };
   world: string;

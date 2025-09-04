@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   loadPortals, 
   findNearestPortals, 
-  calculateNetherAddress, 
   convertOverworldToNether, 
   Portal 
 } from '../utils/shared';
+import { callNetherAddress } from '../route/route-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,19 +19,27 @@ export async function GET(request: NextRequest) {
       const netherPortals = portals.filter(p => p.world === 'nether');
       const netherPortalsMap = new Map(netherPortals.map(p => [p.id, p]));
 
-      const processedPortals: Portal[] = overworldPortals.map(owPortal => {
+      const processedPortals: Portal[] = await Promise.all(overworldPortals.map(async owPortal => {
         const linkedPortal = netherPortalsMap.get(owPortal.id);
         if (linkedPortal) {
-          // Mark the linked portal as used by removing it from the map
           netherPortalsMap.delete(owPortal.id);
-          const { id, world, ...associate } = linkedPortal;
+          // Calculate address for the linked nether portal
+          const netherAddress = await callNetherAddress(
+            linkedPortal.coordinates.x,
+            linkedPortal.coordinates.y,
+            linkedPortal.coordinates.z
+          );
           return {
             ...owPortal,
-            'nether-associate': associate
+            'nether-associate': {
+              id: linkedPortal.id,
+              coordinates: linkedPortal.coordinates,
+              address: netherAddress.address || 'Unknown' // Use 'Unknown' if address is not available
+            }
           };
         }
         return owPortal;
-      });
+      }));
 
       // The remaining portals in the map are the un-associated nether portals
       const unassociatedNetherPortals = Array.from(netherPortalsMap.values());

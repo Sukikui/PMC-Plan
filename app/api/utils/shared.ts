@@ -73,11 +73,14 @@ export interface NetherData {
 }
 
 export function calculateEuclideanDistance(
-  x1: number, y1: number, z1: number,
-  x2: number, y2: number, z2: number
+  x1: number, y1: number | undefined, z1: number,
+  x2: number, y2: number | undefined, z2: number
 ): number {
+  const effectiveY1 = y1 === undefined ? 70 : y1;
+  const effectiveY2 = y2 === undefined ? 70 : y2;
+
   const dx = x2 - x1;
-  const dy = y2 - y1;
+  const dy = effectiveY2 - effectiveY1;
   const dz = z2 - z1;
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
@@ -125,7 +128,7 @@ export async function loadPortals(): Promise<Portal[]> {
 
 export async function findNearestPortals(
     x: number,
-    y: number = 70,
+    y: number | undefined = 70,
     z: number,
     world: 'overworld' | 'nether' = 'overworld',
     max_distance?: number
