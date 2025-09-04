@@ -10,16 +10,17 @@ export interface Portal {
     y: number;
     z: number;
   };
-  description?: string;
-  "nether-associate"?: {
-    id: string;
+  description: string;
+  address: string;
+  "nether-associate": {
     coordinates: {
         x: number;
         y: number;
         z: number;
     },
     address: string;
-  }
+    description: string;
+  } | null;
 }
 
 export interface PortalWithDistance extends Portal {
@@ -27,7 +28,7 @@ export interface PortalWithDistance extends Portal {
 }
 
 export interface Place {
-  id:string;
+  id: string;
   name: string;
   world: string;
   coordinates: {
@@ -35,7 +36,8 @@ export interface Place {
     y: number;
     z: number;
   };
-  description?: string;
+  description: string;
+  tags: string[];
 }
 
 export interface NetherAddress {
@@ -110,6 +112,14 @@ export async function loadPortals(): Promise<Portal[]> {
         const filePath = path.join(portalsDir, file);
         const content = await fs.readFile(filePath, 'utf-8');
         const portal: Portal = JSON.parse(content);
+        // If it's a Nether portal, calculate and add its address
+        if (portal.world === 'nether') {
+          const netherAddress = await calculateNetherAddress(portal.coordinates.x, portal.coordinates.y, portal.coordinates.z);
+          if (!netherAddress.address) {
+            throw new Error(`Failed to calculate nether address for portal ${portal.id} at coordinates (${portal.coordinates.x}, ${portal.coordinates.y}, ${portal.coordinates.z})`);
+          }
+          portal.address = netherAddress.address;
+        }
         portals.push(portal);
       } catch (error) {
         console.warn(`Failed to load portal file ${file}:`, error);
@@ -125,12 +135,12 @@ export async function loadPortals(): Promise<Portal[]> {
 
 export async function findNearestPortals(
     x: number,
-    y: number = 70,
+    y: number,
     z: number,
     world: 'overworld' | 'nether' = 'overworld',
+    allPortals: Portal[],
     max_distance?: number
   ): Promise<PortalWithDistance[]> {
-    const allPortals = await loadPortals();
     const worldPortals = allPortals.filter(portal => portal.world === world);
   
     if (worldPortals.length === 0) {

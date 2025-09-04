@@ -8,22 +8,7 @@ import InfoOverlay from '@/components/InfoOverlay';
 import SettingsPanel from '@/components/SettingsPanel';
 import BetaLockScreen from '@/components/BetaLockScreen';
 
-interface Place {
-  id: string;
-  name: string;
-  tags: string[];
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-}
-
-interface Portal {
-  id: string;
-  name: string;
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-}
+import { Place, Portal } from './api/utils/shared';
 
 export default function Home() {
   const [isUnlocked, setIsUnlocked] = useState(false);

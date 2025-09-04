@@ -1,66 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   loadPortals, 
-  findNearestPortals, 
-  calculateNetherAddress, 
-  convertOverworldToNether, 
-  Portal 
+  Portal,
+  calculateNetherAddress
 } from '../utils/shared';
+import { callLinkedPortal } from '../route/route-utils';
+import { handleError, parseQueryParams } from '../utils/api-utils';
+import { z } from 'zod';
+
+const QuerySchema = z.object({
+  'merge-nether-portals': z.coerce.boolean().optional().default(false),
+});
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const mergeNetherPortals = searchParams.get('merge-nether-portals') === 'true';
+    const { 'merge-nether-portals': mergeNetherPortals } = parseQueryParams(request.url, QuerySchema);
 
     const portals = await loadPortals();
 
     if (mergeNetherPortals) {
       const overworldPortals = portals.filter(p => p.world === 'overworld');
       const netherPortals = portals.filter(p => p.world === 'nether');
+      const netherPortalsMap = new Map(netherPortals.map(p => [p.id, p]));
 
-      const processedPortals: Portal[] = await Promise.all(overworldPortals.map(async (owPortal) => {
-        const netherCoords = convertOverworldToNether(owPortal.coordinates.x, owPortal.coordinates.z);
-        
-        const nearestPortals = await findNearestPortals(
-          netherCoords.x, 
-          owPortal.coordinates.y, // Y is not converted
-          netherCoords.z, 
-          'nether',
-          150 // Search within a 150 block radius
-        );
+      const processedPortals: Portal[] = await Promise.all(overworldPortals.map(async owPortal => {
+        // Condition 1: Find candidate portal by shared ID
+        const candidatePortal = netherPortalsMap.get(owPortal.id);
 
-        const linkedPortal = nearestPortals.find(np => np.name === owPortal.name);
+        if (candidatePortal) {
+            // Condition 2: Check if it's the "official" linked portal
+            const officialLinkedPortal = await callLinkedPortal(
+                owPortal.coordinates.x,
+                owPortal.coordinates.y,
+                owPortal.coordinates.z,
+                'overworld',
+                portals
+            );
 
-        if (linkedPortal) {
-          const netherAddress = await calculateNetherAddress(
-            linkedPortal.coordinates.x, 
-            linkedPortal.coordinates.y, 
-            linkedPortal.coordinates.z
-          );
+            // Check if both conditions are met (same ID and recognized as linked)
+            if (officialLinkedPortal && officialLinkedPortal.id === candidatePortal.id) {
+                // If yes, associate them
+                netherPortalsMap.delete(owPortal.id);
 
-          return {
-            ...owPortal,
-            'nether-associate': {
-              id: linkedPortal.id,
-              coordinates: linkedPortal.coordinates,
-              address: netherAddress.address || ''
+                const netherAddress = await calculateNetherAddress(
+                    candidatePortal.coordinates.x,
+                    candidatePortal.coordinates.y,
+                    candidatePortal.coordinates.z
+                );
+
+                if (!netherAddress.address) {
+                    throw new Error(`Failed to calculate nether address for portal ${candidatePortal.id} at coordinates (${candidatePortal.coordinates.x}, ${candidatePortal.coordinates.y}, ${candidatePortal.coordinates.z})`);
+                }
+
+                return {
+                    ...owPortal,
+                    'nether-associate': {
+                        coordinates: candidatePortal.coordinates,
+                        address: netherAddress.address,
+                        description: candidatePortal.description
+                    }
+                };
             }
-          };
         }
         
+        // If conditions are not met, return the overworld portal as is
         return owPortal;
       }));
 
-      return NextResponse.json([ ...processedPortals, ...netherPortals ]);
+      // The remaining portals in the map are the un-associated nether portals
+      const unassociatedNetherPortals = Array.from(netherPortalsMap.values());
+
+      return NextResponse.json([...processedPortals, ...unassociatedNetherPortals]);
     }
 
     return NextResponse.json(portals);
 
   } catch (error) {
-    console.error('Unexpected error loading portals:', error);
-    return NextResponse.json({ 
-      error: 'Unexpected server error',
-      details: 'Une erreur inattendue est survenue lors du chargement des portails'
-    }, { status: 500 });
+    return handleError(error, 'Unexpected server error');
   }
 }

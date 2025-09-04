@@ -1,0 +1,12 @@
+{
+  "id": "spawn_overworld",
+  "name": "Spawn Overworld",
+  "world": "overworld",
+  "coordinates": {
+    "x": 0,
+    "y": 70,
+    "z": 0
+  },
+  "tags": ["spawn", "test"],
+  "description": "Point de spawn du serveur pour les tests"
+}

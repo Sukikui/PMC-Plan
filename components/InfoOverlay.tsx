@@ -3,29 +3,8 @@
 import { useEffect } from 'react';
 import CrossIcon from './icons/CrossIcon';
 
-interface Place {
-  id: string;
-  name: string;
-  tags: string[];
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-  owner?: string;
-}
-
-interface Portal {
-  id: string;
-  name: string;
-  world: 'overworld' | 'nether';
-  coordinates: { x: number; y: number; z: number };
-  description?: string;
-  owner?: string;
-  'nether-associate'?: {
-    id: string;
-    coordinates: { x: number; y: number; z: number };
-    address: string;
-  };
-}
+import { Place, Portal } from '../app/api/utils/shared';
+import { getWorldBadgeLarge } from '../lib/ui-utils';
 
 interface InfoOverlayProps {
   isOpen: boolean;
@@ -55,15 +34,39 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
 
   if (!isOpen || !item) return null;
 
-  const getWorldBadge = (world: string) => {
-    const baseClasses = "inline-block text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300";
-    if (world === 'overworld') {
-      return `${baseClasses} bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300`;
-    } else if (world === 'nether') {
-      return `${baseClasses} bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300`;
+  const renderDescription = typeof item.description === 'string' && item.description.length > 0 ? (
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Description</h3>
+      <p className="text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
+        {(item.description as string)}
+      </p>
+    </div>
+  ) : null;
+
+  const renderTags = (() => {
+    if (type === 'place' && item) {
+      const placeItem = item as Place;
+      if (Array.isArray(placeItem.tags) && placeItem.tags.length > 0) {
+        return (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {placeItem.tags.map(tag => (
+                <span 
+                  key={tag} 
+                  className="bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      }
     }
-    return `${baseClasses} bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300`;
-  };
+    return null;
+  })();
+
 
   const getTypeStyles = () => {
     if (type === 'place') {
@@ -106,17 +109,22 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
               </div>
               
               <div className="flex items-center gap-3">
-                <span className={getWorldBadge(item.world)}>
+                <span className={getWorldBadgeLarge(item.world)}>
                   {item.world}
                 </span>
                 <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
                   {item.coordinates.x}, {item.coordinates.y}, {item.coordinates.z}
                 </span>
+                {type === 'portal' && item.world === 'nether' && (item as Portal).address && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
+                    {(item as Portal).address}
+                  </span>
+                )}
               </div>
-              {'nether-associate' in item && item['nether-associate'] && (
-                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/50 transition-colors duration-300">
+              {'nether-associate' in item && item['nether-associate'] && item['nether-associate'].address && (
+                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/80 transition-colors duration-300">
                     <div className="flex items-center gap-2">
-                        <span className={getWorldBadge('nether')}>
+                        <span className={getWorldBadgeLarge('nether')}>
                         nether
                         </span>
                         <div className="flex items-center justify-between w-full">
@@ -158,42 +166,10 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
             </div>
           )}
           
-          {/* Description */}
-          {item.description && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Description</h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
-                {item.description}
-              </p>
-            </div>
-          )}
-
-          {/* Owner/Manager */}
-          {item.owner && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Propriétaire / Gérant</h3>
-              <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
-                <span className="text-gray-800 dark:text-gray-200 font-medium transition-colors duration-300">{item.owner}</span>
-              </div>
-            </div>
-          )}
+          {renderDescription}
 
           {/* Tags (only for places) */}
-          {'tags' in item && item.tags && item.tags.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {item.tags.map(tag => (
-                  <span 
-                    key={tag} 
-                    className="bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          {renderTags} {/* Reintroduce renderDescription */}
         </div>
       </div>
     </div>

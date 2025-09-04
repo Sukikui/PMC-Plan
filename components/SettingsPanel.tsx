@@ -1,48 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import BigPlusIcon from './icons/BigPlusIcon';
-import PlusIcon from './icons/PlusIcon';
 import CrossIcon from './icons/CrossIcon';
+import { useTheme } from '../lib/useTheme';
 
 const SettingsPanel = () => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [theme, setTheme] = useState('light');
-
-    const applyTheme = (selectedTheme: string) => {
-        const root = document.documentElement;
-        
-        if (selectedTheme === 'dark') {
-            root.classList.add('dark');
-        } else if (selectedTheme === 'light') {
-            root.classList.remove('dark');
-        } else if (selectedTheme === 'system') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                root.classList.add('dark');
-            } else {
-                root.classList.remove('dark');
-            }
-        }
-    };
-
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('pmc-plan-theme');
-        if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
-            setTheme(savedTheme);
-            applyTheme(savedTheme);
-        } else {
-            setTheme('light');
-            applyTheme('light');
-            localStorage.setItem('pmc-plan-theme', 'light');
-        }
-    }, []);
-
-    const handleThemeChange = (newTheme: string) => {
-        setTheme(newTheme);
-        applyTheme(newTheme);
-        localStorage.setItem('pmc-plan-theme', newTheme);
-    };
+    const { theme, changeTheme: handleThemeChange } = useTheme();
 
     return (
         <div className={`fixed bottom-4 right-4 z-50 transition-all duration-500 ease-out ${
@@ -94,7 +59,6 @@ const SettingsPanel = () => {
                                 >
                                     Clair
                                 </button>
-                                {/*
                                 <button
                                     onClick={() => handleThemeChange('dark')}
                                     className={`px-2 py-1 text-xs rounded-full border transition-colors ${
@@ -105,8 +69,6 @@ const SettingsPanel = () => {
                                 >
                                     Sombre
                                 </button>
-                                */}
-                                {/*
                                 <button
                                     onClick={() => handleThemeChange('system')}
                                     className={`px-2 py-1 text-xs rounded-full border transition-colors ${
@@ -117,7 +79,6 @@ const SettingsPanel = () => {
                                 >
                                     Système
                                 </button>
-                                */}
                             </div>
                         </div>
 
@@ -146,7 +107,9 @@ const SettingsPanel = () => {
                                 rel="noopener noreferrer" 
                                 className="flex items-center gap-2 text-xs text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-2 rounded-full transition-all duration-300"
                             >
-                                <PlusIcon className="w-4 h-4" />
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
+                                </svg>
                                 Ajouter un lieu ou un portail
                             </a>
                             

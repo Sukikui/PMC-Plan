@@ -3,11 +3,11 @@
   "name": "Village de Suki",
   "world": "overworld",
   "coordinates": {
-    "x": 1000,
+    "x": 5000,
     "y": 70,
-    "z": -500
+    "z": 300
   },
   "tags": ["village", "base"],
-  "description": "Village de Suki au sein duquel de nombreux secrets et trésors sont gardés à tout jamais...",
+  "description": "Ancien village caché au sein duquel de nombreux secrets et trésors sont gardés à tout jamais...",
   "portals": ["portail_village_suki"]
 }
