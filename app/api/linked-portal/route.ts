@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { loadPortals } from '../utils/shared';
 import { callLinkedPortal } from '../route/route-utils';
+import { handleError, parseQueryParams } from '../utils/api-utils';
 
 const QuerySchema = z.object({
   from_x: z.coerce.number(),
@@ -11,23 +13,14 @@ const QuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const { from_x, from_y, from_z, from_world } = QuerySchema.parse({
-      from_x: searchParams.get('from_x'),
-      from_y: searchParams.get('from_y'),
-      from_z: searchParams.get('from_z'),
-      from_world: searchParams.get('from_world'),
-    });
+    const { from_x, from_y, from_z, from_world } = parseQueryParams(request.url, QuerySchema);
 
-    const linkedPortal = await callLinkedPortal(from_x, from_y, from_z, from_world);
+    const allPortals = await loadPortals();
+    const linkedPortal = await callLinkedPortal(from_x, from_y, from_z, from_world, allPortals);
 
     return NextResponse.json(linkedPortal);
 
   } catch (error) {
-    console.error('Error finding linked portal:', error);
-    return NextResponse.json(
-      { error: 'Failed to find linked portal' },
-      { status: 500 }
-    );
+    return handleError(error, 'Failed to find linked portal');
   }
 }

@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   loadPortals, 
-  findNearestPortals, 
-  convertOverworldToNether, 
-  Portal 
+  Portal,
+  calculateNetherAddress
 } from '../utils/shared';
-import { callNetherAddress, callLinkedPortal } from '../route/route-utils';
+import { callLinkedPortal } from '../route/route-utils';
+import { handleError, parseQueryParams } from '../utils/api-utils';
+import { z } from 'zod';
+
+const QuerySchema = z.object({
+  'merge-nether-portals': z.coerce.boolean().optional().default(false),
+});
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const mergeNetherPortals = searchParams.get('merge-nether-portals') === 'true';
+    const { 'merge-nether-portals': mergeNetherPortals } = parseQueryParams(request.url, QuerySchema);
 
     const portals = await loadPortals();
 
@@ -29,7 +33,8 @@ export async function GET(request: NextRequest) {
                 owPortal.coordinates.x,
                 owPortal.coordinates.y,
                 owPortal.coordinates.z,
-                'overworld'
+                'overworld',
+                portals
             );
 
             // Check if both conditions are met (same ID and recognized as linked)
@@ -37,17 +42,21 @@ export async function GET(request: NextRequest) {
                 // If yes, associate them
                 netherPortalsMap.delete(owPortal.id);
 
-                const netherAddress = await callNetherAddress(
+                const netherAddress = await calculateNetherAddress(
                     candidatePortal.coordinates.x,
                     candidatePortal.coordinates.y,
                     candidatePortal.coordinates.z
                 );
 
+                if (!netherAddress.address) {
+                    throw new Error(`Failed to calculate nether address for portal ${candidatePortal.id} at coordinates (${candidatePortal.coordinates.x}, ${candidatePortal.coordinates.y}, ${candidatePortal.coordinates.z})`);
+                }
+
                 return {
                     ...owPortal,
                     'nether-associate': {
                         coordinates: candidatePortal.coordinates,
-                        address: netherAddress.address || 'Unknown',
+                        address: netherAddress.address,
                         description: candidatePortal.description
                     }
                 };
@@ -67,10 +76,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(portals);
 
   } catch (error) {
-    console.error('Unexpected error loading portals:', error);
-    return NextResponse.json({ 
-      error: 'Unexpected server error',
-      details: 'Une erreur inattendue est survenue lors du chargement des portails'
-    }, { status: 500 });
+    return handleError(error, 'Unexpected server error');
   }
 }

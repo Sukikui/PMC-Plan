@@ -3,49 +3,31 @@ import {
   loadPlaces,
   loadPortals,
 } from '../utils/shared';
-import { normalizeWorldName } from '../../../lib/world-utils';
-import { QuerySchema, RoutePoint } from './route-types';
+import { QuerySchema } from './route-types';
 import { RouteService } from './route-service';
+import { handleError, parseQueryParams } from '../utils/api-utils';
+import { resolveRoutePoint } from './route-utils';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-
-    // Normalize world names before Zod validation
-    const rawFromWorld = searchParams.get('from_world');
-    const rawToWorld = searchParams.get('to_world');
-    const normalizedFromWorld = rawFromWorld ? normalizeWorldName(rawFromWorld) : null;
-    const normalizedToWorld = rawToWorld ? normalizeWorldName(rawToWorld) : null;
-
-    const params = QuerySchema.parse({
-      from_x: searchParams.get('from_x'),
-      from_y: searchParams.get('from_y'),
-      from_z: searchParams.get('from_z'),
-      from_world: normalizedFromWorld,
-      from_place_id: searchParams.get('from_place_id'),
-      to_x: searchParams.get('to_x'),
-      to_y: searchParams.get('to_y'),
-      to_z: searchParams.get('to_z'),
-      to_world: normalizedToWorld,
-      to_place_id: searchParams.get('to_place_id'),
-    });
+    const params = parseQueryParams(request.url, QuerySchema);
 
     // Validate input parameters
     const hasFromCoords = params.from_x !== undefined && params.from_z !== undefined && params.from_world;
-    const hasFromPlace = params.from_place_id;
+    const hasFromPlace = !!params.from_place_id;
     const hasToCoords = params.to_x !== undefined && params.to_z !== undefined && params.to_world;
-    const hasToPlace = params.to_place_id;
+    const hasToPlace = !!params.to_place_id;
 
     if (!hasFromCoords && !hasFromPlace) {
       return NextResponse.json(
-        { error: 'Either from coordinates (from_x, from_z, from_world) or from_place_id must be provided' },
+        { error: 'Either from coordinates (from_x, from_z) or from_place_id must be provided' },
         { status: 400 }
       );
     }
 
     if (!hasToCoords && !hasToPlace) {
       return NextResponse.json(
-        { error: 'Either to coordinates (to_x, to_z, to_world) or to_place_id must be provided' },
+        { error: 'Either to coordinates (to_x, to_z) or to_place_id must be provided' },
         { status: 400 }
       );
     }
@@ -55,80 +37,52 @@ export async function GET(request: NextRequest) {
     const portals = await loadPortals();
 
     // Resolve from point
-    let fromPoint: RoutePoint;
-    if (hasFromPlace) {
-      // Check places first, then portals
-      let place = places.find(p => p.id === params.from_place_id);
-      if (!place) {
-        place = portals.find(p => p.id === params.from_place_id);
-      }
-      if (!place) {
-        return NextResponse.json(
-          { error: `Place or portal with id '${params.from_place_id}' not found` },
-          { status: 404 }
-        );
-      }
-      fromPoint = {
-        coordinates: place.coordinates,
-        world: place.world,
-        name: place.name,
-        id: place.id
-      };
-    } else {
-      fromPoint = {
-        coordinates: {
-          x: params.from_x!,
-          y: params.from_y,
-          z: params.from_z!
-        },
-        world: params.from_world!
-      };
+    const fromPointResult = resolveRoutePoint(
+      hasFromPlace,
+      params.from_place_id,
+      params.from_x,
+      params.from_y,
+      params.from_z,
+      params.from_world,
+      places,
+      portals,
+      'from'
+    );
+    if (fromPointResult instanceof NextResponse) {
+      return fromPointResult;
     }
+    const fromPoint = fromPointResult;
 
     // Resolve to point
-    let toPoint: RoutePoint;
-    if (hasToPlace) {
-      // Check places first, then portals
-      let place = places.find(p => p.id === params.to_place_id);
-      if (!place) {
-        place = portals.find(p => p.id === params.to_place_id);
-      }
-      if (!place) {
-        return NextResponse.json(
-          { error: `Place or portal with id '${params.to_place_id}' not found` },
-          { status: 404 }
-        );
-      }
-      toPoint = {
-        coordinates: place.coordinates,
-        world: place.world,
-        name: place.name,
-        id: place.id
-      };
-    } else {
-      toPoint = {
-        coordinates: {
-          x: params.to_x!,
-          y: params.to_y,
-          z: params.to_z!
-        },
-        world: params.to_world!
-      };
+    const toPointResult = resolveRoutePoint(
+      hasToPlace,
+      params.to_place_id,
+      params.to_x,
+      params.to_y,
+      params.to_z,
+      params.to_world,
+      places,
+      portals,
+      'to'
+    );
+    if (toPointResult instanceof NextResponse) {
+      return toPointResult;
     }
+    const toPoint = toPointResult;
 
     // Determine routing case and execute
-    const fromWorld = fromPoint.world;
-    const toWorld = toPoint.world;
+    const finalFromWorld = fromPoint.world;
+    const finalToWorld = toPoint.world;
 
-    const routeService = new RouteService();
+    const routeService = new RouteService(places, portals);
 
-    if (fromWorld === 'overworld' && toWorld === 'overworld') {
+    if (finalFromWorld === 'overworld' && finalToWorld === 'overworld') {
       return await routeService.handleOverworldToOverworld(fromPoint, toPoint);
-    } else if (fromWorld === 'nether' && toWorld === 'nether') {
+    } else if (finalFromWorld === 'nether' && finalToWorld === 'nether') {
       return await routeService.handleNetherToNether(fromPoint, toPoint);
-    } else if (fromWorld === 'overworld' && toWorld === 'nether') {
+    } else if (finalFromWorld === 'overworld' && finalToWorld === 'nether') {
       return await routeService.handleOverworldToNether(fromPoint, toPoint);
-    } else if (fromWorld === 'nether' && toWorld === 'overworld') {
+    } else if (finalFromWorld === 'nether' && finalToWorld === 'overworld') {
       return await routeService.handleNetherToOverworld(fromPoint, toPoint);
     }
 
@@ -138,10 +92,6 @@ export async function GET(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('Error calculating route:', error);
-    return NextResponse.json(
-      { error: 'Failed to calculate route' },
-      { status: 500 }
-    );
+    return handleError(error, 'Failed to calculate route');
   }
 }

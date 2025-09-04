@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { calculateNetherAddress } from '../utils/shared';
+import { handleError, parseQueryParams } from '../utils/api-utils';
 
 const QuerySchema = z.object({
   x: z.coerce.number(),
-  y: z.coerce.number().optional(),
+  y: z.coerce.number(),
   z: z.coerce.number(),
 });
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const { x, y, z } = QuerySchema.parse({
-      x: searchParams.get('x'),
-      y: searchParams.get('y') || undefined,
-      z: searchParams.get('z'),
-    });
+    const { x, y, z } = parseQueryParams(request.url, QuerySchema);
 
-    const netherAddress = await calculateNetherAddress(x, y || 70, z);
+    const netherAddress = await calculateNetherAddress(x, y, z);
 
     if (netherAddress.error) {
       return NextResponse.json(
@@ -29,10 +25,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(netherAddress);
 
   } catch (error) {
-    console.error('Error calculating nether address:', error);
-    return NextResponse.json(
-      { error: 'Failed to calculate nether address' },
-      { status: 500 }
-    );
+    return handleError(error, 'Failed to calculate nether address');
   }
 }

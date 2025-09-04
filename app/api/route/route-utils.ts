@@ -1,27 +1,12 @@
 import { 
   Portal, 
-  NetherData,
-  loadPlaces, 
-  loadPortals, 
-  loadNetherData, 
-  calculateEuclideanDistance, 
-  convertOverworldToNether 
+  calculateEuclideanDistance,
+  convertOverworldToNether, 
+  NetherAddress // Import NetherAddress from shared.ts
 } from '../utils/shared';
-
-export interface NetherAddress {
-  address: string;
-  nearestStop: {
-    axis: string;
-    level: number | null;
-    coordinates: {
-      x: number;
-      y: number | undefined;
-      z: number;
-    };
-    distance: number;
-  };
-  direction?: string;
-}
+import { RoutePoint } from './route-types';
+import { NextResponse } from 'next/server';
+import { Place } from '../utils/shared';
 
 export interface NearestStop {
   axisName: string;
@@ -34,73 +19,7 @@ export interface NearestStop {
   distance: number;
 }
 
-export async function callNetherAddress(x: number, y: number | undefined, z: number): Promise<NetherAddress> {
-  const netherData = await loadNetherData();
-  
-  const nearestStop = findNearestStop(x, z, netherData);
-  const spawnDistance = calculateEuclideanDistance(x, y, z, netherData.spawn.x, netherData.spawn.y, netherData.spawn.z);
-  
-  if (spawnDistance < nearestStop.distance) {
-    return {
-      address: "Spawn",
-      nearestStop: {
-        axis: "Spawn",
-        level: null,
-        coordinates: { x: netherData.spawn.x, y: netherData.spawn.y, z: netherData.spawn.z },
-        distance: spawnDistance
-      }
-    };
-  }
-  
-  const distance = calculateEuclideanDistance(x, y, z, nearestStop.stop.x, nearestStop.stop.y, nearestStop.stop.z);
-  
-  if (distance <= 10) {
-    return {
-      address: `${nearestStop.axisName} ${nearestStop.stop.level}`,
-      nearestStop: {
-        axis: nearestStop.axisName,
-        level: nearestStop.stop.level,
-        coordinates: nearestStop.stop,
-        distance
-      }
-    };
-  }
-  
-  const direction = x > nearestStop.stop.x ? "droite" : "gauche";
-  
-  return {
-    address: `${nearestStop.axisName} ${nearestStop.stop.level} ${direction}`,
-    nearestStop: {
-      axis: nearestStop.axisName,
-      level: nearestStop.stop.level,
-      coordinates: nearestStop.stop,
-      distance
-    },
-    direction
-  };
-}
-
-export function findNearestStop(x: number, z: number, data: NetherData): NearestStop {
-  let nearestStop: NearestStop | null = null;
-  
-  Object.entries(data.axes).forEach(([axisName, stops]) => {
-    stops.forEach(stop => {
-      const distance = calculateEuclideanDistance(x, undefined, z, stop.x, stop.y, stop.z);
-      if (!nearestStop || distance < nearestStop.distance) {
-        nearestStop = {
-          axisName,
-          stop,
-          distance
-        };
-      }
-    });
-  });
-  
-  return nearestStop!;
-}
-
-export async function callNearestPortals(x: number, y: number | undefined, z: number, world: string, maxDistance?: number): Promise<(Portal & {distance: number})[]> {
-  const allPortals = await loadPortals();
+export async function callNearestPortals(x: number, y: number, z: number, world: string, allPortals: Portal[], maxDistance?: number): Promise<(Portal & {distance: number})[]> {
   const worldPortals = allPortals.filter(portal => portal.world === world);
   
   const portalsWithDistance = worldPortals
@@ -118,8 +37,7 @@ export async function callNearestPortals(x: number, y: number | undefined, z: nu
     : portalsWithDistance;
 }
 
-export async function callLinkedPortal(x: number, y: number | undefined, z: number, fromWorld: string): Promise<(Portal & {distance: number}) | null> {
-  const allPortals = await loadPortals();
+export async function callLinkedPortal(x: number, y: number, z: number, fromWorld: string, allPortals: Portal[]): Promise<(Portal & {distance: number}) | null> {
   const targetWorld = fromWorld === 'overworld' ? 'nether' : 'overworld';
   const searchCoords = fromWorld === 'overworld' 
     ? convertOverworldToNether(x, z)
@@ -137,7 +55,7 @@ export async function callLinkedPortal(x: number, y: number | undefined, z: numb
     .map(portal => ({
       ...portal,
       distance: calculateEuclideanDistance(
-        searchCoords.x, fromWorld === 'overworld' ? undefined : y, searchCoords.z,
+        searchCoords.x, y, searchCoords.z,
         portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
       )
     }))
@@ -150,9 +68,54 @@ export function calculateNetherNetworkDistance(address1: NetherAddress, address2
   // Simplified implementation - in reality this would calculate the actual network distance
   // based on the nether axes system described in DECISION.md
   
+  // Check if both addresses have nearestStop data
+  if (!address1.nearestStop || !address2.nearestStop) {
+    throw new Error('Both addresses must have nearestStop data to calculate nether network distance');
+  }
+  
   // For now, return euclidean distance as approximation
   return calculateEuclideanDistance(
     address1.nearestStop.coordinates.x, address1.nearestStop.coordinates.y, address1.nearestStop.coordinates.z,
     address2.nearestStop.coordinates.x, address2.nearestStop.coordinates.y, address2.nearestStop.coordinates.z
   );
+}
+
+export function resolveRoutePoint(
+  isPlace: boolean,
+  placeId: string | undefined | null,
+  x: number | undefined,
+  y: number | undefined,
+  z: number | undefined,
+  world: string | undefined | null,
+  places: Place[],
+  portals: Portal[],
+  pointType: 'from' | 'to'
+): RoutePoint | NextResponse {
+  if (isPlace) {
+    let foundPlace: Place | Portal | undefined = places.find(p => p.id === placeId);
+    if (!foundPlace) {
+      foundPlace = portals.find(p => p.id === placeId);
+    }
+    if (!foundPlace) {
+      return NextResponse.json(
+        { error: `Place or portal with id '${placeId}' not found for ${pointType} point` },
+        { status: 404 }
+      );
+    }
+    return {
+      coordinates: foundPlace.coordinates,
+      world: foundPlace.world,
+      name: foundPlace.name,
+      id: foundPlace.id
+    };
+  } else {
+    return {
+      coordinates: {
+        x: x!,
+        y: y!,
+        z: z!
+      },
+      world: world || 'overworld'
+    };
+  }
 }

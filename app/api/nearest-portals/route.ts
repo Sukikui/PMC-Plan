@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { findNearestPortals } from '../utils/shared';
+import { findNearestPortals, loadPortals } from '../utils/shared';
+import { handleError, parseQueryParams } from '../utils/api-utils';
 
 const QuerySchema = z.object({
   x: z.coerce.number(),
@@ -12,24 +13,14 @@ const QuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const { x, y, z, max_distance, world } = QuerySchema.parse({
-      x: searchParams.get('x'),
-      y: searchParams.get('y'),
-      z: searchParams.get('z'),
-      max_distance: searchParams.get('max_distance') || undefined,
-      world: searchParams.get('world') || 'overworld',
-    });
+    const { x, y, z, max_distance, world } = parseQueryParams(request.url, QuerySchema);
 
-    const nearestPortals = await findNearestPortals(x, y, z, world, max_distance);
+    const allPortals = await loadPortals();
+    const nearestPortals = await findNearestPortals(x, y, z, world, allPortals, max_distance);
 
     return NextResponse.json(nearestPortals);
     
   } catch (error) {
-    console.error('Error finding nearest portals:', error);
-    return NextResponse.json(
-      { error: 'Failed to find nearest portals' },
-      { status: 500 }
-    );
+    return handleError(error, 'Failed to find nearest portals');
   }
 }
