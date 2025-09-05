@@ -83,11 +83,9 @@ body:
   - type: input
     id: owner
     attributes:
-      label: Propriétaire
+      label: Propriétaire (optionnel)
       description: Pseudo Minecraft du joueur propriétaire de ce lieu
       placeholder: "Suki"
-    validations:
-      required: true
 
   - type: input
     id: discord
