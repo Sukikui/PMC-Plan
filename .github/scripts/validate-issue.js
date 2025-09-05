@@ -434,7 +434,7 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     }
 
     const requiredFields = isPlace
-        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ', 'owner']
+        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
         : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
 
     const missingFields = [];
