@@ -60,17 +60,13 @@
       "maxLength": 500,
       "description": "Optional description of the place"
     },
-    "portals": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z0-9_]+$",
-        "minLength": 1,
-        "maxLength": 50
-      },
-      "uniqueItems": true,
-      "maxItems": 10,
-      "description": "Array of portal IDs associated with this place"
+    "discord": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://discord\\.gg/[a-zA-Z0-9]+$",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Optional Discord server URL for this place"
     }
   },
   "additionalProperties": false
