@@ -1,0 +1,14 @@
+{
+  "id": "test",
+  "name": "Test",
+  "world": "overworld",
+  "coordinates": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "tags": [],
+  "description": "",
+  "discord": "https://discord.gg/syXvuFqF",
+  "owner": "Suki"
+}
