@@ -1,5 +1,6 @@
 
 const Ajv = require('ajv');
+const addFormats = require('ajv-formats');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,6 +15,7 @@ const placeSchema = JSON.parse(fs.readFileSync(placeSchemaPath, 'utf8'));
 const portalSchema = JSON.parse(fs.readFileSync(portalSchemaPath, 'utf8'));
 
 const ajv = new Ajv();
+addFormats(ajv);
 const schemas = {
   place: ajv.compile(placeSchema),
   portal: ajv.compile(portalSchema),
