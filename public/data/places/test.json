@@ -1,0 +1,14 @@
+{
+  "id": "test",
+  "name": "test",
+  "world": "overworld",
+  "coordinates": {
+    "x": 8,
+    "y": 8,
+    "z": 8
+  },
+  "tags": [],
+  "description": "",
+  "discord": "",
+  "owner": ""
+}
