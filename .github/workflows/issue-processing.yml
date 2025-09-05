@@ -20,7 +20,7 @@ jobs:
 
       - name: 📦 Install dependencies
         run: |
-          npm install ajv node-fetch@2
+          npm install ajv ajv-formats node-fetch@2
 
       - name: 📝 Extract, validate, and create PR
         id: create_pr
