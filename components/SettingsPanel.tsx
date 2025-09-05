@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import BigPlusIcon from './icons/BigPlusIcon';
 import CrossIcon from './icons/CrossIcon';
-import { useTheme } from '../lib/useTheme';
+import { useTheme } from '../lib/use-theme';
 import { themeColors } from '../lib/theme-colors';
 
 const SettingsPanel = () => {

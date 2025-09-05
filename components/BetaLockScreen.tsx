@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTheme } from '../lib/useTheme';
+import { useTheme } from '../lib/use-theme';
 import { themeColors } from '../lib/theme-colors';
 
 interface BetaLockScreenProps {
