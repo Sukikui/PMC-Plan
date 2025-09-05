@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { themeColors } from '../lib/theme-colors';
 
 interface Step {
     type: 'overworld_transport' | 'nether_transport' | 'portal';
@@ -48,66 +49,55 @@ interface TravelPlanProps {
 }
 
 export default function TravelPlan({
-                                       selectedPlaceId,
-                                       playerPosition,
-                                       manualCoords
-                                   }: TravelPlanProps) {
+    selectedPlaceId,
+    playerPosition,
+    manualCoords
+}: TravelPlanProps) {
     const [route, setRoute] = useState<RouteData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const calculateRoute = async () => {
-        if (!selectedPlaceId) return;
-
-        // Determine source coordinates
-        let fromParams = '';
-        
-        console.log('Manual coords:', manualCoords);
-
+    const buildFromParams = () => {
         if (playerPosition) {
-            fromParams = `from_x=${playerPosition.x}&from_y=${playerPosition.y}&from_z=${playerPosition.z}&from_world=${playerPosition.world}`;
-        } else if (manualCoords && manualCoords.x && manualCoords.y && manualCoords.z) {
-            // Convert string coordinates to numbers
+            return `from_x=${playerPosition.x}&from_y=${playerPosition.y}&from_z=${playerPosition.z}&from_world=${playerPosition.world}`;
+        }
+        
+        if (manualCoords?.x && manualCoords?.y && manualCoords?.z) {
             const x = parseFloat(manualCoords.x);
             const y = parseFloat(manualCoords.y);
             const z = parseFloat(manualCoords.z);
 
-            // Check if conversion was successful
             if (isNaN(x) || isNaN(y) || isNaN(z)) {
-                setError('Coordonnées invalides');
-                return;
+                throw new Error('Coordonnées invalides');
             }
 
-            fromParams = `from_x=${x}&from_y=${y}&from_z=${z}&from_world=${manualCoords.world}`;
-        } else {
-            
-            return;
+            return `from_x=${x}&from_y=${y}&from_z=${z}&from_world=${manualCoords.world}`;
         }
-
         
+        return null;
+    };
 
-        setLoading(true);
-        setError(null);
+    const calculateRoute = async () => {
+        if (!selectedPlaceId) return;
 
         try {
-            const url = `/api/route?${fromParams}&to_place_id=${selectedPlaceId}`;
-            
+            const fromParams = buildFromParams();
+            if (!fromParams) return;
 
+            setLoading(true);
+            setError(null);
+
+            const url = `/api/route?${fromParams}&to_place_id=${selectedPlaceId}`;
             const response = await fetch(url);
 
             if (!response.ok) {
                 const errorText = await response.text();
-                
                 throw new Error(`Erreur ${response.status}: ${errorText || 'Impossible de calculer l\'itinéraire'}`);
             }
 
             const data: RouteData = await response.json();
-            
-            // Log all step data to understand structure
-            
             setRoute(data);
         } catch (err) {
-            
             setError(err instanceof Error ? err.message : 'Erreur inconnue');
             setRoute(null);
         } finally {
@@ -115,65 +105,65 @@ export default function TravelPlan({
         }
     };
 
+    const shouldRecalculate = () => {
+        if (!route || !playerPosition || route.steps.length === 0) return true;
+        
+        const currentFrom = route.player_from.coordinates;
+        const distance = Math.sqrt(
+            Math.pow(playerPosition.x - currentFrom.x, 2) +
+            Math.pow(playerPosition.y - currentFrom.y, 2) +
+            Math.pow(playerPosition.z - currentFrom.z, 2)
+        );
+
+        if (distance >= 5) return true;
+
+        const lastStepTo = route.steps[route.steps.length - 1]?.to;
+        return lastStepTo?.id !== selectedPlaceId;
+    };
+
     useEffect(() => {
         if (selectedPlaceId && (playerPosition || (manualCoords?.x && manualCoords?.y && manualCoords?.z))) {
-            // Always recalculate when selectedPlaceId changes (new place/portal selected)
-            // Only optimize for player movement if the destination hasn't changed
-            if (route && playerPosition && route.steps.length > 0) {
-                // Check if this is just a player position update (same destination)
-                const currentFrom = route.player_from.coordinates;
-                const distance = Math.sqrt(
-                    Math.pow(playerPosition.x - currentFrom.x, 2) +
-                    Math.pow(playerPosition.y - currentFrom.y, 2) +
-                    Math.pow(playerPosition.z - currentFrom.z, 2)
-                );
-
-                // Don't recalculate if player moved less than 5 blocks AND destination is the same
-                if (distance < 5) {
-                    // But we still need to recalculate if the selectedPlaceId changed
-                    const lastStepTo = route.steps[route.steps.length - 1]?.to;
-                    if (lastStepTo?.id === selectedPlaceId) {
-                        return; // Same destination and small player movement, skip recalculation
-                    }
-                }
+            if (shouldRecalculate()) {
+                calculateRoute();
             }
-
-            calculateRoute();
         } else {
             setRoute(null);
         }
     }, [selectedPlaceId, playerPosition, manualCoords]);
 
     const getStepIcon = (type: string) => {
+        const iconProps = "w-4 h-4";
+        const containerProps = `w-8 h-8 ${themeColors.util.roundedFull} flex items-center justify-center border-2 ${themeColors.transition}`;
+        
         switch (type) {
             case 'overworld_transport':
                 return (
-                    <div className="w-8 h-8 bg-green-100 dark:bg-green-800/40 rounded-full flex items-center justify-center border-2 border-green-200 dark:border-green-700 transition-colors duration-300">
-                        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <div className={`${containerProps} ${themeColors.world.overworld}`}>
+                        <svg className={`${iconProps} ${themeColors.travelPlan.overworldIcon}`} fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
                     </div>
                 );
             case 'nether_transport':
                 return (
-                    <div className="w-8 h-8 bg-red-100 dark:bg-red-800/40 rounded-full flex items-center justify-center border-2 border-red-200 dark:border-red-700 transition-colors duration-300">
-                        <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <div className={`${containerProps} ${themeColors.world.nether}`}>
+                        <svg className={`${iconProps} ${themeColors.travelPlan.netherIcon}`} fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
                     </div>
                 );
             case 'portal':
                 return (
-                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-800/40 rounded-full flex items-center justify-center border-2 border-purple-200 dark:border-purple-700 transition-colors duration-300">
-                        <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                    <div className={`${containerProps} ${themeColors.travelPlan.portalContainer}`}>
+                        <svg className={`${iconProps} ${themeColors.travelPlan.portalIcon}`} fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
                     </div>
                 );
             default:
                 return (
-                    <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 transition-colors duration-300">
-                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-300 rounded-full"></div>
+                    <div className={`${containerProps} ${themeColors.tag.display}`}>
+                        <div className={`w-2 h-2 ${themeColors.text.secondary} ${themeColors.util.roundedFull}`}></div>
                     </div>
                 );
         }
@@ -184,19 +174,19 @@ export default function TravelPlan({
             case 'overworld_transport':
                 return (
                     <div className="flex items-center gap-2">
-                        <span>Passage</span>
-                        <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700 border border-green-200 font-medium">
-              overworld
-            </span>
+                        <span className={themeColors.text.secondary}>Passage</span>
+                        <span className={`px-3 py-1 text-sm ${themeColors.util.roundedFull} ${themeColors.world.overworld} font-medium`}>
+                            overworld
+                        </span>
                     </div>
                 );
             case 'nether_transport':
                 return (
                     <div className="flex items-center gap-2">
-                        <span>Passage</span>
-                        <span className="px-3 py-1 text-sm rounded-full bg-red-100 text-red-700 border border-red-200 font-medium">
-              nether
-            </span>
+                        <span className={themeColors.text.secondary}>Passage</span>
+                        <span className={`px-3 py-1 text-sm ${themeColors.util.roundedFull} ${themeColors.world.nether} font-medium`}>
+                            nether
+                        </span>
                     </div>
                 );
             case 'portal':
@@ -206,100 +196,105 @@ export default function TravelPlan({
         }
     };
 
-    const getLocationDisplayForStep = (location: Step['from'] | Step['to']) => {
-        // Prioriser le nom s'il existe et est significatif
+    const getLocationDisplay = (location: Step['from'] | Step['to']) => {
         if (location.name && location.name !== 'none') {
             return location.name;
         }
-        // Si pas de nom significatif, utiliser les coordonnées
         if (location.coordinates) {
             return `${location.coordinates.x}, ${location.coordinates.y}, ${location.coordinates.z}`;
         }
         return 'Position inconnue';
     };
 
-    if (!selectedPlaceId) {
-        return (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-950/20 via-white dark:via-gray-900 to-indigo-100 dark:to-indigo-900/20 flex items-center justify-center transition-colors duration-300">
-                <div className="text-center max-w-md">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 dark:from-blue-800/30 to-indigo-100 dark:to-indigo-800/30 flex items-center justify-center transition-colors duration-300">
-                        <svg className="w-8 h-8 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
-                        </svg>
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Planification d&apos;itinéraire</h2>
-                    <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
-                        Sélectionnez une destination dans le panneau de gauche
-                    </p>
+    const getLocationStyle = (location: Step['from'] | Step['to'], isFirstStep: boolean) => {
+        if (location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '')) {
+            return themeColors.travelPlan.unknownPortal;
+        }
+        if (isFirstStep && !location.name && !location.coordinates) {
+            return themeColors.travelPlan.playerPosition;
+        }
+        return themeColors.text.primary;
+    };
+
+    const getLocationText = (location: Step['from'] | Step['to'], isFirstStep: boolean) => {
+        if (location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '')) {
+            return "Portail inconnu";
+        }
+        if (isFirstStep && !location.name && !location.coordinates) {
+            return "Position du joueur";
+        }
+        return getLocationDisplay(location);
+    };
+
+    const renderEmptyState = (icon: JSX.Element, title: string, description: string, bgGradient: string) => (
+        <div className={`absolute inset-0 ${bgGradient} flex items-center justify-center ${themeColors.transition}`}>
+            <div className="text-center max-w-md">
+                <div className={`w-16 h-16 mx-auto mb-6 ${themeColors.util.roundedFull} bg-gradient-to-br from-blue-100 dark:from-gray-800/30 to-indigo-100 dark:to-gray-800/30 flex items-center justify-center ${themeColors.transition}`}>
+                    {icon}
                 </div>
+                <h2 className={`text-xl font-bold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>{title}</h2>
+                <p className={`${themeColors.text.secondary} ${themeColors.transition}`}>{description}</p>
             </div>
+        </div>
+    );
+
+    if (!selectedPlaceId) {
+        return renderEmptyState(
+            <svg className={`w-8 h-8 ${themeColors.travelPlan.routeIcon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+            </svg>,
+            "Planification d'itinéraire",
+            "Sélectionnez une destination dans le panneau de gauche",
+            "bg-gradient-to-br from-blue-100 dark:from-gray-900 via-white dark:via-gray-950 to-indigo-100 dark:to-gray-900"
         );
     }
 
     if (loading) {
-        return (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-950/20 via-white dark:via-gray-900 to-indigo-100 dark:to-indigo-900/20 flex items-center justify-center transition-colors duration-300">
-                <div className="text-center">
-                    <div className="w-12 h-12 mx-auto mb-6 border-4 border-blue-200 dark:border-blue-700 border-t-blue-500 dark:border-t-blue-400 rounded-full animate-spin transition-colors duration-300"></div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Calcul en cours...</h2>
-                    <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">Recherche du meilleur itinéraire</p>
-                </div>
-            </div>
+        return renderEmptyState(
+            <div className={`w-12 h-12 border-4 ${themeColors.border.tertiary} ${themeColors.travelPlan.spinnerTop} ${themeColors.util.roundedFull} ${themeColors.util.animateSpin} ${themeColors.transition}`}></div>,
+            "Calcul en cours...",
+            "Recherche du meilleur itinéraire",
+            "bg-gradient-to-br from-blue-100 dark:from-gray-900 via-white dark:via-gray-950 to-indigo-100 dark:to-gray-900"
         );
     }
 
     if (error) {
-        return (
-            <div className="absolute inset-0 bg-gradient-to-br from-red-50 dark:from-red-950 via-white dark:via-gray-900 to-pink-50 dark:to-pink-950 flex items-center justify-center transition-colors duration-300">
-                <div className="text-center max-w-md">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-100 dark:from-red-800/30 to-pink-100 dark:to-pink-800/30 flex items-center justify-center transition-colors duration-300">
-                        <svg className="w-8 h-8 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                    </div>
-                    <h2 className="text-xl font-bold text-red-900 dark:text-red-100 mb-3 transition-colors duration-300">Erreur de calcul</h2>
-                    <p className="text-red-700 dark:text-red-300 transition-colors duration-300">{error}</p>
-                </div>
-            </div>
+        return renderEmptyState(
+            <svg className={`w-8 h-8 ${themeColors.travelPlan.errorIcon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>,
+            "Erreur de calcul",
+            error,
+            "bg-gradient-to-br from-red-50 dark:from-gray-900 via-white dark:via-gray-950 to-pink-50 dark:to-gray-900"
         );
     }
 
     if (!route) {
-        return (
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 dark:from-yellow-950 via-white dark:via-gray-900 to-orange-50 dark:to-orange-950 flex items-center justify-center transition-colors duration-300">
-                <div className="text-center max-w-md">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-yellow-100 dark:from-yellow-800/30 to-orange-100 dark:to-orange-800/30 flex items-center justify-center transition-colors duration-300">
-                        <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Position requise</h2>
-                    <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
-                        Synchronisez-vous avec le mod PlayerCoordsAPI<br />
-                        ou indiquez manuellement vos coordonnées
-                    </p>
-                </div>
-            </div>
+        return renderEmptyState(
+            <svg className={`w-8 h-8 ${themeColors.travelPlan.positionIcon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>,
+            "Position requise",
+            "Synchronisez-vous avec le mod PlayerCoordsAPI ou indiquez manuellement vos coordonnées",
+            "bg-gradient-to-br from-yellow-50 dark:from-gray-900 via-white dark:via-gray-950 to-orange-50 dark:to-gray-900"
         );
     }
 
     return (
-        <div className="absolute inset-0 bg-gradient-to-br from-green-100 dark:from-green-950 via-white dark:via-gray-900 to-blue-100 dark:to-blue-950 transition-colors duration-300">
-            {/* Center content between left panel (w-96) and right panel (w-80) */}
+        <div className={`absolute inset-0 bg-gradient-to-br from-green-100 dark:from-gray-900 via-white dark:via-gray-950 to-blue-100 dark:to-gray-900 ${themeColors.transition}`}>
             <div className="absolute inset-0 left-[25rem] right-[21rem] overflow-y-auto">
                 <div className="p-6 min-h-full flex flex-col justify-center">
                     <div className="w-full max-w-2xl mx-auto">
                         {/* Total distance display */}
                         <div className="text-center mb-8">
-                            <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border border-white/60">
-                                <div className="text-2xl font-bold text-gray-900">{route.total_distance.toFixed(0)}</div>
-                                <div className="text-sm text-gray-600 uppercase tracking-wide">blocs au total</div>
+                            <div className={`inline-flex items-center gap-3 ${themeColors.panel.tertiary} ${themeColors.blurSm} ${themeColors.util.roundedFull} px-6 py-3 ${themeColors.shadow.panel} border ${themeColors.border.secondary}`}>
+                                <div className={`text-2xl font-bold ${themeColors.text.primary}`}>{route.total_distance.toFixed(0)}</div>
+                                <div className={`text-sm ${themeColors.text.secondary} ${themeColors.util.uppercase}`}>blocs au total</div>
                             </div>
                         </div>
 
                         <div className="space-y-5">
-                            {/* Route Steps */}
                             {route.steps.filter(step => step.type !== 'portal').map((step, index) => (
                                 <div key={index} className="flex items-start gap-3 justify-center">
                                     <div className="flex flex-col items-center flex-shrink-0">
@@ -307,111 +302,80 @@ export default function TravelPlan({
                                             {getStepIcon(step.type)}
                                         </div>
                                         {index < route.steps.length - 1 && (
-                                            <div className="w-0.5 h-6 bg-gradient-to-b from-gray-300 to-gray-300 mt-2"></div>
+                                            <div className="w-0.5 h-6 bg-gradient-to-b from-gray-300 dark:from-gray-600 to-gray-300 dark:to-gray-600 mt-2"></div>
                                         )}
                                     </div>
-                                    <div className="flex-1 min-w-0 max-w-lg bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-white/60">
+                                    <div className={`flex-1 min-w-0 max-w-lg ${themeColors.panel.tertiary} ${themeColors.blurSm} ${themeColors.util.roundedXl} p-4 ${themeColors.shadow.panel} border ${themeColors.border.secondary}`}>
                                         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                            <h3 className="font-bold text-gray-900">{getStepTitle(step)}</h3>
+                                            <h3 className={`font-bold ${themeColors.text.primary}`}>{getStepTitle(step)}</h3>
                                             {step.distance && (
-                                                <span className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap">
-                          {step.distance.toFixed(1)} blocs
-                        </span>
+                                                <span className={`${themeColors.text.tertiary} text-xs`}>
+                                                    {step.distance.toFixed(0)} blocs
+                                                </span>
                                             )}
                                         </div>
+                                        
                                         <div className="space-y-3">
                                             <div className="flex items-center justify-between">
+                                                {/* From */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">De</div>
-                                                    
-                                                    
-                                                    
-                                                    <div className={`font-medium mb-1 ${
-                                                        // Condition for "Portail inconnu" (red text)
-                                                        (step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === ''))
-                                                            ? "text-red-700 dark:text-red-300"
-                                                            // Condition for "Position du joueur" (green text)
-                                                            : (index === 0 && (!step.from.name && !step.from.coordinates)
-                                                                ? "text-green-600"
-                                                                // Default text color
-                                                                : "text-gray-900")
-                                                    }`}>
-                                                        {/* Display logic */}
-                                                        {(step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === ''))
-                                                            ? "Portail inconnu" // Case: Portal with ID but no name
-                                                            : (index === 0 && (!step.from.name && !step.from.coordinates)
-                                                                ? "Position du joueur" // Case: Player's starting position
-                                                                : getLocationDisplayForStep(step.from))
-                                                        }
+                                                    <div className={`${themeColors.text.secondary} text-xs font-semibold ${themeColors.util.uppercase} mb-1`}>De</div>
+                                                    <div className={`font-medium mb-1 ${getLocationStyle(step.from, index === 0)}`}>
+                                                        {getLocationText(step.from, index === 0)}
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        {/* For first step, use player world if step.from.world is missing */}
                                                         {step.from.world && (
-                                                            <span className={`px-2 py-1 text-xs rounded-full border ${
-                                                                step.from.world === 'overworld'
-                                                                    ? 'bg-green-100 text-green-700 border-green-100'
-                                                                    : 'bg-red-100 text-red-700 border-red-100'
+                                                            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${
+                                                                step.from.world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether
                                                             }`}>
-                                {step.from.world}
-                              </span>
+                                                                {step.from.world}
+                                                            </span>
                                                         )}
-                                                        {/* For first step, use player coordinates if step.from.coordinates is missing */}
                                                         {(step.from.coordinates || (index === 0 && route.player_from.coordinates)) && (
-                                                            <span className="text-xs text-gray-500">
-                                {(step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === '')) ? '~ ' : ''}{step.from.coordinates
-                                    ? `${Math.floor(step.from.coordinates.x)}, ${Math.floor(step.from.coordinates.y)}, ${Math.floor(step.from.coordinates.z)}`
-                                    : `${Math.floor(route.player_from.coordinates.x)}, ${Math.floor(route.player_from.coordinates.y)}, ${Math.floor(route.player_from.coordinates.z)}`
-                                }
-                                {(step.type === 'nether_transport' && step.from.address) && <span className="ml-4">{step.from.address}</span>}
-                              </span>
+                                                            <span className={`text-sm ${themeColors.text.secondary} font-medium`}>
+                                                                {(step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === '')) ? '~ ' : ''}
+                                                                {step.from.coordinates
+                                                                    ? `${Math.floor(step.from.coordinates.x)}, ${Math.floor(step.from.coordinates.y)}, ${Math.floor(step.from.coordinates.z)}`
+                                                                    : `${Math.floor(route.player_from.coordinates.x)}, ${Math.floor(route.player_from.coordinates.y)}, ${Math.floor(route.player_from.coordinates.z)}`
+                                                                }
+                                                                {(step.type === 'nether_transport' && step.from.address) && <span className={`ml-3 px-2 py-1 ${themeColors.util.roundedFull} ${themeColors.travelPlan.netherAddress} text-xs font-semibold`}>{step.from.address}</span>}
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </div>
 
+                                                {/* Arrow */}
                                                 <div className="mx-4">
-                                                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className={`w-6 h-6 ${themeColors.text.secondary}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                     </svg>
                                                 </div>
 
+                                                {/* To */}
                                                 <div className="flex-1 min-w-0 text-right">
-                                                    <div className="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">À</div>
-                                                    
-                                                    
-                                                    
-                                                    <div className={`font-medium mb-1 ${
-                                                        // Condition for "Portail inconnu" (red text)
-                                                        (step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === ''))
-                                                            ? "text-red-700 dark:text-red-300"
-                                                            // Default text color
-                                                            : "text-gray-900"
-                                                    }`} title={getLocationDisplayForStep(step.to)}>
-                                                        {/* Display logic */}
+                                                    <div className={`${themeColors.text.secondary} text-xs font-semibold ${themeColors.util.uppercase} mb-1`}>À</div>
+                                                    <div className={`font-medium mb-1 ${getLocationStyle(step.to, false)}`} title={getLocationDisplay(step.to)}>
                                                         {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === ''))
-                                                            ? "Portail inconnu" // Case: Portal with ID but no name
-                                                            : (
-                                                                // Case: Portal without ID, displaying coordinates
-                                                                (step.type === 'portal' && (step.to.id === undefined || step.to.id === null || step.to.id === '') && step.to.coordinates)
-                                                                    ? `~ ${step.to.coordinates.x}, ${step.to.coordinates.y}, ${step.to.coordinates.z}${(step.type === 'nether_transport' && step.to.address) ? `  ${step.to.address}` : ''}`
-                                                                    : getLocationDisplayForStep(step.to) // All other cases
-                                                            )
+                                                            ? "Portail inconnu"
+                                                            : (step.type === 'portal' && (step.to.id === undefined || step.to.id === null || step.to.id === '') && step.to.coordinates)
+                                                                ? `~ ${step.to.coordinates.x}, ${step.to.coordinates.y}, ${step.to.coordinates.z}`
+                                                                : getLocationDisplay(step.to)
                                                         }
                                                     </div>
                                                     <div className="flex items-center justify-end gap-2">
                                                         {step.to.world && (
-                                                            <span className={`px-2 py-1 text-xs rounded-full border ${
-                                                                step.to.world === 'overworld'
-                                                                    ? 'bg-green-100 text-green-700 border-green-100'
-                                                                    : 'bg-red-100 text-red-700 border-red-100'
+                                                            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${
+                                                                step.to.world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether
                                                             }`}>
-                                {step.to.world}
-                              </span>
+                                                                {step.to.world}
+                                                            </span>
                                                         )}
                                                         {step.to.coordinates && (
-                                                            <span className="text-xs text-gray-500">
-                                {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === '')) ? '~ ' : ''}{step.to.coordinates.x}, {step.to.coordinates.y}, {step.to.coordinates.z}
-                                {(step.type === 'nether_transport' && step.to.address) && <span className="ml-4">{step.to.address}</span>}
-                              </span>
+                                                            <span className={`text-sm ${themeColors.text.secondary} font-medium`}>
+                                                                {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === '')) ? '~ ' : ''}
+                                                                {step.to.coordinates.x}, {step.to.coordinates.y}, {step.to.coordinates.z}
+                                                                {(step.type === 'nether_transport' && step.to.address) && <span className={`ml-3 px-2 py-1 ${themeColors.util.roundedFull} ${themeColors.travelPlan.netherAddress} text-xs font-semibold`}>{step.to.address}</span>}
+                                                            </span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -420,7 +384,6 @@ export default function TravelPlan({
                                     </div>
                                 </div>
                             ))}
-
                         </div>
                     </div>
                 </div>
