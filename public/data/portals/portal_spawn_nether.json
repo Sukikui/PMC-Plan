@@ -1,0 +1,11 @@
+{
+  "id": "portail_spawn",
+  "name": "Portail du Spawn",
+  "world": "nether",
+  "coordinates": {
+    "x": -19,
+    "y": 69,
+    "z": 29
+  },
+  "description": ""
+}

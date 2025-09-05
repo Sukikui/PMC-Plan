@@ -1,0 +1,12 @@
+{
+  "id": "carto",
+  "name": "Shop des Carto",
+  "world": "overworld",
+  "coordinates": {
+    "x": -1179,
+    "y": 66,
+    "z": 252
+  },
+  "tags": ["magasin"],
+  "description": "Cette splendide galerie d'art tenue par les cartographes du serveur propose des Map-Arts uniques."
+}

@@ -3,9 +3,9 @@
   "name": "Portail du Spawn",
   "world": "overworld",
   "coordinates": {
-    "x": -160,
-    "y": 70,
-    "z": 240
+    "x": -166,
+    "y": 74,
+    "z": 254
   },
-  "description": "Point central de l'autoroute aménagée du Nether"
+  "description": "Accès à l'autoroute aménagée du Nether"
 }

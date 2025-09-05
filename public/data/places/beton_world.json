@@ -1,0 +1,12 @@
+{
+  "id": "beton_world",
+  "name": "Beton World",
+  "world": "overworld",
+  "coordinates": {
+    "x": -1284,
+    "y": 70,
+    "z": 268
+  },
+  "tags": ["magasin"],
+  "description": "Magasin spécialisé situé dans la zone de l’Arbre Rosé, proposant toutes les couleurs de béton."
+}
