@@ -73,14 +73,14 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
     if (type === 'place') {
       return {
         border: themeColors.border.primary,
-        shadow: 'shadow-blue-400/75 dark:shadow-blue-700/50',
+        shadow: themeColors.shadow.overlay.place,
         headerBg: themeColors.panel.primary,
         headerBorder: themeColors.border.primary
       };
     } else {
       return {
         border: themeColors.border.primary,
-        shadow: 'shadow-purple-400/75 dark:shadow-purple-700/50',
+        shadow: themeColors.shadow.overlay.portal,
         headerBg: themeColors.panel.primary,
         headerBorder: themeColors.border.primary
       };
@@ -90,7 +90,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
   const typeStyles = getTypeStyles();
 
   return (
-    <div className={`fixed inset-0 bg-black/0 ${themeColors.blurSm} z-[9999] flex items-center justify-center p-4`}>
+    <div className={`fixed inset-0 ${themeColors.ui.overlayBackdrop} ${themeColors.blurSm} z-[9999] flex items-center justify-center p-4`}>
       <div 
         className="fixed inset-0 cursor-pointer"
         onClick={onClose}

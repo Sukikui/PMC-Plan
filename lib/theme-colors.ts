@@ -1,12 +1,51 @@
 export const themeColors = {
-  // Panel backgrounds - exactement comme dans les panels existants
+  // Simplified background system - base color IDENTICAL to panels
+  background: {
+    // BetaLockScreen - gradient with accentuated blue shades consistent with noDestination
+    lockScreen: 'bg-gradient-to-br from-blue-100 via-white to-indigo-100 dark:from-blue-950/20 dark:via-gray-900 dark:to-indigo-950/20',
+  },
+
+  // Main screen backgrounds by state - base identical to panels
+  mainScreen: {
+    // State 1: No destination selected - accentuated blue shades like BetaLockScreen
+    noDestination: 'bg-gradient-to-br from-blue-100 via-white to-indigo-100 dark:from-blue-950/20 dark:via-gray-900 dark:to-indigo-950/20',
+    
+    // State 2: Destination selected but no position (also loading) - dark yellow shades
+    noPosition: 'bg-gradient-to-br from-yellow-50 via-white to-orange-50 dark:from-yellow-950/15 dark:via-gray-900 dark:to-orange-950/15',
+    
+    // State 3: Route calculated and displayed - dark green shades
+    routeActive: 'bg-gradient-to-br from-green-50 via-white to-green-100 dark:from-green-950/15 dark:via-gray-900 dark:to-green-900/20',
+    
+    // Error state - dark red shades
+    error: 'bg-gradient-to-br from-red-50 via-white to-pink-50 dark:from-red-950/15 dark:via-gray-900 dark:to-pink-950/15',
+  },
+
+  // Centralized UI elements
+  ui: {
+    // Icon container (BetaLockScreen + generic TravelPlan icons)
+    iconContainer: 'bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 dark:bg-gray-800',
+    
+    // Specific container for the position icon (yellow/orange)
+    positionIconContainer: 'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 dark:bg-gray-800',
+    
+    // Specific container for the error icon (red)
+    errorIconContainer: 'bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900/30 dark:to-pink-900/30 dark:bg-gray-800',
+    
+    // Connector between steps
+    stepConnector: 'bg-gradient-to-b from-gray-300 to-gray-300 dark:from-gray-600 dark:to-gray-600',
+    
+    // Overlay backdrop
+    overlayBackdrop: 'bg-black/20 dark:bg-black/40',
+  },
+
+  // Panel backgrounds - consistent with the main background
   panel: {
     primary: 'bg-white/90 dark:bg-gray-900/95',
     secondary: 'bg-white/70 dark:bg-gray-900/70',
     tertiary: 'bg-white/80 dark:bg-gray-900/80',
   },
   
-  // Borders - reprises des panels existants
+  // Borders - reused from existing panels
   border: {
     primary: 'border-gray-200/50 dark:border-gray-800/50',
     secondary: 'border-gray-200/70 dark:border-gray-800/95',
@@ -15,7 +54,7 @@ export const themeColors = {
     light: 'border-gray-200/70 dark:border-gray-800/80',
   },
 
-  // Text colors - exactement comme utilisées
+  // Text colors - exactly as used
   text: {
     primary: 'text-gray-900 dark:text-gray-100',
     secondary: 'text-gray-600 dark:text-gray-400',
@@ -24,7 +63,7 @@ export const themeColors = {
     muted: 'text-gray-500 dark:text-gray-500',
   },
 
-  // Interactive elements - états hover des panels
+  // Interactive elements - hover states for panels
   interactive: {
     hover: 'hover:bg-gray-50 dark:hover:bg-gray-600',
     hoverPanel: 'hover:bg-white/90 dark:hover:bg-gray-900/90',
@@ -40,7 +79,7 @@ export const themeColors = {
     disconnected: 'bg-red-500',
   },
 
-  // Buttons - tous les types utilisés
+  // Buttons - all types used
   button: {
     primary: 'bg-blue-500 text-white hover:bg-blue-600',
     danger: 'bg-red-500 text-white hover:bg-red-600',
@@ -49,7 +88,7 @@ export const themeColors = {
     round: 'w-12 h-12 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700',
   },
 
-  // World badges - PositionPanel et DestinationPanel
+  // World badges - PositionPanel and DestinationPanel
   world: {
     overworld: 'bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 border border-green-100 dark:border-transparent',
     nether: 'bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300 border border-red-100 dark:border-transparent',
@@ -82,16 +121,20 @@ export const themeColors = {
     filterLogic: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700',
   },
 
-  // Links - SettingsPanel et DestinationPanel
+  // Links - SettingsPanel and DestinationPanel
   link: 'text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-800',
 
-  // Shadows - utilisées partout
+  // Shadows - used everywhere
   shadow: {
     panel: 'shadow-2xl dark:shadow-black/65',
     button: 'shadow-sm dark:shadow-black/65',
+    overlay: {
+      place: 'shadow-blue-400/75 dark:shadow-blue-700/50',
+      portal: 'shadow-purple-400/75 dark:shadow-purple-700/50',
+    }
   },
 
-  // Input styles - PositionPanel et DestinationPanel
+  // Input styles - PositionPanel and DestinationPanel
   input: {
     base: 'bg-white/90 dark:bg-gray-900/95 border-gray-200/50 dark:border-gray-800/50 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500',
     search: 'bg-white/70 dark:bg-gray-900/70 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500',
@@ -100,7 +143,7 @@ export const themeColors = {
   // Placeholders
   placeholder: 'placeholder-gray-400 dark:placeholder-gray-500',
 
-  // Transitions - utilisée partout
+  // Transitions - used everywhere
   transition: 'transition-colors duration-300',
   transitionAll: 'transition-all duration-300',
 
@@ -116,44 +159,44 @@ export const themeColors = {
     bottomBlur: 'bg-gradient-to-t from-white dark:from-gray-900 via-white/90 dark:via-gray-900/90 to-transparent',
   },
 
-  // Couleurs spécifiques pour TravelPlan
+  // Specific colors for TravelPlan
   travelPlan: {
-    // Icônes de transport
+    // Transport icons
     overworldIcon: 'text-green-600 dark:text-green-400',
     netherIcon: 'text-red-600 dark:text-red-400', 
     portalIcon: 'text-purple-600 dark:text-purple-400',
     portalContainer: 'bg-purple-100 dark:bg-purple-800/40 border-purple-200 dark:border-purple-700',
     
-    // États sémantiques
+    // Semantic states
     unknownPortal: 'text-red-700 dark:text-red-300',
     playerPosition: 'text-blue-500 dark:text-blue-400',
     
-    // Adresses nether
+    // Nether addresses
     netherAddress: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
     
-    // Icônes d'état dans les écrans vides
+    // Status icons in empty screens
     routeIcon: 'text-blue-500 dark:text-blue-400',
     errorIcon: 'text-red-500 dark:text-red-400', 
     positionIcon: 'text-yellow-600 dark:text-yellow-400',
     
-    // Spinner de chargement
+    // Loading spinner
     spinnerTop: 'border-t-blue-500 dark:border-t-blue-400',
   },
 
-  // Couleurs spécifiques pour SyncNotification 
+  // Specific colors for SyncNotification 
   syncNotification: {
-    // Container de notification d'erreur
+    // Error notification container
     errorBg: 'bg-red-50 dark:bg-red-900/20',
     errorBorder: 'border-red-200 dark:border-red-700',
     
-    // Indicateur de status (point rouge)
+    // Status indicator (red dot)
     statusDot: 'bg-red-500',
     
-    // Messages d'erreur
+    // Error messages
     errorText: 'text-red-700 dark:text-red-300',
     helpText: 'text-red-600 dark:text-red-400',
     
-    // Bouton de téléchargement
+    // Download button
     downloadBg: 'bg-white/80 dark:bg-gray-800/80',
     downloadHoverBg: 'hover:bg-white dark:hover:bg-gray-700',
     downloadBorder: 'border-red-300 dark:border-red-600',
@@ -162,39 +205,39 @@ export const themeColors = {
     downloadHoverText: 'hover:text-red-800 dark:hover:text-red-200',
   },
 
-  // Couleurs spécifiques pour BetaLockScreen
+  // Specific colors for BetaLockScreen
   betaLockScreen: {
-    // Icône de verrouillage
+    // Lock icon
     lockIcon: 'text-blue-500 dark:text-blue-400',
     
-    // Input de mot de passe
+    // Password input
     inputBg: 'bg-white/90 dark:bg-gray-800/90',
     inputBorder: 'border-gray-200/50 dark:border-gray-600/50',
     inputFocus: 'focus:ring-blue-500 focus:border-blue-500',
     
-    // Bordure de séparation
+    // Separator border
     separatorBorder: 'border-gray-200/50 dark:border-gray-600/50',
   },
 
-  // Couleurs spécifiques pour InfoOverlay
+  // Specific colors for InfoOverlay
   infoOverlay: {
     // Description background
     descriptionBg: 'bg-gray-50 dark:bg-gray-800/50',
     
-    // Tags des lieux (bleus)
+    // Place tags (blue)
     placeTags: 'bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300',
     
-    // Texte d'adresse nether
+    // Nether address text
     netherAddressText: 'text-gray-500 dark:text-gray-400',
   },
 
-  // Couleurs spécifiques pour DestinationPanel
+  // Specific colors for DestinationPanel
   destinationPanel: {
-    // État vide
+    // Empty state
     emptyStateText: 'text-gray-500',
   },
 
-  // Utility classes couramment utilisées
+  // Commonly used utility classes
   util: {
     roundedXl: 'rounded-xl',
     roundedLg: 'rounded-lg',

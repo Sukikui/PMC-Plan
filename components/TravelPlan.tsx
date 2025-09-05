@@ -226,10 +226,18 @@ export default function TravelPlan({
         return getLocationDisplay(location);
     };
 
-    const renderEmptyState = (icon: JSX.Element, title: string, description: string, bgGradient: string) => (
-        <div className={`absolute inset-0 ${bgGradient} flex items-center justify-center ${themeColors.transition}`}>
+    const getIconContainer = (iconType: 'default' | 'position' | 'error') => {
+        switch(iconType) {
+            case 'position': return themeColors.ui.positionIconContainer;
+            case 'error': return themeColors.ui.errorIconContainer;
+            default: return themeColors.ui.iconContainer;
+        }
+    };
+
+    const renderEmptyState = (icon: JSX.Element, title: string, description: string, bgClass: string, iconType: 'default' | 'position' | 'error' = 'default') => (
+        <div className={`absolute inset-0 ${bgClass} flex items-center justify-center ${themeColors.transition}`}>
             <div className="text-center max-w-md">
-                <div className={`w-16 h-16 mx-auto mb-6 ${themeColors.util.roundedFull} bg-gradient-to-br from-blue-100 dark:from-gray-800/30 to-indigo-100 dark:to-gray-800/30 flex items-center justify-center ${themeColors.transition}`}>
+                <div className={`w-16 h-16 mx-auto mb-6 ${themeColors.util.roundedFull} ${getIconContainer(iconType)} flex items-center justify-center ${themeColors.transition}`}>
                     {icon}
                 </div>
                 <h2 className={`text-xl font-bold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>{title}</h2>
@@ -245,7 +253,7 @@ export default function TravelPlan({
             </svg>,
             "Planification d'itinéraire",
             "Sélectionnez une destination dans le panneau de gauche",
-            "bg-gradient-to-br from-blue-100 dark:from-gray-900 via-white dark:via-gray-950 to-indigo-100 dark:to-gray-900"
+            themeColors.mainScreen.noDestination
         );
     }
 
@@ -254,7 +262,7 @@ export default function TravelPlan({
             <div className={`w-12 h-12 border-4 ${themeColors.border.tertiary} ${themeColors.travelPlan.spinnerTop} ${themeColors.util.roundedFull} ${themeColors.util.animateSpin} ${themeColors.transition}`}></div>,
             "Calcul en cours...",
             "Recherche du meilleur itinéraire",
-            "bg-gradient-to-br from-blue-100 dark:from-gray-900 via-white dark:via-gray-950 to-indigo-100 dark:to-gray-900"
+            themeColors.mainScreen.noDestination
         );
     }
 
@@ -265,7 +273,8 @@ export default function TravelPlan({
             </svg>,
             "Erreur de calcul",
             error,
-            "bg-gradient-to-br from-red-50 dark:from-gray-900 via-white dark:via-gray-950 to-pink-50 dark:to-gray-900"
+            themeColors.mainScreen.error,
+            'error'
         );
     }
 
@@ -277,12 +286,13 @@ export default function TravelPlan({
             </svg>,
             "Position requise",
             "Synchronisez-vous avec le mod PlayerCoordsAPI ou indiquez manuellement vos coordonnées",
-            "bg-gradient-to-br from-yellow-50 dark:from-gray-900 via-white dark:via-gray-950 to-orange-50 dark:to-gray-900"
+            themeColors.mainScreen.noPosition,
+            'position'
         );
     }
 
     return (
-        <div className={`absolute inset-0 bg-gradient-to-br from-green-100 dark:from-gray-900 via-white dark:via-gray-950 to-blue-100 dark:to-gray-900 ${themeColors.transition}`}>
+        <div className={`absolute inset-0 ${themeColors.mainScreen.routeActive} ${themeColors.transition}`}>
             <div className="absolute inset-0 left-[25rem] right-[21rem] overflow-y-auto">
                 <div className="p-6 min-h-full flex flex-col justify-center">
                     <div className="w-full max-w-2xl mx-auto">
@@ -302,7 +312,7 @@ export default function TravelPlan({
                                             {getStepIcon(step.type)}
                                         </div>
                                         {index < route.steps.length - 1 && (
-                                            <div className="w-0.5 h-6 bg-gradient-to-b from-gray-300 dark:from-gray-600 to-gray-300 dark:to-gray-600 mt-2"></div>
+                                            <div className={`w-0.5 h-6 ${themeColors.ui.stepConnector} mt-2`}></div>
                                         )}
                                     </div>
                                     <div className={`flex-1 min-w-0 max-w-lg ${themeColors.panel.tertiary} ${themeColors.blurSm} ${themeColors.util.roundedXl} p-4 ${themeColors.shadow.panel} border ${themeColors.border.secondary}`}>

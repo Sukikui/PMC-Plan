@@ -7,6 +7,7 @@ import TravelPlan from '@/components/TravelPlan';
 import InfoOverlay from '@/components/InfoOverlay';
 import SettingsPanel from '@/components/SettingsPanel';
 import BetaLockScreen from '@/components/BetaLockScreen';
+import { themeColors } from '@/lib/theme-colors';
 
 import { Place, Portal } from './api/utils/shared';
 
@@ -39,7 +40,13 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className={`h-screen ${
+      selectedPlaceId && (playerPosition || (manualCoords?.x && manualCoords?.y && manualCoords?.z))
+        ? themeColors.mainScreen.routeActive  // État 3: Itinéraire affiché
+        : selectedPlaceId
+        ? themeColors.mainScreen.noPosition   // État 2: Destination mais pas de position
+        : themeColors.mainScreen.noDestination // État 1: Aucune destination
+    } ${themeColors.transition}`}>
 
       {/* Left sliding panel */}
       <DestinationPanel
