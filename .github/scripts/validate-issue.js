@@ -416,8 +416,9 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
             data.coordinatesZ = fieldValues[5] || '';
             data.description = fieldValues[6] || '';
             data.tags = fieldValues[7] || '';
-            data.discord = fieldValues[8] || '';
-            data.image = fieldValues[9] || '';
+            data.owner = fieldValues[8] || '';
+            data.discord = fieldValues[9] || '';
+            data.image = fieldValues[10] || '';
         }
     } else if (isPortal) {
         if (fieldValues.length >= 6) {
@@ -432,7 +433,7 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     }
 
     const requiredFields = isPlace
-        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
+        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ', 'owner']
         : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
 
     const missingFields = [];

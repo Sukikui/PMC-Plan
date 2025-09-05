@@ -32,6 +32,12 @@ function generatePlaceJson(data) {
       place.discord = "";
   }
 
+  if (data.owner && data.owner.trim()) {
+    place.owner = data.owner.trim();
+  } else {
+    place.owner = "";
+  }
+
   return place;
 }
 

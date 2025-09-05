@@ -81,6 +81,15 @@ body:
       placeholder: "ferme, ville, magasin"
 
   - type: input
+    id: owner
+    attributes:
+      label: Propriétaire
+      description: Pseudo Minecraft du joueur propriétaire de ce lieu
+      placeholder: "Suki"
+    validations:
+      required: true
+
+  - type: input
     id: discord
     attributes:
       label: Serveur Discord (optionnel)

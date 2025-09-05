@@ -3,7 +3,7 @@
   "type": "object",
   "title": "PMC Plan Place Schema",
   "description": "Schema for validating place data in the PMC Plan project",
-  "required": ["id", "name", "world", "coordinates"],
+  "required": ["id", "name", "world", "coordinates", "owner"],
   "properties": {
     "id": {
       "type": "string",
@@ -67,6 +67,13 @@
       "minLength": 1,
       "maxLength": 200,
       "description": "Optional Discord server URL for this place"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "pattern": "^[a-zA-Z0-9_]+$",
+      "description": "Minecraft username of the player who owns this place"
     }
   },
   "additionalProperties": false
