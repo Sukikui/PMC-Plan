@@ -10,8 +10,7 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:endpoints": "node tests/endpoint-validation.js"
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
