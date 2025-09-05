@@ -45,21 +45,21 @@ export const themeColors = {
     primary: 'bg-blue-500 text-white hover:bg-blue-600',
     danger: 'bg-red-500 text-white hover:bg-red-600',
     secondary: 'bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700',
-    ghost: 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
+    ghost: 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
     round: 'w-12 h-12 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700',
   },
 
   // World badges - PositionPanel et DestinationPanel
   world: {
-    overworld: 'bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 border border-green-100 dark:border-none',
-    nether: 'bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300 border border-red-100 dark:border-none',
+    overworld: 'bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 border border-green-100 dark:border-transparent',
+    nether: 'bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300 border border-red-100 dark:border-transparent',
   },
 
   // Theme selector - SettingsPanel
   theme: {
-    light: 'bg-yellow-100 dark:bg-yellow-800/30 text-yellow-700 dark:text-yellow-300 border-yellow-100 dark:border-none',
-    dark: 'bg-gray-100 dark:bg-indigo-800/50 text-gray-700 dark:text-indigo-100 border-gray-100 dark:border-none',
-    system: 'bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-200 border-blue-100 dark:border-none',
+    light: 'bg-yellow-100 dark:bg-yellow-800/30 text-yellow-700 dark:text-yellow-300 border border-yellow-100 dark:border-transparent',
+    dark: 'bg-gray-100 dark:bg-indigo-800/50 text-gray-700 dark:text-indigo-100 border border-gray-100 dark:border-transparent',
+    system: 'bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-200 border border-blue-100 dark:border-transparent',
   },
 
   // Selection states - DestinationPanel

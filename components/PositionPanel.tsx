@@ -234,7 +234,7 @@ export default function PositionPanel({
           <>
             {/* Player name */}
             <div 
-              className={`${themeColors.panel.primary} ${themeColors.blurSm} ${themeColors.util.roundedLg} p-3 border ${themeColors.border.primary} ${themeColors.transition}`}
+              className={`${themeColors.panel.primary} ${themeColors.blurSm} ${themeColors.util.roundedLg} p-3 border ${themeColors.border.primary} ${isNewConnection ? '' : themeColors.transition}`}
               style={{
                 animation: isNewConnection ? 'blueGlow 0.5s ease-out' : undefined,
                 animationName: isNewConnection ? (document.documentElement.classList.contains('dark') ? 'blueGlowDark' : 'blueGlow') : undefined
@@ -263,7 +263,7 @@ export default function PositionPanel({
                 className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   (playerData.world === 'overworld' || playerData.world === 'minecraft:overworld')
                     ? themeColors.world.overworld
-                    : `${themeColors.button.ghost} border`
+                    : `${themeColors.button.ghost}`
                 }`}
                 disabled
               >
@@ -273,7 +273,7 @@ export default function PositionPanel({
                 className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   (playerData.world === 'nether' || playerData.world === 'minecraft:the_nether')
                     ? themeColors.world.nether
-                    : `${themeColors.button.ghost} border`
+                    : `${themeColors.button.ghost}`
                 }`}
                 disabled
               >
@@ -306,7 +306,7 @@ export default function PositionPanel({
                 className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   manualWorld === 'overworld'
                     ? themeColors.world.overworld
-                    : `${themeColors.button.ghost} border ${themeColors.interactive.hover}`
+                    : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
                 }`}
               >
                 overworld
@@ -316,7 +316,7 @@ export default function PositionPanel({
                 className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   manualWorld === 'nether'
                     ? themeColors.world.nether
-                    : `${themeColors.button.ghost} border ${themeColors.interactive.hover}`
+                    : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
                 }`}
               >
                 nether
