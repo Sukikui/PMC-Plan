@@ -63,7 +63,7 @@
     "discord": {
       "type": "string",
       "format": "uri",
-      "pattern": "^https://discord\\.gg/[a-zA-Z0-9]+$",
+      "pattern": "^$|^https://discord\\.gg/[a-zA-Z0-9]+$",
       "minLength": 0,
       "maxLength": 200,
       "description": "Optional Discord server URL for this place"
@@ -72,7 +72,7 @@
       "type": "string",
       "minLength": 0,
       "maxLength": 16,
-      "pattern": "^[a-zA-Z0-9_]+$",
+      "pattern": "^$|^[a-zA-Z0-9_]+$",
       "description": "Minecraft username of the player who owns this place"
     }
   },
