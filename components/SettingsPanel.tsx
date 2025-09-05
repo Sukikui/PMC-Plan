@@ -19,7 +19,7 @@ const SettingsPanel = () => {
                     onClick={() => setIsExpanded(true)}
                     className={`${themeColors.button.round} border ${themeColors.border.light} ${themeColors.transitionAll} flex items-center justify-center ${themeColors.util.hoverScale} ${themeColors.util.activeScale} ${themeColors.interactive.hoverBorder}`}
                     style={{
-                        boxShadow: document.documentElement.classList.contains('dark') 
+                        boxShadow: typeof window !== 'undefined' && document.documentElement.classList.contains('dark')
                             ? '0 8px 25px rgba(0, 0, 0, 0.4)'
                             : '0 8px 25px rgba(0, 0, 0, 0.15)'
                     }}

@@ -18,8 +18,10 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Yes. The password is basically hardcoded, congrats on finding it :)
-    if (password === 'beta') {
+    // Get password from environment variable, fallback to 'beta'
+    const expectedPassword = process.env.NEXT_PUBLIC_BETA_PASSWORD || 'beta';
+    
+    if (password === expectedPassword) {
       onUnlock();
     } else {
       setIsShaking(true);

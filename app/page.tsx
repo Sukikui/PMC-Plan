@@ -34,8 +34,10 @@ export default function Home() {
     setOverlayOpen(true);
   };
 
-  // Show lock screen if not unlocked
-  if (!isUnlocked) {
+  // Show lock screen if not unlocked and beta lock is not disabled
+  const shouldShowLockScreen = process.env.NEXT_PUBLIC_DISABLE_BETA_LOCK !== 'true' && !isUnlocked;
+  
+  if (shouldShowLockScreen) {
     return <BetaLockScreen onUnlock={() => setIsUnlocked(true)} />;
   }
 
