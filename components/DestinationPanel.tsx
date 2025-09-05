@@ -85,8 +85,8 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
     return tagMatch && searchMatch;
   });
 
-  // Filter portals by search query
-  const filteredPortals = portals.filter(portal => {
+  // Filter portals by search query (exclude portals when tags are active)
+  const filteredPortals = enabledTags.size > 0 ? [] : portals.filter(portal => {
     return searchQuery === '' || 
       portal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       portal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
