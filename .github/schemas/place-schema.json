@@ -62,7 +62,6 @@
     },
     "discord": {
       "type": "string",
-      "format": "uri",
       "pattern": "^$|^https://discord\\.gg/[a-zA-Z0-9]+$",
       "minLength": 0,
       "maxLength": 200,
