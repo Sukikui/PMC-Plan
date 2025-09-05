@@ -13,7 +13,7 @@ async function validateIssueData(github, context) {
 
     if (!isPlace && !isPortal) {
         console.log('❌ Issue must be labeled as either place or portal');
-        return;
+        return { branchName: null, prNumber: null };
     }
 
     let extractedData;
@@ -23,7 +23,7 @@ async function validateIssueData(github, context) {
     } catch (error) {
         console.log('❌ Failed to extract data from template:', error.message);
         await addErrorComment(github, context, error.message);
-        return;
+        return { branchName: null, prNumber: null };
     }
 
     const { generatePlaceJson, generatePortalJson } = require('./generate-json.js');
@@ -82,6 +82,7 @@ async function validateIssueData(github, context) {
     } catch (error) {
         console.log('❌ Validation failed:', error.message);
         await addErrorComment(github, context, error.message);
+        return { branchName: null, prNumber: null };
     }
 }
 
