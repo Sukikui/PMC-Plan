@@ -1,0 +1,11 @@
+{
+  "id": "portail_arbre_rose",
+  "name": "Portail de l'Arbre Rosé",
+  "world": "overworld",
+  "coordinates": {
+    "x": -1180,
+    "y": 65,
+    "z": 224
+  },
+  "description": "Accès à la zone commerciale de l'Arbre Rosé."
+}

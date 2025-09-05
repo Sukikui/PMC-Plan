@@ -1,0 +1,12 @@
+{
+  "id": "spawn",
+  "name": "Spawn",
+  "world": "overworld",
+  "coordinates": {
+    "x": -182,
+    "y": 76,
+    "z": 244
+  },
+  "tags": ["public"],
+  "description": "Point central de Play-MC.fr"
+}

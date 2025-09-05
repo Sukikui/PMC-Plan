@@ -1,0 +1,12 @@
+{
+  "id": "monde_ressource",
+  "name": "Monde ressource",
+  "world": "overworld",
+  "coordinates": {
+    "x": -192,
+    "y": 74,
+    "z": 227
+  },
+  "tags": ["public"],
+  "description": "Portail d'accès au monde ressource du serveur. Ce monde est régénéré périodiquement pour offrir un terrain de jeu frais et varié aux joueurs. Vous y trouverez des ressources abondantes et des paysages diversifiés, parfaits pour l'exploration et la collecte de matériaux."
+}

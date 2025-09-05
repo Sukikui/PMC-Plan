@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTheme } from '../lib/useTheme';
+import { useTheme } from '../lib/use-theme';
+import { themeColors } from '../lib/theme-colors';
 
 interface BetaLockScreenProps {
   onUnlock: () => void;
@@ -37,17 +38,17 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
         }
       `}</style>
       
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-100 dark:from-blue-950/20 via-white dark:via-gray-900 to-indigo-100 dark:to-indigo-900/20 flex items-center justify-center z-50 transition-colors duration-300">
+      <div className={`fixed inset-0 ${themeColors.background.lockScreen} flex items-center justify-center z-50 ${themeColors.transition}`}>
         <div className="max-w-md w-full mx-4">
           
           {/* Logo/Title */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 dark:from-blue-800/30 to-indigo-100 dark:to-indigo-800/30 flex items-center justify-center transition-colors duration-300">
-              <svg className="w-8 h-8 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={`w-16 h-16 mx-auto mb-4 ${themeColors.util.roundedFull} ${themeColors.ui.iconContainer} flex items-center justify-center ${themeColors.transition}`}>
+              <svg className={`w-8 h-8 ${themeColors.betaLockScreen.lockIcon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 transition-colors duration-300">
+            <h1 className={`text-2xl font-bold ${themeColors.text.primary} mb-2 ${themeColors.transition}`}>
               PMC Plan
             </h1>
           </div>
@@ -55,7 +56,7 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
           {/* Password Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-300">
+              <label htmlFor="password" className={`block text-sm font-medium ${themeColors.text.quaternary} mb-2 ${themeColors.transition}`}>
                 Mot de passe
               </label>
               <input
@@ -64,8 +65,8 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Saisissez le mot de passe..."
-                className={`w-full px-4 py-3 text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-800/90 border border-gray-200/50 dark:border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 dark:placeholder-gray-500 ${
-                  isShaking ? 'animate-pulse' : ''
+                className={`w-full px-4 py-3 ${themeColors.text.primary} ${themeColors.betaLockScreen.inputBg} border ${themeColors.betaLockScreen.inputBorder} ${themeColors.util.roundedLg} focus:outline-none focus:ring-2 ${themeColors.betaLockScreen.inputFocus} ${themeColors.transitionAll} ${themeColors.placeholder} ${
+                  isShaking ? themeColors.util.animatePulse : ''
                 }`}
                 style={{
                   animation: isShaking ? 'shake 0.5s ease-in-out' : undefined
@@ -77,10 +78,10 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
             <button
               type="submit"
               disabled={!password.trim()}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+              className={`w-full py-3 px-4 ${themeColors.util.roundedLg} font-medium ${themeColors.transitionAll} ${
                 password.trim()
-                  ? "bg-blue-500 text-white hover:bg-blue-600 active:scale-95"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  ? `${themeColors.button.primary} ${themeColors.util.activeScale}`
+                  : `${themeColors.interactive.disabled} cursor-not-allowed`
               }`}
             >
               Débloquer l&apos;accès
@@ -88,8 +89,8 @@ export default function BetaLockScreen({ onUnlock }: BetaLockScreenProps) {
           </form>
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-600/50 text-center transition-colors duration-300">
-            <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
+          <div className={`mt-8 pt-6 border-t ${themeColors.betaLockScreen.separatorBorder} text-center ${themeColors.transition}`}>
+            <p className={`text-xs ${themeColors.text.tertiary} ${themeColors.transition}`}>
               Phase de test - Accès temporaire
             </p>
           </div>

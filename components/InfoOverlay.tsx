@@ -5,6 +5,7 @@ import CrossIcon from './icons/CrossIcon';
 
 import { Place, Portal } from '../app/api/utils/shared';
 import { getWorldBadgeLarge } from '../lib/ui-utils';
+import { themeColors } from '../lib/theme-colors';
 
 interface InfoOverlayProps {
   isOpen: boolean;
@@ -36,8 +37,8 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
 
   const renderDescription = typeof item.description === 'string' && item.description.length > 0 ? (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Description</h3>
-      <p className="text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg transition-colors duration-300">
+      <h3 className={`text-lg font-semibold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>Description</h3>
+      <p className={`${themeColors.text.quaternary} leading-relaxed ${themeColors.infoOverlay.descriptionBg} p-4 ${themeColors.util.roundedLg} ${themeColors.transition}`}>
         {(item.description as string)}
       </p>
     </div>
@@ -49,12 +50,12 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
       if (Array.isArray(placeItem.tags) && placeItem.tags.length > 0) {
         return (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 transition-colors duration-300">Tags</h3>
+            <h3 className={`text-lg font-semibold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>Tags</h3>
             <div className="flex flex-wrap gap-2">
               {placeItem.tags.map(tag => (
                 <span 
                   key={tag} 
-                  className="bg-blue-100 dark:bg-blue-800/30 text-blue-700 dark:text-blue-300 text-sm px-3 py-1 rounded-full font-medium transition-colors duration-300"
+                  className={`${themeColors.infoOverlay.placeTags} text-sm px-3 py-1 ${themeColors.util.roundedFull} font-medium ${themeColors.transition}`}
                 >
                   {tag}
                 </span>
@@ -71,17 +72,17 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
   const getTypeStyles = () => {
     if (type === 'place') {
       return {
-        border: 'border-gray-200/50 dark:border-gray-800/50',
-        shadow: 'shadow-blue-400/75 dark:shadow-blue-700/50',
-        headerBg: 'bg-white/90 dark:bg-gray-900/95',
-        headerBorder: 'border-gray-200/50 dark:border-gray-800/50'
+        border: themeColors.border.primary,
+        shadow: themeColors.shadow.overlay.place,
+        headerBg: themeColors.panel.primary,
+        headerBorder: themeColors.border.primary
       };
     } else {
       return {
-        border: 'border-gray-200/50 dark:border-gray-800/50',
-        shadow: 'shadow-purple-400/75 dark:shadow-purple-700/50',
-        headerBg: 'bg-white/90 dark:bg-gray-900/95',
-        headerBorder: 'border-gray-200/50 dark:border-gray-800/50'
+        border: themeColors.border.primary,
+        shadow: themeColors.shadow.overlay.portal,
+        headerBg: themeColors.panel.primary,
+        headerBorder: themeColors.border.primary
       };
     }
   };
@@ -89,21 +90,21 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
   const typeStyles = getTypeStyles();
 
   return (
-    <div className="fixed inset-0 bg-black/0 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+    <div className={`fixed inset-0 ${themeColors.ui.overlayBackdrop} ${themeColors.blurSm} z-[9999] flex items-center justify-center p-4`}>
       <div 
         className="fixed inset-0 cursor-pointer"
         onClick={onClose}
         aria-label="Fermer l'overlay"
       />
       
-      <div className={`relative bg-white/90 dark:bg-gray-900/95 backdrop-blur-md rounded-xl [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] overflow-y-auto border ${typeStyles.border} transition-colors duration-300`}>
+      <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] overflow-y-auto border ${typeStyles.border} ${themeColors.transition}`}>
         {/* Header */}
-        <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} transition-colors duration-300`}>
+        <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition}`}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 transition-colors duration-300">{item.name}</h2>
-                <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full uppercase transition-colors duration-300">
+                <h2 className={`text-2xl font-bold ${themeColors.text.primary} ${themeColors.transition}`}>{item.name}</h2>
+                <span className={`text-sm font-medium ${themeColors.text.tertiary} ${themeColors.tag.display} px-2 py-1 ${themeColors.util.roundedFull} ${themeColors.util.uppercase} ${themeColors.transition}`}>
                   {type === 'place' ? 'Lieu' : 'Portail'}
                 </span>
               </div>
@@ -112,26 +113,26 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                 <span className={getWorldBadgeLarge(item.world)}>
                   {item.world}
                 </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.transition}`}>
                   {item.coordinates.x}, {item.coordinates.y}, {item.coordinates.z}
                 </span>
                 {type === 'portal' && item.world === 'nether' && (item as Portal).address && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300 ml-auto">
+                  <span className={`text-sm ${themeColors.infoOverlay.netherAddressText} ${themeColors.transition} ml-auto`}>
                     {(item as Portal).address}
                   </span>
                 )}
               </div>
               {'nether-associate' in item && item['nether-associate'] && item['nether-associate'].address && (
-                <div className="mt-2 pt-2 border-t border-gray-200/80 dark:border-gray-800/80 transition-colors duration-300">
+                <div className={`mt-2 pt-2 border-t ${themeColors.border.primary} ${themeColors.transition}`}>
                     <div className="flex items-center gap-2">
                         <span className={getWorldBadgeLarge('nether')}>
                         nether
                         </span>
                         <div className="flex items-center justify-between w-full">
-                            <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                            <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.transition}`}>
                                 {item['nether-associate'].coordinates.x}, {item['nether-associate'].coordinates.y}, {item['nether-associate'].coordinates.z}
                             </span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                            <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.transition}`}>
                                 {item['nether-associate'].address}
                             </span>
                         </div>
@@ -142,23 +143,23 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
             
             <button
               onClick={onClose}
-              className="ml-2 p-1 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700 border border-gray-200/70 dark:border-gray-800/80 shadow-sm dark:shadow-black/65 transition-all duration-200 flex-shrink-0"
+              className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
               aria-label="Fermer"
             >
-              <CrossIcon className="w-4 h-4 text-gray-400 dark:text-gray-400" />
+              <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6 bg-white/90 dark:bg-gray-900/95 transition-colors duration-300">
+        <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition}`}>
           {/* Place Image */}
           {type === 'place' && (
             <div className="flex justify-center">
               <img
                 src={`/data/place_images/${item.id}.png`}
                 alt={`Image de ${item.name}`}
-                className="max-h-64 w-auto rounded-lg"
+                className={`max-h-64 w-auto ${themeColors.util.roundedLg}`}
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}

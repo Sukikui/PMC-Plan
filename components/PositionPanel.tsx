@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import SyncNotification, { getErrorMessage, ERROR_MESSAGES } from './SyncNotification';
+import { themeColors } from '../lib/theme-colors';
 
 interface PlayerData {
   x: number;
@@ -173,10 +174,10 @@ export default function PositionPanel({
         }
       `}</style>
       <div className="fixed top-4 right-4 w-80 z-50">
-        <div className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-md shadow-2xl dark:shadow-black/65 rounded-xl border border-gray-200/50 dark:border-gray-800/50 transition-colors duration-300">
+        <div className={`${themeColors.panel.primary} ${themeColors.blur} ${themeColors.shadow.panel} ${themeColors.util.roundedXl} border ${themeColors.border.primary} ${themeColors.transition}`}>
 
       {/* Server Logo */}
-      <div className="p-4 flex justify-center bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-t-xl border-b border-gray-200/30 dark:border-gray-800/50 transition-colors duration-300">
+      <div className={`p-4 flex justify-center ${themeColors.panel.primary} ${themeColors.blurSm} rounded-t-xl border-b ${themeColors.border.primary} ${themeColors.transition}`}>
         <a href="https://play-mc.fr" target="_blank" rel="noopener noreferrer">
           <img 
             src="/pmc_logo.png" 
@@ -190,24 +191,24 @@ export default function PositionPanel({
       </div>
       
       {/* Header with sync button */}
-      <div className="p-4 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm transition-colors duration-300">
+      <div className={`p-4 border-b ${themeColors.border.primary} ${themeColors.panel.primary} ${themeColors.blurSm} ${themeColors.transition}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-blue-500 animate-pulse' : 'bg-red-500'}`}></div>
-            <h2 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide transition-colors duration-300">Position du Client</h2>
+            <div className={`w-3 h-3 ${themeColors.util.roundedFull} ${isConnected ? `${themeColors.status.connected} ${themeColors.util.animatePulse}` : themeColors.status.disconnected}`}></div>
+            <h2 className={`text-xs font-semibold ${themeColors.text.secondary} ${themeColors.util.uppercase} ${themeColors.transition}`}>Position du Client</h2>
           </div>
           
           <button
             onClick={isConnected ? disconnect : () => syncPosition()}
             disabled={isLoading}
-            className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+            className={`px-3 py-1.5 text-xs ${themeColors.util.roundedLg} font-medium ${themeColors.transitionAll} ${
               isLoading
-                ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                ? `${themeColors.interactive.disabled} cursor-not-allowed`
                 : isConnected
-                ? 'bg-red-500 text-white hover:bg-red-600 active:scale-95'
-                : 'bg-blue-500 text-white hover:bg-blue-600 active:scale-95'
+                ? `${themeColors.button.danger} ${themeColors.util.activeScale}`
+                : `${themeColors.button.primary} ${themeColors.util.activeScale}`
             } ${
-              isShaking ? 'animate-pulse' : ''
+              isShaking ? themeColors.util.animatePulse : ''
             }`}
             style={{
               animation: isShaking ? 'shake 0.5s ease-in-out' : undefined
@@ -215,7 +216,7 @@ export default function PositionPanel({
           >
             {isLoading ? (
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 border border-gray-400 dark:border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                <div className={`w-3 h-3 border ${themeColors.text.secondary} border-t-transparent ${themeColors.util.roundedFull} ${themeColors.util.animateSpin}`}></div>
                 Sync...
               </div>
             ) : isConnected ? (
@@ -228,12 +229,12 @@ export default function PositionPanel({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3 bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-b-xl transition-colors duration-300">
+      <div className={`p-4 space-y-3 ${themeColors.panel.primary} ${themeColors.blurSm} rounded-b-xl ${themeColors.transition}`}>
         {playerData ? (
           <>
             {/* Player name */}
             <div 
-              className="bg-white/90 dark:bg-gray-900/95 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 dark:border-gray-800/50 transition-colors duration-300"
+              className={`${themeColors.panel.primary} ${themeColors.blurSm} ${themeColors.util.roundedLg} p-3 border ${themeColors.border.primary} ${isNewConnection ? '' : themeColors.transition}`}
               style={{
                 animation: isNewConnection ? 'blueGlow 0.5s ease-out' : undefined,
                 animationName: isNewConnection ? (document.documentElement.classList.contains('dark') ? 'blueGlowDark' : 'blueGlow') : undefined
@@ -250,8 +251,8 @@ export default function PositionPanel({
                   }}
                 />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-300">{playerData.username}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 transition-colors duration-300">UUID: {playerData.uuid.substring(0, 8)}...</div>
+                  <div className={`text-sm font-medium ${themeColors.text.primary} ${themeColors.transition}`}>{playerData.username}</div>
+                  <div className={`text-xs ${themeColors.text.tertiary} mt-0.5 ${themeColors.transition}`}>UUID: {playerData.uuid.substring(0, 8)}...</div>
                 </div>
               </div>
             </div>
@@ -259,20 +260,20 @@ export default function PositionPanel({
             {/* World selector */}
             <div className="flex gap-1">
               <button
-                className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
+                className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   (playerData.world === 'overworld' || playerData.world === 'minecraft:overworld')
-                    ? 'bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 border border-green-100 dark:border-none'
-                    : 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                    ? themeColors.world.overworld
+                    : `${themeColors.button.ghost}`
                 }`}
                 disabled
               >
                 overworld
               </button>
               <button
-                className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
+                className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   (playerData.world === 'nether' || playerData.world === 'minecraft:the_nether')
-                    ? 'bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300 border border-red-100 dark:border-none'
-                    : 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                    ? themeColors.world.nether
+                    : `${themeColors.button.ghost}`
                 }`}
                 disabled
               >
@@ -282,16 +283,16 @@ export default function PositionPanel({
 
             {/* Coordinates */}
             <div className="flex items-center gap-3">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">X</label>
-              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded transition-colors duration-300">
+              <label className={`text-xs font-medium ${themeColors.text.quaternary} w-4 text-center ${themeColors.transition}`}>X</label>
+              <div className={`w-16 px-2 py-1 text-xs ${themeColors.text.primary} ${themeColors.input.base} border rounded ${themeColors.transition}`}>
                 {Math.floor(playerData.x)}
               </div>
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Y</label>
-              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded transition-colors duration-300">
+              <label className={`text-xs font-medium ${themeColors.text.quaternary} w-4 text-center ${themeColors.transition}`}>Y</label>
+              <div className={`w-16 px-2 py-1 text-xs ${themeColors.text.primary} ${themeColors.input.base} border rounded ${themeColors.transition}`}>
                 {Math.floor(playerData.y)}
               </div>
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Z</label>
-              <div className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/70 dark:bg-gray-900/70 border border-gray-300 dark:border-gray-600 rounded mr-3 transition-colors duration-300">
+              <label className={`text-xs font-medium ${themeColors.text.quaternary} w-4 text-center ${themeColors.transition}`}>Z</label>
+              <div className={`w-16 px-2 py-1 text-xs ${themeColors.text.primary} ${themeColors.input.base} border rounded mr-3 ${themeColors.transition}`}>
                 {Math.floor(playerData.z)}
               </div>
             </div>
@@ -302,20 +303,20 @@ export default function PositionPanel({
             <div className="flex gap-1">
               <button
                 onClick={() => setManualWorld('overworld')}
-                className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
+                className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   manualWorld === 'overworld'
-                    ? 'bg-green-100 dark:bg-green-800/30 text-green-700 dark:text-green-300 border border-green-100 dark:border-none'
-                    : 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    ? themeColors.world.overworld
+                    : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
                 }`}
               >
                 overworld
               </button>
               <button
                 onClick={() => setManualWorld('nether')}
-                className={`px-2 py-1 text-xs rounded-full font-medium transition-colors ${
+                className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                   manualWorld === 'nether'
-                    ? 'bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-300 border border-red-100 dark:border-none'
-                    : 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    ? themeColors.world.nether
+                    : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
                 }`}
               >
                 nether
@@ -324,29 +325,29 @@ export default function PositionPanel({
 
             {/* Coordinates input */}
             <div className="flex items-center gap-3">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">X</label>
+              <label className={`text-xs font-medium ${themeColors.text.quaternary} w-4 text-center ${themeColors.transition}`}>X</label>
               <input
                 type="number"
                 value={manualCoords.x}
                 onChange={(e) => setManualCoords(prev => ({ ...prev, x: e.target.value }))}
                 placeholder="0"
-                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className={`w-16 px-2 py-1 text-xs ${themeColors.input.base} border rounded focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
               />
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Y</label>
+              <label className={`text-xs font-medium ${themeColors.text.quaternary} w-4 text-center ${themeColors.transition}`}>Y</label>
               <input
                 type="number"
                 value={manualCoords.y}
                 onChange={(e) => setManualCoords(prev => ({ ...prev, y: e.target.value }))}
                 placeholder="64"
-                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/95 border border-gray-200/50 dark:border-gray-800/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className={`w-16 px-2 py-1 text-xs ${themeColors.input.base} border rounded focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
               />
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 w-4 text-center transition-colors duration-300">Z</label>
+              <label className={`text-xs font-medium ${themeColors.text.quaternary} w-4 text-center ${themeColors.transition}`}>Z</label>
               <input
                 type="number"
                 value={manualCoords.z}
                 onChange={(e) => setManualCoords(prev => ({ ...prev, z: e.target.value }))}
                 placeholder="0"
-                className="w-16 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 bg-white/80 dark:bg-gray-900/80 border border-gray-200/50 dark:border-gray-800/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none mr-3"
+                className={`w-16 px-2 py-1 text-xs ${themeColors.input.base} border rounded focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder} [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none mr-3`}
               />
             </div>
           </div>

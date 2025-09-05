@@ -1,0 +1,11 @@
+{
+  "id": "portail_arbre_rose",
+  "name": "Portail de l'Arbre Rosé",
+  "world": "nether",
+  "coordinates": {
+    "x": -145,
+    "y": 71,
+    "z": 22
+  },
+  "description": ""
+}
