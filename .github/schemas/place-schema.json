@@ -3,7 +3,7 @@
   "type": "object",
   "title": "PMC Plan Place Schema",
   "description": "Schema for validating place data in the PMC Plan project",
-  "required": ["id", "name", "world", "coordinates"],
+  "required": ["id", "name", "world", "coordinates", "owner"],
   "properties": {
     "id": {
       "type": "string",
@@ -60,17 +60,20 @@
       "maxLength": 500,
       "description": "Optional description of the place"
     },
-    "portals": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z0-9_]+$",
-        "minLength": 1,
-        "maxLength": 50
-      },
-      "uniqueItems": true,
-      "maxItems": 10,
-      "description": "Array of portal IDs associated with this place"
+    "discord": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://discord\\.gg/[a-zA-Z0-9]+$",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Optional Discord server URL for this place"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "pattern": "^[a-zA-Z0-9_]+$",
+      "description": "Minecraft username of the player who owns this place"
     }
   },
   "additionalProperties": false

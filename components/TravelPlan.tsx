@@ -196,23 +196,37 @@ export default function TravelPlan({
         }
     };
 
+    const isUnknownPortal = (location: Step['from'] | Step['to']) => {
+        return location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '');
+    };
+
+    const isPlayerPosition = (location: Step['from'] | Step['to'], isFirstStep: boolean) => {
+        return isFirstStep && !location.id;
+    };
+
+    const formatCoordinates = (coordinates: { x: number; y: number; z: number }, withFloor = true) => {
+        if (withFloor) {
+            return `${Math.floor(coordinates.x)}, ${Math.floor(coordinates.y)}, ${Math.floor(coordinates.z)}`;
+        }
+        return `${coordinates.x}, ${coordinates.y}, ${coordinates.z}`;
+    };
+
     const getLocationDisplay = (location: Step['from'] | Step['to']) => {
         if (location.name && location.name !== 'none') {
             return location.name;
         }
         if (location.coordinates) {
-            return `${location.coordinates.x}, ${location.coordinates.y}, ${location.coordinates.z}`;
+            return formatCoordinates(location.coordinates, false);
         }
         return 'Position inconnue';
     };
 
     const getLocationStyle = (location: Step['from'] | Step['to'], isFirstStep: boolean) => {
-        if (location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '')) {
+        if (isUnknownPortal(location)) {
             return themeColors.travelPlan.unknownPortal;
         }
 
-        const isPlayerPosition = isFirstStep && !location.id;
-        if (isPlayerPosition) {
+        if (isPlayerPosition(location, isFirstStep)) {
             return themeColors.travelPlan.playerPosition;
         }
 
@@ -220,16 +234,36 @@ export default function TravelPlan({
     };
 
     const getLocationText = (location: Step['from'] | Step['to'], isFirstStep: boolean) => {
-        if (location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '')) {
+        if (isUnknownPortal(location)) {
             return "Portail inconnu";
         }
 
-        const isPlayerPosition = isFirstStep && !location.id;
-        if (isPlayerPosition) {
+        if (isPlayerPosition(location, isFirstStep)) {
             return "Position du joueur";
         }
 
         return getLocationDisplay(location);
+    };
+
+    const renderWorldBadge = (world: string) => {
+        return (
+            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${
+                world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether
+            }`}>
+                {world}
+            </span>
+        );
+    };
+
+    const renderNetherAddress = (stepType: string, address?: string) => {
+        if (stepType === 'nether_transport' && address) {
+            return (
+                <span className={`ml-3 px-2 py-1 ${themeColors.util.roundedFull} ${themeColors.travelPlan.netherAddress} text-xs font-semibold`}>
+                    {address}
+                </span>
+            );
+        }
+        return null;
     };
 
     const getIconContainer = (iconType: 'default' | 'position' | 'error') => {
@@ -340,21 +374,15 @@ export default function TravelPlan({
                                                         {getLocationText(step.from, index === 0)}
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        {step.from.world && (
-                                                            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${
-                                                                step.from.world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether
-                                                            }`}>
-                                                                {step.from.world}
-                                                            </span>
-                                                        )}
+                                                        {step.from.world && renderWorldBadge(step.from.world)}
                                                         {(step.from.coordinates || (index === 0 && route.player_from.coordinates)) && (
                                                             <span className={`text-sm ${themeColors.text.secondary} font-medium`}>
-                                                                {(step.from.id !== undefined && step.from.id !== null && (!step.from.name || step.from.name === 'none' || step.from.name === '')) ? '~ ' : ''}
+                                                                {isUnknownPortal(step.from) ? '~ ' : ''}
                                                                 {step.from.coordinates
-                                                                    ? `${Math.floor(step.from.coordinates.x)}, ${Math.floor(step.from.coordinates.y)}, ${Math.floor(step.from.coordinates.z)}`
-                                                                    : `${Math.floor(route.player_from.coordinates.x)}, ${Math.floor(route.player_from.coordinates.y)}, ${Math.floor(route.player_from.coordinates.z)}`
+                                                                    ? formatCoordinates(step.from.coordinates)
+                                                                    : formatCoordinates(route.player_from.coordinates)
                                                                 }
-                                                                {(step.type === 'nether_transport' && step.from.address) && <span className={`ml-3 px-2 py-1 ${themeColors.util.roundedFull} ${themeColors.travelPlan.netherAddress} text-xs font-semibold`}>{step.from.address}</span>}
+                                                                {renderNetherAddress(step.type, step.from.address)}
                                                             </span>
                                                         )}
                                                     </div>
@@ -371,26 +399,20 @@ export default function TravelPlan({
                                                 <div className="flex-1 min-w-0 text-right">
                                                     <div className={`${themeColors.text.secondary} text-xs font-semibold ${themeColors.util.uppercase} mb-1`}>À</div>
                                                     <div className={`font-medium mb-1 ${getLocationStyle(step.to, false)}`} title={getLocationDisplay(step.to)}>
-                                                        {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === ''))
+                                                        {isUnknownPortal(step.to)
                                                             ? "Portail inconnu"
                                                             : (step.type === 'portal' && (step.to.id === undefined || step.to.id === null || step.to.id === '') && step.to.coordinates)
-                                                                ? `~ ${step.to.coordinates.x}, ${step.to.coordinates.y}, ${step.to.coordinates.z}`
+                                                                ? `~ ${formatCoordinates(step.to.coordinates, false)}`
                                                                 : getLocationDisplay(step.to)
                                                         }
                                                     </div>
                                                     <div className="flex items-center justify-end gap-2">
-                                                        {step.to.world && (
-                                                            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${
-                                                                step.to.world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether
-                                                            }`}>
-                                                                {step.to.world}
-                                                            </span>
-                                                        )}
+                                                        {step.to.world && renderWorldBadge(step.to.world)}
                                                         {step.to.coordinates && (
                                                             <span className={`text-sm ${themeColors.text.secondary} font-medium`}>
-                                                                {(step.to.id !== undefined && step.to.id !== null && (!step.to.name || step.to.name === 'none' || step.to.name === '')) ? '~ ' : ''}
-                                                                {step.to.coordinates.x}, {step.to.coordinates.y}, {step.to.coordinates.z}
-                                                                {(step.type === 'nether_transport' && step.to.address) && <span className={`ml-3 px-2 py-1 ${themeColors.util.roundedFull} ${themeColors.travelPlan.netherAddress} text-xs font-semibold`}>{step.to.address}</span>}
+                                                                {isUnknownPortal(step.to) ? '~ ' : ''}
+                                                                {formatCoordinates(step.to.coordinates, false)}
+                                                                {renderNetherAddress(step.type, step.to.address)}
                                                             </span>
                                                         )}
                                                     </div>

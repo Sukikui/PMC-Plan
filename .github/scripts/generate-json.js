@@ -26,10 +26,16 @@ function generatePlaceJson(data) {
     place.description = "";
   }
 
-  if (data.portals && data.portals.trim()) {
-    place.portals = data.portals.split(',').map(portal => portal.trim()).filter(portal => portal);
+  if (data.discord && data.discord.trim()) {
+    place.discord = data.discord.trim();
   } else {
-    place.portals = [];
+      place.discord = "";
+  }
+
+  if (data.owner && data.owner.trim()) {
+    place.owner = data.owner.trim();
+  } else {
+    place.owner = "";
   }
 
   return place;

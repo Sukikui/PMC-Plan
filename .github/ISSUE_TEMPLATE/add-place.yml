@@ -81,11 +81,20 @@ body:
       placeholder: "ferme, ville, magasin"
 
   - type: input
-    id: portals
+    id: owner
     attributes:
-      label: Portails liés (optionnel)
-      description: IDs des portails associés à ce lieu, séparés par des virgules
-      placeholder: "portail_village_suki, portail_autre_lieu"
+      label: Propriétaire
+      description: Pseudo Minecraft du joueur propriétaire de ce lieu
+      placeholder: "Suki"
+    validations:
+      required: true
+
+  - type: input
+    id: discord
+    attributes:
+      label: Serveur Discord (optionnel)
+      description: URL d'invitation Discord associée à ce lieu
+      placeholder: "https://discord.gg/abcd1234"
 
   - type: textarea
     id: image
@@ -106,7 +115,7 @@ body:
           required: true
         - label: Les coordonnées sont exactes
           required: true
-        - label: J'ai indiqué l'ensemble des portails liés à ce lieu
+        - label: Les informations fournies sont exactes
           required: true
 
   - type: markdown

@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { validateSchema, checkIdUniqueness, checkLinkedPortals } = require('./validate-data.js');
+const { validateSchema, checkIdUniqueness } = require('./validate-data.js');
 
 /**
  * Validates issue data based on labels (place or portal) and generates a pull request.
@@ -45,10 +45,6 @@ async function validateIssueData(github, context) {
         checkIdUniqueness(type, jsonData.id);
         console.log('✅ ID uniqueness verified');
 
-        if (isPlace) {
-            checkLinkedPortals(jsonData);
-            console.log('✅ All linked portals exist');
-        }
 
         if (isPlace && extractedData.image && extractedData.image.trim()) {
             console.log('🖼️ Image field is present, fetching issue as HTML to get image URL...');
@@ -420,8 +416,9 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
             data.coordinatesZ = fieldValues[5] || '';
             data.description = fieldValues[6] || '';
             data.tags = fieldValues[7] || '';
-            data.portals = fieldValues[8] || '';
-            data.image = fieldValues[9] || '';
+            data.owner = fieldValues[8] || '';
+            data.discord = fieldValues[9] || '';
+            data.image = fieldValues[10] || '';
         }
     } else if (isPortal) {
         if (fieldValues.length >= 6) {
@@ -436,7 +433,7 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     }
 
     const requiredFields = isPlace
-        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
+        ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ', 'owner']
         : ['portalId', 'portalName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ'];
 
     const missingFields = [];
