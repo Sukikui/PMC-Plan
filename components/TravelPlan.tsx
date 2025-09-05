@@ -210,9 +210,12 @@ export default function TravelPlan({
         if (location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '')) {
             return themeColors.travelPlan.unknownPortal;
         }
-        if (isFirstStep && !location.name && !location.coordinates) {
+
+        const isPlayerPosition = isFirstStep && !location.id;
+        if (isPlayerPosition) {
             return themeColors.travelPlan.playerPosition;
         }
+
         return themeColors.text.primary;
     };
 
@@ -220,9 +223,12 @@ export default function TravelPlan({
         if (location.id !== undefined && location.id !== null && (!location.name || location.name === 'none' || location.name === '')) {
             return "Portail inconnu";
         }
-        if (isFirstStep && !location.name && !location.coordinates) {
+
+        const isPlayerPosition = isFirstStep && !location.id;
+        if (isPlayerPosition) {
             return "Position du joueur";
         }
+
         return getLocationDisplay(location);
     };
 
@@ -305,7 +311,7 @@ export default function TravelPlan({
                         </div>
 
                         <div className="space-y-5">
-                            {route.steps.filter(step => step.type !== 'portal').map((step, index) => (
+                            {route.steps.filter(step => step.type !== 'portal' && step.distance && step.distance > 0).map((step, index) => (
                                 <div key={index} className="flex items-start gap-3 justify-center">
                                     <div className="flex flex-col items-center flex-shrink-0">
                                         <div className="transform scale-110">
