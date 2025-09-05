@@ -5,7 +5,7 @@ import { GET as getPlaces } from '../app/api/places/route';
 import { GET as getPortals } from '../app/api/portals/route';
 import { GET as getRoute } from '../app/api/route/route';
 import { NextRequest } from 'next/server';
-import { mockPortals, mockPlaces, getPortalsByWorld, getPortalPairs, generateRouteTestScenarios, getTestCoordinates } from './mockData';
+import { mockPortals, mockPlaces, getPortalsByWorld, getPortalPairs, generateRouteTestScenarios, getTestCoordinates } from './mock-data';
 
 // Mock the loadPlaces and loadPortals functions
 jest.mock('../app/api/utils/shared', () => ({

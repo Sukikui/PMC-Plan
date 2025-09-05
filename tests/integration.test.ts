@@ -1,6 +1,6 @@
 import { GET as getRoute } from '../app/api/route/route';
 import { NextRequest } from 'next/server';
-import { mockPlaces, mockPortals } from './mockData';
+import { mockPlaces, mockPortals } from './mock-data';
 
 // Mock the loadPlaces and loadPortals functions
 jest.mock('../app/api/utils/shared', () => ({
