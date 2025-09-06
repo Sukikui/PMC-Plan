@@ -122,7 +122,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
       {/* Header */}
       <div className={`flex-shrink-0 p-6 border-b ${themeColors.border.primary} ${themeColors.panel.primary} ${themeColors.blurSm} rounded-t-xl ${themeColors.transition}`}>
         {/* Tag Filters */}
-        <div className="mt-2">
+        <div>
           <div className={`text-xs font-semibold ${themeColors.text.secondary} mb-2 ${themeColors.util.uppercase} ${themeColors.transition}`}>Filtrer par tags</div>
           <div className="flex flex-wrap gap-1">
             <button
@@ -229,7 +229,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                         <div
                           key={place.id}
                           onClick={() => handlePlaceClick(place.id, 'place')}
-                          className={`relative group p-4 ${themeColors.util.roundedLg} cursor-pointer ${themeColors.transitionAll} ${themeColors.selection.place.hover} ${
+                          className={`relative group px-4 pb-4 pt-3 ${themeColors.util.roundedLg} cursor-pointer ${themeColors.transitionAll} ${themeColors.selection.place.hover} ${
                             selectedId === place.id
                               ? themeColors.selection.place.active
                               : `${themeColors.panel.secondary} border ${themeColors.border.secondary} ${themeColors.interactive.hoverPanel} ${themeColors.interactive.hoverBorder}`
@@ -249,6 +249,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               onClick={(e) => handleInfoClick(e, place, 'place')}
                               className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.secondary} ${themeColors.shadow.button} ${themeColors.transitionAll} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
                               aria-label="Plus d'informations"
+                              style={{ marginTop: '4px' }}
                             >
                               <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
                             </button>
@@ -288,7 +289,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                         <div
                           key={portal.id}
                           onClick={() => handlePlaceClick(portal.id, 'portal')}
-                          className={`relative group p-4 ${themeColors.util.roundedLg} cursor-pointer ${themeColors.transitionAll} ${themeColors.selection.portal.hover} ${
+                          className={`relative group px-4 pb-4 pt-3 ${themeColors.util.roundedLg} cursor-pointer ${themeColors.transitionAll} ${themeColors.selection.portal.hover} ${
                             selectedId === portal.id
                               ? themeColors.selection.portal.active
                               : `${themeColors.panel.secondary} border ${themeColors.border.secondary} ${themeColors.interactive.hoverPanel} ${themeColors.interactive.hoverBorder}`
@@ -316,6 +317,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                               onClick={(e) => handleInfoClick(e, portal, 'portal')}
                               className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.secondary} ${themeColors.shadow.button} ${themeColors.transitionAll} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
                               aria-label="Plus d'informations"
+                              style={{ marginTop: '4px' }}
                             >
                               <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
                             </button>
