@@ -185,24 +185,24 @@ export const themeColors = {
 
   // Specific colors for SyncNotification 
   syncNotification: {
-    // Error notification container
-    errorBg: 'bg-red-50 dark:bg-red-900/20',
-    errorBorder: 'border-red-200 dark:border-red-700',
+    // Error notification container - improved contrast for dark mode
+    errorBg: 'bg-red-50 dark:bg-red-950/40',
+    errorBorder: 'border-red-200 dark:border-red-800/60',
     
-    // Status indicator (red dot)
-    statusDot: 'bg-red-500',
+    // Status indicator (red dot) - more visible in dark mode
+    statusDot: 'bg-red-500 dark:bg-red-400',
     
-    // Error messages
-    errorText: 'text-red-700 dark:text-red-300',
-    helpText: 'text-red-600 dark:text-red-400',
+    // Error messages - better contrast in dark mode
+    errorText: 'text-red-700 dark:text-red-200',
+    helpText: 'text-red-600 dark:text-red-300',
     
-    // Download button
-    downloadBg: 'bg-white/80 dark:bg-gray-800/80',
-    downloadHoverBg: 'hover:bg-white dark:hover:bg-gray-700',
-    downloadBorder: 'border-red-300 dark:border-red-600',
-    downloadHoverBorder: 'hover:border-red-400 dark:hover:border-red-500',
-    downloadText: 'text-red-700 dark:text-red-300',
-    downloadHoverText: 'hover:text-red-800 dark:hover:text-red-200',
+    // Download button - consistent with other buttons
+    downloadBg: 'bg-white/90 dark:bg-gray-900/90',
+    downloadHoverBg: 'hover:bg-white dark:hover:bg-gray-800/90',
+    downloadBorder: 'border-red-300 dark:border-red-700/50',
+    downloadHoverBorder: 'hover:border-red-400 dark:hover:border-red-600',
+    downloadText: 'text-red-700 dark:text-red-200',
+    downloadHoverText: 'hover:text-red-800 dark:hover:text-red-100',
   },
 
   // Specific colors for BetaLockScreen
