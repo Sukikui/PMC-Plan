@@ -256,7 +256,7 @@ export default function PositionPanel({
                     style={{ imageRendering: 'pixelated' }}
                   />
                   {/* Gradient fade to panel background color */}
-                  <div className="absolute inset-x-0 bottom-0 h-2 bg-gradient-to-t from-white to-transparent dark:from-gray-900 pointer-events-none"></div>
+                  <div className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white/90 to-transparent dark:from-gray-900/95 dark:to-transparent pointer-events-none"></div>
                 </div>
                 <div>
                   <div className={`text-sm font-medium ${themeColors.text.primary} ${themeColors.transition}`}>{playerData.username}</div>

@@ -17,10 +17,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
 
       - name: 📦 Install dependencies
-        run: |
-          npm install ajv ajv-formats node-fetch@2
+        run: npm ci
 
       - name: 📝 Extract, validate, and create PR
         id: create_pr

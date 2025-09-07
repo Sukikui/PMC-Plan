@@ -78,7 +78,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
     // Filter by search query
     const searchMatch = searchQuery === '' || 
       place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      place.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (place.description && place.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
       place.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
       place.world.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -89,7 +89,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const filteredPortals = enabledTags.size > 0 ? [] : portals.filter(portal => {
     return searchQuery === '' || 
       portal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      portal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (portal.description && portal.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
       portal.world.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -237,7 +237,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                           <div className="flex items-start justify-between">
                             <div className={`font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} flex-1 ${themeColors.transition}`}>
                               {place.name}
-                              {selectedId === place.id && place.description.trim() !== '' && (
+                              {selectedId === place.id && place.description && place.description.trim() !== '' && (
                                 <div className="mt-2 mb-2">
                                   <p className={`text-xs ${themeColors.text.secondary}`}>
                                     {place.description.length > 80 ? `${place.description.substring(0, 80)}...` : place.description}
@@ -298,9 +298,9 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             <div className={`font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} flex-1 ${themeColors.transition}`}>
                               {portal.name}
                               {(() => {
-                                const displayDescription = portal.description.trim() !== ''
+                                const displayDescription = portal.description && portal.description.trim() !== ''
                                   ? portal.description
-                                  : (portal['nether-associate'] && portal['nether-associate'].description.trim() !== '')
+                                  : (portal['nether-associate'] && portal['nether-associate'].description && portal['nether-associate'].description.trim() !== '')
                                     ? portal['nether-associate'].description
                                     : '';
 

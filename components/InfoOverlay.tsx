@@ -35,11 +35,11 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
 
   if (!isOpen || !item) return null;
 
-  const renderDescription = typeof item.description === 'string' && item.description.length > 0 ? (
+  const renderDescription = item.description && item.description.length > 0 ? (
     <div>
       <h3 className={`text-lg font-semibold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>Description</h3>
       <p className={`${themeColors.text.quaternary} leading-relaxed ${themeColors.infoOverlay.descriptionBg} p-4 ${themeColors.util.roundedLg} ${themeColors.transition}`}>
-        {(item.description as string)}
+        {item.description}
       </p>
     </div>
   ) : null;
