@@ -55,23 +55,23 @@
       "description": "Array of tags to categorize the place"
     },
     "description": {
-      "type": "string",
-      "minLength": 0,
+      "type": ["string", "null"],
+      "minLength": 1,
       "maxLength": 500,
       "description": "Optional description of the place"
     },
     "discord": {
-      "type": "string",
-      "pattern": "^$|^https://discord\\.gg/[a-zA-Z0-9]+$",
-      "minLength": 0,
+      "type": ["string", "null"],
+      "pattern": "^https://discord\\.gg/[a-zA-Z0-9]+$",
+      "minLength": 1,
       "maxLength": 200,
       "description": "Optional Discord server URL for this place"
     },
     "owner": {
-      "type": "string",
-      "minLength": 0,
+      "type": ["string", "null"],
+      "minLength": 1,
       "maxLength": 16,
-      "pattern": "^$|^[a-zA-Z0-9_]+$",
+      "pattern": "^[a-zA-Z0-9_]+$",
       "description": "Minecraft username of the player who owns this place"
     }
   },

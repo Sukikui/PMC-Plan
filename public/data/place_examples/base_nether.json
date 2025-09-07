@@ -8,5 +8,7 @@
     "z": 300
   },
   "tags": ["base", "nether"],
-  "description": "Base établie dans le Nether pour les tests"
+  "description": "Base établie dans le Nether pour les tests",
+  "owner": "TestUser",
+  "discord": null
 }

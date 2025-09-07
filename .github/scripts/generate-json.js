@@ -23,19 +23,19 @@ function generatePlaceJson(data) {
   if (data.description && data.description.trim()) {
     place.description = data.description.trim();
   } else {
-    place.description = "";
+    place.description = null;
   }
 
   if (data.discord && data.discord.trim()) {
     place.discord = data.discord.trim();
   } else {
-      place.discord = "";
+      place.discord = null;
   }
 
   if (data.owner && data.owner.trim()) {
     place.owner = data.owner.trim();
   } else {
-    place.owner = "";
+    place.owner = null;
   }
 
   return place;
@@ -59,7 +59,7 @@ function generatePortalJson(data) {
     if (data.description && data.description.trim()) {
         portal.description = data.description.trim();
     } else {
-        portal.description = "";
+        portal.description = null;
     }
     return portal;
 }
