@@ -52,7 +52,7 @@ export default function StartupScreen({ onUnlock }: StartupScreenProps) {
           PMC Plan
         </h1>
         <p className={`text-lg ${themeColors.text.quaternary} mb-8 ${themeColors.transition}`}>
-          Chargement de l'application...
+          Chargement de l&apos;application...
         </p>
 
         {/* Loading indicator */}
