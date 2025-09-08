@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import SyncNotification, { getErrorMessage, ERROR_MESSAGES } from './SyncNotification';
 import { themeColors } from '../lib/theme-colors';
 import { getRenderUrl } from '../lib/starlight-skin-api';
+import { usePrewarmPlayerSkin } from '../hooks/usePrewarmPlayerSkin';
 
 interface PlayerData {
   x: number;
@@ -24,6 +25,9 @@ export default function PositionPanel({
   onPlayerPositionChange,
   onManualCoordsChange 
 }: PositionPanelProps) {
+  // Preload current player's skin
+  usePrewarmPlayerSkin();
+  
   const [playerData, setPlayerData] = useState<PlayerData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -251,9 +255,10 @@ export default function PositionPanel({
                       borderHighlightRadius: 7, 
                       dropShadow: true,
                     })}
-                    alt={`${playerData.username}'s avatar`}
                     className="w-full h-full object-cover"
                     style={{ imageRendering: 'pixelated' }}
+                    crossOrigin="anonymous"
+                    loading="eager"
                   />
                   {/* Gradient fade to panel background color */}
                   <div className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white/90 to-transparent dark:from-gray-900/95 dark:to-transparent pointer-events-none"></div>
