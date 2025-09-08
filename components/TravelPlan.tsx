@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { themeColors } from '../lib/theme-colors';
 
 interface Step {
@@ -57,7 +57,7 @@ export default function TravelPlan({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const buildFromParams = useCallback(() => {
+    const buildFromParams = () => {
         if (playerPosition) {
             return `from_x=${playerPosition.x}&from_y=${playerPosition.y}&from_z=${playerPosition.z}&from_world=${playerPosition.world}`;
         }
@@ -75,9 +75,9 @@ export default function TravelPlan({
         }
         
         return null;
-    }, [playerPosition, manualCoords]);
+    };
 
-    const calculateRoute = useCallback(async () => {
+    const calculateRoute = async () => {
         if (!selectedPlaceId) return;
 
         try {
@@ -103,9 +103,9 @@ export default function TravelPlan({
         } finally {
             setLoading(false);
         }
-    }, [selectedPlaceId, buildFromParams]);
+    };
 
-    const shouldRecalculate = useCallback(() => {
+    const shouldRecalculate = () => {
         if (!route || !playerPosition || route.steps.length === 0) return true;
         
         const currentFrom = route.player_from.coordinates;
@@ -119,7 +119,7 @@ export default function TravelPlan({
 
         const lastStepTo = route.steps[route.steps.length - 1]?.to;
         return lastStepTo?.id !== selectedPlaceId;
-    }, [route, playerPosition, selectedPlaceId]);
+    };
 
     useEffect(() => {
         if (selectedPlaceId && (playerPosition || (manualCoords?.x && manualCoords?.y && manualCoords?.z))) {
@@ -129,7 +129,7 @@ export default function TravelPlan({
         } else {
             setRoute(null);
         }
-    }, [selectedPlaceId, playerPosition, manualCoords, shouldRecalculate, calculateRoute]);
+    }, [selectedPlaceId, playerPosition, manualCoords]);
 
     const getStepIcon = (type: string) => {
         const iconProps = "w-4 h-4";
