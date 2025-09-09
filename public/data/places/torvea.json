@@ -1,0 +1,16 @@
+{
+  "id": "torvea",
+  "name": "Torvea",
+  "world": "overworld",
+  "coordinates": {
+    "x": -5862,
+    "y": 79,
+    "z": 1223
+  },
+  "tags": [
+    "ville"
+  ],
+  "description": "Archipel tropical habité par des forces mystiques où logent __Orni et __Daw",
+  "discord": "https://discord.gg/4B7XvCK",
+  "owner": "__Daw"
+}
