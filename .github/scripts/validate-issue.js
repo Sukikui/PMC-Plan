@@ -354,84 +354,90 @@ async function downloadAndValidateImage(imageUrl, referer, context, placeId, dep
  * @throws {Error} If required fields are missing or empty.
  */
 function extractDataFromTemplate(issueBody, isPlace, isPortal) {
+    console.log('📝 Starting extraction from template');
     const data = {};
 
-    const extractField = () => {
+    // More robust parser that better captures values by field name
+    const extractFieldsByName = () => {
+        const sections = {};
         const lines = issueBody.split('\n');
-        const fieldMatches = [];
-        let inField = false;
-        let currentValue = '';
+        let currentSection = null;
+        let currentContent = [];
 
-        for (let i = 0; i < lines.length;
-             i++) {
+        console.log(`📄 Processing ${lines.length} lines`);
+
+        for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
+            
             if (line.startsWith('### ')) {
-                if (inField) {
-                    const cleanValue = currentValue.trim();
-                    if (cleanValue === '' || cleanValue === '_No response_') {
-                        fieldMatches.push('');
-                    } else {
-                        fieldMatches.push(cleanValue);
-                    }
+                // Save previous section
+                if (currentSection && currentContent.length > 0) {
+                    const content = currentContent
+                        .map(l => l.trim())
+                        .filter(l => l && l !== '_No response_' && !l.startsWith('- '))
+                        .join(' ')
+                        .trim();
+                    sections[currentSection] = content;
+                    console.log(`✅ Saved section "${currentSection}": "${content}"`);
                 }
-                inField = true;
-                currentValue = '';
-            } else if (inField && line.trim() && !line.startsWith('-') && !line.startsWith('##')) {
-                if (currentValue) currentValue += ' ';
-                currentValue += line.trim();
-            } else if (line.startsWith('### ') || line.startsWith('## ')) {
-                if (inField) {
-                    const cleanValue = currentValue.trim();
-                    if (cleanValue === '' || cleanValue === '_No response_') {
-                        fieldMatches.push('');
-                    } else {
-                        fieldMatches.push(cleanValue);
-                    }
-                    currentValue = '';
+                
+                // Start new section
+                currentSection = line.substring(4).trim(); // Remove "### "
+                currentContent = [];
+                console.log(`🔍 Starting section: "${currentSection}"`);
+                
+            } else if (currentSection) {
+                // Collect content for current section
+                const trimmed = line.trim();
+                if (trimmed && !trimmed.startsWith('##')) {
+                    currentContent.push(trimmed);
+                    console.log(`  ➕ Added to "${currentSection}": "${trimmed}"`);
                 }
-                inField = line.startsWith('### ');
             }
         }
 
-        if (inField) {
-            const cleanValue = currentValue.trim();
-            if (cleanValue === '' || cleanValue === '_No response_') {
-                fieldMatches.push('');
-            } else {
-                fieldMatches.push(cleanValue);
-            }
+        // Save final section
+        if (currentSection && currentContent.length > 0) {
+            const content = currentContent
+                .map(l => l.trim())
+                .filter(l => l && l !== '_No response_' && !l.startsWith('- '))
+                .join(' ')
+                .trim();
+            sections[currentSection] = content;
+            console.log(`✅ Saved final section "${currentSection}": "${content}"`);
         }
 
-        return fieldMatches;
+        return sections;
     };
 
-    const fieldValues = extractField();
+    const sections = extractFieldsByName();
+    console.log('📋 All sections extracted:', Object.keys(sections));
 
     if (isPlace) {
-        if (fieldValues.length >= 6) {
-            data.placeId = fieldValues[0] || '';
-            data.placeName = fieldValues[1] || '';
-            data.world = fieldValues[2] || '';
-            data.coordinatesX = fieldValues[3] || '';
-            data.coordinatesY = fieldValues[4] || '';
-            data.coordinatesZ = fieldValues[5] || '';
-            data.description = fieldValues[6] || '';
-            data.tags = fieldValues[7] || '';
-            data.owner = fieldValues[8] || '';
-            data.discord = fieldValues[9] || '';
-            data.image = fieldValues[10] || '';
-        }
+        console.log('🏠 Processing as Place');
+        data.placeId = sections['ID du lieu'] || '';
+        data.placeName = sections['Nom du lieu'] || '';
+        data.world = sections['Monde'] || '';
+        data.coordinatesX = sections['Coordonnée X'] || '';
+        data.coordinatesY = sections['Coordonnée Y'] || '';
+        data.coordinatesZ = sections['Coordonnée Z'] || '';
+        data.description = sections['Description (optionnel)'] || '';
+        data.tags = sections['Étiquettes (optionnel)'] || '';
+        data.owner = sections['Propriétaire (optionnel)'] || '';
+        data.discord = sections['Serveur Discord (optionnel)'] || '';
+        data.image = sections['Image du lieu (optionnel)'] || '';
     } else if (isPortal) {
-        if (fieldValues.length >= 6) {
-            data.portalId = fieldValues[0] || '';
-            data.portalName = fieldValues[1] || '';
-            data.world = fieldValues[2] || '';
-            data.coordinatesX = fieldValues[3] || '';
-            data.coordinatesY = fieldValues[4] || '';
-            data.coordinatesZ = fieldValues[5] || '';
-            data.description = fieldValues[6] || '';
-        }
+        console.log('🌀 Processing as Portal');
+        data.portalId = sections['ID du portail'] || '';
+        data.portalName = sections['Nom du portail'] || '';
+        data.world = sections['Monde'] || '';
+        data.coordinatesX = sections['Coordonnée X'] || '';
+        data.coordinatesY = sections['Coordonnée Y'] || '';
+        data.coordinatesZ = sections['Coordonnée Z'] || '';
+        data.description = sections['Description (optionnel)'] || '';
     }
+
+    console.log('📊 Mapped data:', JSON.stringify(data, null, 2));
 
     const requiredFields = isPlace
         ? ['placeId', 'placeName', 'world', 'coordinatesX', 'coordinatesY', 'coordinatesZ']
@@ -445,9 +451,11 @@ function extractDataFromTemplate(issueBody, isPlace, isPortal) {
     }
 
     if (missingFields.length > 0) {
+        console.log('❌ Missing fields:', missingFields);
         throw new Error(`Champs requis manquants ou vides: ${missingFields.join(', ')}`);
     }
 
+    console.log('✅ All required fields present');
     return data;
 }
 
