@@ -219,7 +219,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                 <img
                   src={`/data/place_images/${item.id}.png`}
                   alt={`Image de ${item.name}`}
-                  className={`w-auto ${themeColors.util.roundedLg}`}
+                  className={`h-72 w-auto max-w-full object-contain ${themeColors.util.roundedLg}`}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
