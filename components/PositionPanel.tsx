@@ -230,7 +230,7 @@ export default function PositionPanel({
               <div className="flex items-center gap-6">
                 <div className="relative w-16 h-16 overflow-hidden ml-2">
                   <img 
-                    src={getRenderUrl(playerData.uuid, {
+                    src={getRenderUrl(playerData.username, {
                       renderType: 'ultimate',
                       crop: 'face',
                       borderHighlight: true,
