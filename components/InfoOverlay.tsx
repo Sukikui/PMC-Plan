@@ -181,7 +181,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                         dropShadow: true,
                       })}
                       alt={`Skin de ${(item as Place).owner}`}
-                      className="w-20 h-20 object-cover"
+                      className="w-20 h-20 object-contain"
                       style={{ imageRendering: 'pixelated' }}
                       crossOrigin="anonymous"
                       loading="eager"
