@@ -134,7 +134,7 @@ export class PlayerCoordsApi {
     try {
       await this.getCoords();
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
