@@ -103,7 +103,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
       <div className="flex justify-center">
         <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] border ${typeStyles.border} ${themeColors.transition}`}>
           {/* Header */}
-          <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition}`}>
+          <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition} rounded-t-xl`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -212,7 +212,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
           </div>
 
           {/* Content */}
-          <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} max-h-[calc(80vh-12rem)] overflow-y-auto`}>
+          <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} max-h-[calc(80vh-12rem)] overflow-y-auto rounded-b-xl`}>
             {/* Place Image */}
             {type === 'place' && (
               <div className="flex justify-center">
