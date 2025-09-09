@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import SyncNotification from './SyncNotification';
 import { themeColors } from '../lib/theme-colors';
 import { getRenderUrl } from '../lib/starlight-skin-api';
-import { usePrewarmPlayerSkin } from '../hooks/usePrewarmPlayerSkin';
 import { playerCoordsApi, PlayerData, PlayerCoordsApiError, getPlayerCoordsErrorMessage } from '../lib/playercoords-api';
 
 interface PositionPanelProps {
@@ -16,8 +15,6 @@ export default function PositionPanel({
   onPlayerPositionChange,
   onManualCoordsChange 
 }: PositionPanelProps) {
-  // Preload current player's skin
-  usePrewarmPlayerSkin();
   
   const [playerData, setPlayerData] = useState<PlayerData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -240,6 +237,7 @@ export default function PositionPanel({
                       borderHighlightRadius: 7, 
                       dropShadow: true,
                     })}
+                    alt={`Skin de ${playerData.username}`}
                     className="w-full h-full object-cover"
                     style={{ imageRendering: 'pixelated' }}
                     crossOrigin="anonymous"

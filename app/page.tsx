@@ -9,13 +9,10 @@ import SettingsPanel from '@/components/SettingsPanel';
 import BetaLockScreen from '@/components/BetaLockScreen';
 import StartupScreen from '@/components/StartupScreen';
 import { themeColors } from '@/lib/theme-colors';
-import { usePrewarmSkins } from '@/hooks/usePrewarmSkins';
 
 import { Place, Portal } from './api/utils/shared';
 
 export default function Home() {
-  // Preload all skin images in background
-  usePrewarmSkins();
   
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>('');
