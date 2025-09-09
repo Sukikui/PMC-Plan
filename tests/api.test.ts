@@ -165,8 +165,12 @@ describe('API Endpoints', () => {
         expect(place).toHaveProperty('coordinates');
         expect(place).toHaveProperty('tags');
         expect(place).toHaveProperty('description');
+        expect(place).toHaveProperty('owner');
+        expect(place).toHaveProperty('discord');
         expect(Array.isArray(place.tags)).toBe(true);
-        expect(typeof place.description).toBe('string');
+        expect(place.description === null || typeof place.description === 'string').toBe(true);
+        expect(place.owner === null || typeof place.owner === 'string').toBe(true);
+        expect(place.discord === null || typeof place.discord === 'string').toBe(true);
       });
     });
 
@@ -178,9 +182,11 @@ describe('API Endpoints', () => {
       expect(Array.isArray(data)).toBe(true);
       expect(data.length).toBeGreaterThan(0);
       
-      // Verify data quality: no empty descriptions, all have tags, multiple worlds
+      // Verify data quality: descriptions are valid (null or non-empty string), all have tags, multiple worlds
       data.forEach((place: any) => {
-        expect(place.description.length).toBeGreaterThan(0);
+        if (place.description !== null) {
+          expect(place.description.length).toBeGreaterThan(0);
+        }
         expect(place.tags.length).toBeGreaterThan(0);
         expect(['overworld', 'nether']).toContain(place.world);
       });
@@ -208,7 +214,7 @@ describe('API Endpoints', () => {
         expect(portal).toHaveProperty('world');
         expect(portal).toHaveProperty('coordinates');
         expect(portal).toHaveProperty('description');
-        expect(typeof portal.description).toBe('string');
+        expect(portal.description === null || typeof portal.description === 'string').toBe(true);
       });
     });
 

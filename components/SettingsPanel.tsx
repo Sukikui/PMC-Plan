@@ -84,12 +84,12 @@ const SettingsPanel = () => {
                         </div>
 
                         {/* Separator */}
-                        <div className="-mx-4 mb-3">
+                        <div className="-mx-4 my-3">
                             <div className={`border-t ${themeColors.border.primary}`}></div>
                         </div>
 
                         {/* Links */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 -mb-1">
                             <a 
                                 href="https://modrinth.com/mod/playercoordsapi"
                                 target="_blank" 

@@ -372,7 +372,9 @@ None
     "world": "overworld",
     "coordinates": {"x": -100, "y": 65, "z": -200},
     "tags": ["village", "spawn"],
-    "description": "Point de départ pour tester le voyage via nether"
+    "description": "Point de départ pour tester le voyage via nether",
+    "owner": "Notch",
+    "discord": null
   },
   {
     "id": "end_city",
@@ -380,7 +382,9 @@ None
     "world": "overworld",
     "coordinates": {"x": 4500, "y": 70, "z": 300},
     "tags": ["city", "destination"],
-    "description": "Destination finale du voyage de test"
+    "description": "Destination finale du voyage de test",
+    "owner": null,
+    "discord": "https://discord.gg/exemple123"
   }
 ]
 ```
@@ -434,7 +438,7 @@ Returns a list of all available portals from the data files.
     "name": "Portail du Village",
     "world": "nether",
     "coordinates": {"x": -15, "y": 70, "z": -28},
-    "description": "",
+    "description": null,
     "address": "Ouest 2"
   },
   {
@@ -469,7 +473,7 @@ curl "http://localhost:3000/api/portals?merge-nether-portals=true"
     "nether-associate": {
       "coordinates": {"x": -15, "y": 70, "z": -28},
       "address": "Ouest 2",
-      "description": ""
+      "description": null
     }
   },
   {

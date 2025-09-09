@@ -43,8 +43,8 @@
       "additionalProperties": false
     },
     "description": {
-      "type": "string",
-      "minLength": 0,
+      "type": ["string", "null"],
+      "minLength": 1,
       "maxLength": 500,
       "description": "Optional description of the portal"
     }

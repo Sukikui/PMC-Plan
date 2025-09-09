@@ -7,11 +7,16 @@ import TravelPlan from '@/components/TravelPlan';
 import InfoOverlay from '@/components/InfoOverlay';
 import SettingsPanel from '@/components/SettingsPanel';
 import BetaLockScreen from '@/components/BetaLockScreen';
+import StartupScreen from '@/components/StartupScreen';
 import { themeColors } from '@/lib/theme-colors';
+import { usePrewarmSkins } from '@/hooks/usePrewarmSkins';
 
 import { Place, Portal } from './api/utils/shared';
 
 export default function Home() {
+  // Preload all skin images in background
+  usePrewarmSkins();
+  
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>('');
   const [selectedPlaceType, setSelectedPlaceType] = useState<'place' | 'portal'>('place');
@@ -41,13 +46,18 @@ export default function Home() {
     return <BetaLockScreen onUnlock={() => setIsUnlocked(true)} />;
   }
 
+  // Show startup screen if beta lock is disabled and not unlocked yet
+  if (process.env.NEXT_PUBLIC_DISABLE_BETA_LOCK === 'true' && !isUnlocked) {
+    return <StartupScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
+
   return (
     <div className={`h-screen ${
       selectedPlaceId && (playerPosition || (manualCoords?.x && manualCoords?.y && manualCoords?.z))
-        ? themeColors.mainScreen.routeActive  // État 3: Itinéraire affiché
+        ? themeColors.mainScreen.routeActive  // State 3: Route displayed
         : selectedPlaceId
-        ? themeColors.mainScreen.noPosition   // État 2: Destination mais pas de position
-        : themeColors.mainScreen.noDestination // État 1: Aucune destination
+        ? themeColors.mainScreen.noPosition   // State 2: Destination but no position
+        : themeColors.mainScreen.noDestination // State 1: No destination
     } ${themeColors.transition}`}>
 
       {/* Left sliding panel */}

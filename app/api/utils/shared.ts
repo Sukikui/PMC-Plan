@@ -10,7 +10,7 @@ export interface Portal {
     y: number;
     z: number;
   };
-  description: string;
+  description: string | null;
   address: string;
   "nether-associate": {
     coordinates: {
@@ -19,7 +19,7 @@ export interface Portal {
         z: number;
     },
     address: string;
-    description: string;
+    description: string | null;
   } | null;
 }
 
@@ -36,8 +36,10 @@ export interface Place {
     y: number;
     z: number;
   };
-  description: string;
+  description: string | null;
   tags: string[];
+  owner: string | null;
+  discord: string | null;
 }
 
 export interface NetherAddress {
@@ -111,7 +113,19 @@ export async function loadPortals(): Promise<Portal[]> {
       try {
         const filePath = path.join(portalsDir, file);
         const content = await fs.readFile(filePath, 'utf-8');
-        const portal: Portal = JSON.parse(content);
+        const portalData = JSON.parse(content);
+        
+        // Ensure all required fields are present with proper null handling
+        const portal: Portal = {
+          id: portalData.id || '',
+          name: portalData.name || '',
+          world: portalData.world || 'overworld',
+          coordinates: portalData.coordinates || { x: 0, y: 0, z: 0 },
+          description: portalData.description || null,
+          address: portalData.address || '',
+          "nether-associate": portalData["nether-associate"] || null
+        };
+        
         // If it's a Nether portal, calculate and add its address
         if (portal.world === 'nether') {
           const netherAddress = await calculateNetherAddress(portal.coordinates.x, portal.coordinates.y, portal.coordinates.z);
@@ -301,7 +315,20 @@ export async function loadPlaces(): Promise<Place[]> {
       try {
         const filePath = path.join(placesDir, file);
         const content = await fs.readFile(filePath, 'utf-8');
-        const place: Place = JSON.parse(content);
+        const placeData = JSON.parse(content);
+        
+        // Ensure all required fields are present with proper null handling
+        const place: Place = {
+          id: placeData.id || '',
+          name: placeData.name || '',
+          world: placeData.world || 'overworld',
+          coordinates: placeData.coordinates || { x: 0, y: 0, z: 0 },
+          description: placeData.description || null,
+          tags: placeData.tags || [],
+          owner: placeData.owner || null,
+          discord: placeData.discord || null
+        };
+        
         places.push(place);
       } catch (error) {
         console.warn(`Failed to load place file ${file}:`, error);

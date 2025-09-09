@@ -56,9 +56,12 @@ ehthumbs.db
 tmp/
 temp/
 
+# AI Agents
+GEMINI.md
+CLAUDE.md
+.claude/
+
 # Personal files
 REMEMBER.md
 PLAN.md
-CLAUDE.md
-GEMINI.md
 TODO.Md

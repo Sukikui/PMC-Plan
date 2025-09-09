@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import SyncNotification, { getErrorMessage, ERROR_MESSAGES } from './SyncNotification';
 import { themeColors } from '../lib/theme-colors';
+import { getRenderUrl } from '../lib/starlight-skin-api';
+import { usePrewarmPlayerSkin } from '../hooks/usePrewarmPlayerSkin';
 
 interface PlayerData {
   x: number;
@@ -23,6 +25,9 @@ export default function PositionPanel({
   onPlayerPositionChange,
   onManualCoordsChange 
 }: PositionPanelProps) {
+  // Preload current player's skin
+  usePrewarmPlayerSkin();
+  
   const [playerData, setPlayerData] = useState<PlayerData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -240,19 +245,27 @@ export default function PositionPanel({
                 animationName: isNewConnection ? (document.documentElement.classList.contains('dark') ? 'blueGlowDark' : 'blueGlow') : undefined
               }}
             >
-              <div className="flex items-center gap-3">
-                <img 
-                  src={`https://crafatar.com/avatars/${playerData.uuid}?size=64&overlay`}
-                  alt={`${playerData.username}'s avatar`}
-                  className="w-8 h-8 rounded"
-                  style={{ imageRendering: 'pixelated' }}
-                  onError={() => {
-                    // Keep the default fallback (Alex/Steve)
-                  }}
-                />
+              <div className="flex items-center gap-6">
+                <div className="relative w-16 h-16 overflow-hidden ml-2">
+                  <img 
+                    src={getRenderUrl(playerData.uuid, {
+                      renderType: 'ultimate',
+                      crop: 'face',
+                      borderHighlight: true,
+                      borderHighlightRadius: 7, 
+                      dropShadow: true,
+                    })}
+                    className="w-full h-full object-cover"
+                    style={{ imageRendering: 'pixelated' }}
+                    crossOrigin="anonymous"
+                    loading="eager"
+                  />
+                  {/* Gradient fade to panel background color */}
+                  <div className="absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-white/90 to-transparent dark:from-gray-900/95 dark:to-transparent pointer-events-none"></div>
+                </div>
                 <div>
                   <div className={`text-sm font-medium ${themeColors.text.primary} ${themeColors.transition}`}>{playerData.username}</div>
-                  <div className={`text-xs ${themeColors.text.tertiary} mt-0.5 ${themeColors.transition}`}>UUID: {playerData.uuid.substring(0, 8)}...</div>
+                  <div className={`text-xs ${themeColors.text.tertiary} mt-1.5 ${themeColors.transition}`}>UUID: {playerData.uuid.substring(0, 8)}...</div>
                 </div>
               </div>
             </div>

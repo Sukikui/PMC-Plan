@@ -1,4 +1,4 @@
-  {
+{
   "id": "village_suki",
   "name": "Village de Suki",
   "world": "overworld",
@@ -9,5 +9,6 @@
   },
   "tags": ["village", "base"],
   "description": "Ancien village caché au sein duquel de nombreux secrets et trésors sont gardés à tout jamais...",
+  "owner": "Suki",
   "discord": "https://discord.gg/exemple123"
 }
