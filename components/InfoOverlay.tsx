@@ -101,7 +101,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
       />
       
       <div className="flex justify-center">
-        <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] border ${typeStyles.border} ${themeColors.transition}`}>
+        <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} w-full max-w-2xl min-w-0 max-h-[95vh] border ${typeStyles.border} ${themeColors.transition}`} style={{ width: 'min(42rem, calc(100vw - 2rem))' }}>
           {/* Header */}
           <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition} rounded-t-xl`}>
             <div className="flex items-start justify-between">
@@ -212,14 +212,14 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
           </div>
 
           {/* Content */}
-          <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} max-h-[calc(80vh-12rem)] overflow-y-auto rounded-b-xl`}>
+          <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} max-h-[calc(95vh-12rem)] overflow-y-auto rounded-b-xl`}>
             {/* Place Image */}
             {type === 'place' && (
               <div className="flex justify-center">
                 <img
                   src={`/data/place_images/${item.id}.png`}
                   alt={`Image de ${item.name}`}
-                  className={`max-h-64 w-auto ${themeColors.util.roundedLg}`}
+                  className={`h-72 w-auto max-w-full object-contain ${themeColors.util.roundedLg}`}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
