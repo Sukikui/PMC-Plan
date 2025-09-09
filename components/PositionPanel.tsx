@@ -1,20 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import SyncNotification, { getErrorMessage, ERROR_MESSAGES } from './SyncNotification';
+import SyncNotification from './SyncNotification';
 import { themeColors } from '../lib/theme-colors';
 import { getRenderUrl } from '../lib/starlight-skin-api';
-import { usePrewarmPlayerSkin } from '../hooks/usePrewarmPlayerSkin';
-
-interface PlayerData {
-  x: number;
-  y: number;
-  z: number;
-  world: string;
-  biome: string;
-  uuid: string;
-  username: string;
-}
+import { playerCoordsApi, PlayerData, PlayerCoordsApiError, getPlayerCoordsErrorMessage } from '../lib/playercoords-api';
 
 interface PositionPanelProps {
   onPlayerPositionChange?: (position: {x: number; y: number; z: number; world: string} | null) => void;
@@ -25,8 +15,6 @@ export default function PositionPanel({
   onPlayerPositionChange,
   onManualCoordsChange 
 }: PositionPanelProps) {
-  // Preload current player's skin
-  usePrewarmPlayerSkin();
   
   const [playerData, setPlayerData] = useState<PlayerData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,20 +31,7 @@ export default function PositionPanel({
     }
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch('http://localhost:25565/api/coords', {
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data: PlayerData = await response.json();
+      const data = await playerCoordsApi.getCoords();
       
       // Trigger blue halo effect for new connections
       if (!isConnected && !isAutoSync) {
@@ -67,32 +42,39 @@ export default function PositionPanel({
       setPlayerData(data);
       setIsConnected(true);
     } catch (err) {
-      const rawErrorMessage = err instanceof Error ? err.message : 'Unknown error';
-      const categorizedErrorMessage = getErrorMessage(rawErrorMessage); // Get the categorized message
+      if (err instanceof PlayerCoordsApiError) {
+        const errorMessage = getPlayerCoordsErrorMessage(err);
 
-      // Only log as "Unexpected sync error" if it's not a known, non-critical error
-      if (categorizedErrorMessage !== ERROR_MESSAGES.NOT_IN_WORLD && // Add this condition
-          categorizedErrorMessage !== ERROR_MESSAGES.ACCESS_DENIED && // Also exclude access denied from unexpected
-          categorizedErrorMessage !== ERROR_MESSAGES.CONNECTION_FAILED && // Also exclude connection failed from unexpected
-          !rawErrorMessage.includes('Failed to fetch') && // Keep existing network checks
-          !rawErrorMessage.includes('Load failed') &&
-          !rawErrorMessage.includes('aborted') &&
-          !rawErrorMessage.includes('NetworkError')) {
-        console.error('Unexpected sync error:', {
-          error: err,
-          message: rawErrorMessage,
-          type: err instanceof Error ? err.constructor.name : typeof err
-        });
-      }
+        // Only log unexpected errors
+        if (err.type === 'UNKNOWN') {
+          console.error('Unexpected PlayerCoordsAPI error:', {
+            error: err,
+            type: err.type,
+            message: err.originalMessage
+          });
+        }
 
-      setIsConnected(false);
-      setPlayerData(null);
+        setIsConnected(false);
+        setPlayerData(null);
 
-      if (!isAutoSync) {
-        setSyncError(categorizedErrorMessage); // Use the categorized message for notification
-        
-        setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
+        if (!isAutoSync) {
+          setSyncError(errorMessage);
+          
+          setIsShaking(true);
+          setTimeout(() => setIsShaking(false), 500);
+        }
+      } else {
+        // Fallback for non-PlayerCoordsApiError
+        console.error('Unexpected sync error:', err);
+        setIsConnected(false);
+        setPlayerData(null);
+
+        if (!isAutoSync) {
+          setSyncError('Erreur inconnue');
+          
+          setIsShaking(true);
+          setTimeout(() => setIsShaking(false), 500);
+        }
       }
     } finally {
       if (!isAutoSync) {
@@ -248,13 +230,14 @@ export default function PositionPanel({
               <div className="flex items-center gap-6">
                 <div className="relative w-16 h-16 overflow-hidden ml-2">
                   <img 
-                    src={getRenderUrl(playerData.uuid, {
+                    src={getRenderUrl(playerData.username, {
                       renderType: 'ultimate',
                       crop: 'face',
                       borderHighlight: true,
                       borderHighlightRadius: 7, 
                       dropShadow: true,
                     })}
+                    alt={`Skin de ${playerData.username}`}
                     className="w-full h-full object-cover"
                     style={{ imageRendering: 'pixelated' }}
                     crossOrigin="anonymous"

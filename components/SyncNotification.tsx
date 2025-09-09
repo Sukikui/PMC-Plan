@@ -3,29 +3,13 @@
 import { useState, useEffect } from 'react';
 import { themeColors } from '../lib/theme-colors';
 
-// Constants
-export const ERROR_MESSAGES = {
-  NOT_IN_WORLD: 'Vous ne vous trouvez pas dans un monde',
-  ACCESS_DENIED: 'Accès refusé par PlayerCoordsAPI',
-  CONNECTION_FAILED: 'Impossible de se connecter'
-} as const;
-
 const HELP_MESSAGES = {
-  [ERROR_MESSAGES.NOT_IN_WORLD]: 'Rejoignez le serveur pour synchroniser',
-  [ERROR_MESSAGES.ACCESS_DENIED]: 'Veuillez contacter le support',
-  [ERROR_MESSAGES.CONNECTION_FAILED]: 'Assurez-vous que le mod est installé et activé'
+  'Vous n\'êtes pas dans un monde': 'Rejoignez le serveur pour synchroniser',
+  'API désactivée dans le mod': 'Activez PlayerCoordsAPI dans les paramètres du mod',
+  'Mod non détecté': 'Assurez-vous que le mod est installé et activé',
+  'Timeout de connexion': 'Vérifiez votre connexion réseau',
+  'Erreur inconnue': 'Veuillez contacter le support'
 } as const;
-
-// Utility function to determine error type from error message
-export const getErrorMessage = (errorMessage: string): string => {
-  if (errorMessage.includes('404')) {
-    return ERROR_MESSAGES.NOT_IN_WORLD;
-  } else if (errorMessage.includes('403')) {
-    return ERROR_MESSAGES.ACCESS_DENIED;
-  } else {
-    return ERROR_MESSAGES.CONNECTION_FAILED;
-  }
-};
 
 interface SyncNotificationProps {
   error: string | null;
@@ -52,7 +36,7 @@ export default function SyncNotification({ error, onClose, topOffset = "350px" }
 
   if (!error) return null;
 
-  const shouldShowDownloadButton = error !== ERROR_MESSAGES.NOT_IN_WORLD && error !== ERROR_MESSAGES.ACCESS_DENIED;
+  const shouldShowDownloadButton = error !== 'Vous n\'êtes pas dans un monde' && error !== 'API désactivée dans le mod';
 
   return (
     <div 
@@ -69,7 +53,7 @@ export default function SyncNotification({ error, onClose, topOffset = "350px" }
         <p className={`text-xs ${themeColors.syncNotification.errorText} font-medium`}>{error}</p>
       </div>
       <p className={`text-xs ${themeColors.syncNotification.helpText} mt-1 mb-2`}>
-        {HELP_MESSAGES[error as keyof typeof HELP_MESSAGES] || HELP_MESSAGES[ERROR_MESSAGES.CONNECTION_FAILED]}
+        {HELP_MESSAGES[error as keyof typeof HELP_MESSAGES] || HELP_MESSAGES['Erreur inconnue']}
       </p>
       {shouldShowDownloadButton && (
         <button
