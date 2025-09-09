@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import CrossIcon from './icons/CrossIcon';
 
 import { Place, Portal } from '../app/api/utils/shared';
@@ -16,6 +16,8 @@ interface InfoOverlayProps {
 }
 
 export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlayProps) {
+  const [showOwnerTooltip, setShowOwnerTooltip] = useState(false);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -98,8 +100,8 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
         aria-label="Fermer l'overlay"
       />
       
-      <div className="flex items-start gap-4">
-        <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] overflow-y-auto border ${typeStyles.border} ${themeColors.transition}`}>
+      <div className="flex justify-center">
+        <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} max-w-2xl w-full max-h-[80vh] border ${typeStyles.border} ${themeColors.transition}`}>
           {/* Header */}
           <div className={`p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition}`}>
             <div className="flex items-start justify-between">
@@ -162,6 +164,43 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
                   )}
               </div>
               
+              {/* Owner skin rendering */}
+              {type === 'place' && (item as Place).owner && (
+                <div className="relative flex-shrink-0 mr-6">
+                  <div
+                    onMouseEnter={() => setShowOwnerTooltip(true)}
+                    onMouseLeave={() => setShowOwnerTooltip(false)}
+                  >
+                    <img
+                      key={`skin-${(item as Place).owner}`}
+                      src={getRenderUrl((item as Place).owner!, {
+                        renderType: 'head',
+                        crop: 'full',
+                        borderHighlight: true,
+                        borderHighlightRadius: 7,
+                        dropShadow: true,
+                      })}
+                      alt={`Skin de ${(item as Place).owner}`}
+                      className="w-20 h-20 object-cover"
+                      style={{ imageRendering: 'pixelated' }}
+                      crossOrigin="anonymous"
+                      loading="eager"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Owner badge tooltip */}
+                  {showOwnerTooltip && (
+                    <div className={`absolute -top-4 left-1/2 transform -translate-x-1/2 -translate-y-full px-3 py-2 text-sm font-medium ${themeColors.util.roundedFull} ${themeColors.infoOverlay.placeTags} whitespace-nowrap z-[10000]`}>
+                      <span className="opacity-75">Propriétaire : </span>
+                      <span className="font-bold">{(item as Place).owner}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <button
                 onClick={onClose}
                 className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
@@ -173,7 +212,7 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
           </div>
 
           {/* Content */}
-          <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition}`}>
+          <div className={`p-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} max-h-[calc(80vh-12rem)] overflow-y-auto`}>
             {/* Place Image */}
             {type === 'place' && (
               <div className="flex justify-center">
@@ -194,30 +233,6 @@ export default function InfoOverlay({ isOpen, onClose, item, type }: InfoOverlay
             {renderTags} {/* Reintroduce renderDescription */}
           </div>
         </div>
-        
-        {type === 'place' && (item as Place).owner && (
-          <div className="w-32 h-auto flex-shrink-0">
-            <img
-              key={`skin-${(item as Place).owner}`}
-              src={getRenderUrl((item as Place).owner!, {
-                renderType: 'mojavatar',
-                crop: 'full',
-                borderHighlight: true,
-                borderHighlightRadius: 7,
-                dropShadow: true,
-              })}
-              alt={'Skin du propriétaire'}
-              className="w-full h-full object-contain"
-              style={{ imageRendering: 'pixelated' }}
-              crossOrigin="anonymous"
-              loading="eager"
-              decoding="sync"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
