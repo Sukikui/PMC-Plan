@@ -44,7 +44,7 @@ export class RouteService {
     };
     
     // Option B: Via nether
-    const searchRadius = 0.8 * directDistance;
+    const searchRadius = directDistance;
     const nearbyPortalsFrom = await callNearestPortals(
       fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
       'overworld', this.portals, searchRadius
