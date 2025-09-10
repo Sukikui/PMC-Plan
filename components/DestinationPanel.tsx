@@ -20,11 +20,20 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const [enabledTags, setEnabledTags] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [tagFilterLogic, setTagFilterLogic] = useState<'OR' | 'AND'>('OR');
+  const [tagFilterLogic, setTagFilterLogic] = useState<'SINGLE' | 'OR' | 'AND'>('SINGLE');
   
 
   const toggleTagFilterLogic = () => {
-    setTagFilterLogic(prev => prev === 'OR' ? 'AND' : 'OR');
+    setTagFilterLogic(prev => {
+      const newMode = prev === 'SINGLE' ? 'OR' : prev === 'OR' ? 'AND' : 'SINGLE';
+      
+      // Si on passe en mode SINGLE avec plusieurs tags sélectionnés, tout déselectionner
+      if (newMode === 'SINGLE' && enabledTags.size > 1) {
+        setEnabledTags(new Set());
+      }
+      
+      return newMode;
+    });
   };
 
   // Load places and portals
@@ -70,7 +79,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
   const filteredPlaces = places.filter(place => {
     // Filter by tags
     const tagMatch = enabledTags.size === 0 || (
-      tagFilterLogic === 'OR'
+      tagFilterLogic === 'SINGLE' || tagFilterLogic === 'OR'
         ? place.tags.some(tag => enabledTags.has(tag))
         : Array.from(enabledTags).every(enabledTag => place.tags.includes(enabledTag))
     );
@@ -95,11 +104,24 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
 
   const toggleTag = (tag: string) => {
     const newEnabledTags = new Set(enabledTags);
-    if (newEnabledTags.has(tag)) {
-      newEnabledTags.delete(tag);
+    
+    if (tagFilterLogic === 'SINGLE') {
+      // En mode SINGLE : sélectionner uniquement ce tag
+      if (newEnabledTags.has(tag)) {
+        newEnabledTags.delete(tag); // Déselectionner si déjà sélectionné
+      } else {
+        newEnabledTags.clear(); // Effacer tous les autres tags
+        newEnabledTags.add(tag); // Ajouter uniquement ce tag
+      }
     } else {
-      newEnabledTags.add(tag);
+      // En mode OR/AND : comportement normal
+      if (newEnabledTags.has(tag)) {
+        newEnabledTags.delete(tag);
+      } else {
+        newEnabledTags.add(tag);
+      }
     }
+    
     setEnabledTags(newEnabledTags);
   };
 
@@ -128,16 +150,22 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
             <button
               onClick={toggleTagFilterLogic}
               className={`w-10 py-1 px-2 ${themeColors.util.roundedFull} border ${themeColors.transition} font-semibold flex items-center justify-center ${themeColors.tag.filterLogic}`}
+              title={`Mode actuel: ${tagFilterLogic === 'SINGLE' ? 'Un seul tag' : tagFilterLogic === 'OR' ? 'OU (au moins un tag)' : 'ET (tous les tags)'}`}
             >
-              {tagFilterLogic === 'OR' ? (
+              {tagFilterLogic === 'SINGLE' ? (
                 <svg className="w-4 h-4" viewBox="-2 0 28 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="5" cy="12" r="6" />
-                  <circle cx="19" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="8" fill="currentColor" />
+                </svg>
+              ) : tagFilterLogic === 'OR' ? (
+                <svg className="w-4 h-4" viewBox="-2 0 28 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg" style={{overflow: 'visible'}}>
+                  <circle cx="5" cy="12" r="8" fill="currentColor" />
+                  <circle cx="19" cy="12" r="8" />
                 </svg>
               ) : (
                 <svg className="w-4 h-4" viewBox="-2 0 28 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="12" r="6" />
-                  <circle cx="16" cy="12" r="6" />
+                  <circle cx="7" cy="12" r="8" />
+                  <circle cx="17" cy="12" r="8" />
+                  <ellipse cx="12" cy="12" rx="3" ry="5.6" fill="currentColor"/>
                 </svg>
               )}
             </button>
