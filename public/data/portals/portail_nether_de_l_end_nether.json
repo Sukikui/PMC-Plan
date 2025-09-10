@@ -1,0 +1,11 @@
+{
+  "id": "portail_acces_end",
+  "name": "Portail d'accès à l'End",
+  "world": "nether",
+  "coordinates": {
+    "x": 114,
+    "y": 71,
+    "z": 43
+  },
+  "description": "Portail publique d'accès à l'End"
+}
