@@ -218,12 +218,19 @@ Calculates the optimal route between two locations using the full routing algori
 
 #### Internal Logic
 
-- **`Overworld to Overworld`** Compares direct route vs nether route, chooses optimal
-- **`Nether to Nether`** Uses nether network transport with address calculation
-- **`Overworld to Nether`** Finds nearest portal and calculates route via nether
-- **`Nether to Overworld`** Calculates route from Nether start to the Overworld portal nearest to the Overworld destination, then overworld transport to the final destination.
-- Includes nether addresses for all nether positions
-- Handles theoretical portal coordinates when linked portals don't exist
+- **`Overworld to Overworld`**: 
+  1. Calculates direct euclidean distance
+  2. Searches for portals within `directDistance` radius from start and end points
+  3. For each route option, finds linked nether portals (or calculates theoretical coordinates)
+  4. Calculates total nether route distance: `distanceToPortal1 + netherDistance + distanceFromPortal2`
+  5. **Decision rule**: `if (totalNetherDistance < directDistance)` → nether route, else direct route
+  6. Falls back to direct route if: no portals found, no linked nether portal at destination
+
+- **`Nether to Nether`**: Uses nether network transport with address calculation
+- **`Overworld to Nether`**: Finds nearest overworld portal, links to nether, calculates route
+- **`Nether to Overworld`**: Finds nearest overworld portal to destination, calculates route from nether start
+- Includes nether addresses for all nether positions using `/nether-address` logic
+- Handles theoretical portal coordinates when linked portals don't exist (8:1 conversion)
 
 **Response:**
 
