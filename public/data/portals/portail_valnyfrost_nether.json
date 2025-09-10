@@ -1,11 +1,11 @@
 {
   "id": "portail_valnyfrost",
-  "name": "Portail ValnyFrost",
+  "name": "Portail de ValnyFrost",
   "world": "nether",
   "coordinates": {
     "x": 29,
     "y": 73,
     "z": -356
   },
-  "description": "Portail principal de ValnyFrost capital de l'empire Valkorion"
+  "description": "Portail principal de ValnyFrost, capitale de l'empire Valkorion"
 }
