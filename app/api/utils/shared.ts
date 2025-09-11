@@ -342,7 +342,8 @@ export async function loadPlaces(): Promise<Place[]> {
           description: placeData.description || null,
           tags: placeData.tags || [],
           owner: placeData.owner || null,
-          discord: placeData.discord || null
+          discord: placeData.discord || null,
+          trade: placeData.trade || null
         };
         
         places.push(place);
