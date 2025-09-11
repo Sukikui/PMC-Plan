@@ -27,6 +27,21 @@ export interface PortalWithDistance extends Portal {
   distance: number;
 }
 
+export interface TradeItem {
+  custom_name?: string | null;
+  item_id: string;
+  quantity: number;
+  enchanted: boolean;
+  lore?: string[];
+}
+
+export interface TradeOffer {
+  gives: TradeItem;
+  wants: TradeItem;
+  stock?: number | null;
+  active?: boolean;
+}
+
 export interface Place {
   id: string;
   name: string;
@@ -40,6 +55,7 @@ export interface Place {
   tags: string[];
   owner: string | null;
   discord: string | null;
+  trade: TradeOffer[] | null;
 }
 
 export interface NetherAddress {
