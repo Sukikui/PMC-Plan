@@ -8,5 +8,8 @@
     "z": -297
   },
   "tags": ["ferme", "public"],
-  "description": "Forteresse creusée et dallée pour forcer le spawn des mobs uniquement sur une grande plateforme centrale. Projet collectif visant un farm efficace."
+  "description": "Forteresse creusée et dallée pour forcer le spawn des mobs uniquement sur une grande plateforme centrale. Projet collectif visant un farm efficace.",
+  "owner": null,
+  "discord": null,
+  "trade": null
 }

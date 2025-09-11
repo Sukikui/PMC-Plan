@@ -8,5 +8,8 @@
     "z": 252
   },
   "tags": ["magasin"],
-  "description": "Cette splendide galerie d'art tenue par les cartographes du serveur propose des Map-Arts uniques."
+  "description": "Cette splendide galerie d'art tenue par les cartographes du serveur propose des Map-Arts uniques.",
+  "owner": null,
+  "discord": null,
+  "trade": null
 }

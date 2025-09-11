@@ -8,5 +8,8 @@
     "z": 232
   },
   "tags": ["public"],
-  "description": "Maison d'accueil pour les nouveaux joueurs. Vous y trouverez des informations utiles sur le serveur et ses règles, une carte du serveur, mais également une zone d'équipements en libre accès pour vous aider à bien démarrer votre aventure sur Play-MC.fr !"
+  "description": "Maison d'accueil pour les nouveaux joueurs. Vous y trouverez des informations utiles sur le serveur et ses règles, une carte du serveur, mais également une zone d'équipements en libre accès pour vous aider à bien démarrer votre aventure sur Play-MC.fr !",
+  "owner": null,
+  "discord": null,
+  "trade": null
 }

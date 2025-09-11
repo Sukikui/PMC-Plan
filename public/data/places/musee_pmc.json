@@ -8,5 +8,8 @@
     "z": 322
   },
   "tags": ["public"],
-  "description": "Venez découvrir les joueurs qui ont marqué l'histoire du serveur !"
+  "description": "Venez découvrir les joueurs qui ont marqué l'histoire du serveur !",
+  "owner": null,
+  "discord": null,
+  "trade": null
 }

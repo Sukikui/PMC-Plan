@@ -8,5 +8,8 @@
     "z": 233
   },
   "tags": ["magasin"],
-  "description": "Marché collectif situé près du spawn, l’Orgue est une infrastructure commerciale structurée autour de boutiques individuelles gérées par des vendeurs, répartis selon une hiérarchie (Anciens, Confiants, Nouveaux) et fondée sur un modèle de trust pour sécuriser les permissions d’accès."
+  "description": "Marché collectif situé près du spawn, l'Orgue est une infrastructure commerciale structurée autour de boutiques individuelles gérées par des vendeurs, répartis selon une hiérarchie (Anciens, Confiants, Nouveaux) et fondée sur un modèle de trust pour sécuriser les permissions d'accès.",
+  "owner": null,
+  "discord": null,
+  "trade": null
 }

@@ -7,8 +7,9 @@
     "y": 58,
     "z": 116
   },
-  "owner": "Ilitch",
   "tags": ["magasin"],
   "description": "Grand magasin automatique spécialisé dans les livres enchantés, facilement repérable depuis le spawn par son immense structure en arbre.",
-  "discord": "https://discord.gg/569Ujdb"
+  "owner": "Ilitch",
+  "discord": "https://discord.gg/569Ujdb",
+  "trade": null
 }

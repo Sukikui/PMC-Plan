@@ -8,5 +8,8 @@
     "z": 224
   },
   "tags": ["magasin"],
-  "description": "Magasin spécialisé situé dans la zone de l’Arbre Rosé, proposant une large gamme de potions ainsi que du souffle de Dragon."
+  "description": "Magasin spécialisé situé dans la zone de l'Arbre Rosé, proposant une large gamme de potions ainsi que du souffle de Dragon.",
+  "owner": null,
+  "discord": null,
+  "trade": null
 }

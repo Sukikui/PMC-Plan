@@ -10,5 +10,6 @@
   "tags": ["spawn", "test"],
   "description": "Point de spawn du serveur pour les tests",
   "owner": null,
-  "discord": null
+  "discord": null,
+  "trade": null
 }

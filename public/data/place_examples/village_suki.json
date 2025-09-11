@@ -10,5 +10,21 @@
   "tags": ["village", "base"],
   "description": "Ancien village caché au sein duquel de nombreux secrets et trésors sont gardés à tout jamais...",
   "owner": "Suki",
-  "discord": "https://discord.gg/exemple123"
+  "discord": "https://discord.gg/exemple123",
+  "trade": [
+    {
+      "gives": {
+        "custom_name": "Gemme de vitalité",
+        "item_id": "emerald",
+        "quantity": 5,
+        "enchanted": true
+      },
+      "wants": {
+        "custom_name": null,
+        "item_id": "diamond",
+        "quantity": 1,
+        "enchanted": false
+      }
+    }
+  ]
 }

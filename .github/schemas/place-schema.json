@@ -3,7 +3,7 @@
   "type": "object",
   "title": "PMC Plan Place Schema",
   "description": "Schema for validating place data in the PMC Plan project",
-  "required": ["id", "name", "world", "coordinates"],
+  "required": ["id", "name", "world", "coordinates", "trade"],
   "properties": {
     "id": {
       "type": "string",
@@ -73,6 +73,108 @@
       "maxLength": 16,
       "pattern": "^[a-zA-Z0-9_]+$",
       "description": "Minecraft username of the player who owns this place"
+    },
+    "trade": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "required": ["gives", "wants"],
+        "properties": {
+          "gives": {
+            "type": "object",
+            "required": ["item_id", "quantity", "enchanted"],
+            "properties": {
+              "custom_name": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 100,
+                "description": "Custom name for the item"
+              },
+              "item_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9_:]+$",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "Minecraft item ID (e.g., 'diamond', 'minecraft:emerald')"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64,
+                "description": "Quantity of the item"
+              },
+              "enchanted": {
+                "type": "boolean",
+                "description": "Whether the item is enchanted"
+              },
+              "lore": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "maxItems": 10,
+                "description": "Optional lore/description lines for the item"
+              }
+            },
+            "additionalProperties": false
+          },
+          "wants": {
+            "type": "object",
+            "required": ["item_id", "quantity", "enchanted"],
+            "properties": {
+              "custom_name": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 100,
+                "description": "Custom name for the item"
+              },
+              "item_id": {
+                "type": "string",
+                "pattern": "^[a-z0-9_:]+$",
+                "minLength": 1,
+                "maxLength": 50,
+                "description": "Minecraft item ID (e.g., 'diamond', 'minecraft:emerald')"
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64,
+                "description": "Quantity of the item"
+              },
+              "enchanted": {
+                "type": "boolean",
+                "description": "Whether the item is enchanted"
+              },
+              "lore": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "maxItems": 10,
+                "description": "Optional lore/description lines for the item"
+              }
+            },
+            "additionalProperties": false
+          },
+          "stock": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Available stock for this trade (optional)"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this trade offer is active"
+          }
+        },
+        "additionalProperties": false
+      },
+      "maxItems": 20,
+      "description": "List of trade offers available at this place (null if no trades)"
     }
   },
   "additionalProperties": false
