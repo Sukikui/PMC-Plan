@@ -1,0 +1,16 @@
+{
+  "id": "l_orgue",
+  "name": "L'Orgue",
+  "world": "overworld",
+  "coordinates": {
+    "x": -266,
+    "y": 64,
+    "z": 233
+  },
+  "tags": [
+    "magasin"
+  ],
+  "description": "L'Orgue est un magasin situé à la sortie ouest du spawn qui vend de multiples items. Les gérants sont Clochette95 et YCMarmotte mais plusieurs joueurs y vendent aussi leurs produits.",
+  "discord": "https://discord.gg/ebHKmyFXnz",
+  "owner": "YCMarmotte"
+}
