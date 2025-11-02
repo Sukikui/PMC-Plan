@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, ReactElement } from 'react';
 import { themeColors } from '../lib/theme-colors';
 
 interface Step {
@@ -274,7 +274,7 @@ export default function TravelPlan({
         }
     };
 
-    const renderEmptyState = (icon: JSX.Element, title: string, description: string, bgClass: string, iconType: 'default' | 'position' | 'error' = 'default') => (
+    const renderEmptyState = (icon: ReactElement, title: string, description: string, bgClass: string, iconType: 'default' | 'position' | 'error' = 'default') => (
         <div className={`absolute inset-0 ${bgClass} flex items-center justify-center ${themeColors.transition}`}>
             <div className="text-center max-w-md">
                 <div className={`w-16 h-16 mx-auto mb-6 ${themeColors.util.roundedFull} ${getIconContainer(iconType)} flex items-center justify-center ${themeColors.transition}`}>
