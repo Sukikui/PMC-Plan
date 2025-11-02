@@ -57,6 +57,7 @@ tmp/
 temp/
 
 # AI Agents
+AGENTS.md
 GEMINI.md
 CLAUDE.md
 .claude/
@@ -65,3 +66,11 @@ CLAUDE.md
 REMEMBER.md
 PLAN.md
 TODO.Md
+/generated/prisma
+
+# Old static files
+public/data/place_examples/
+public/data/place_images/
+public/data/places/
+public/data/portal_examples/
+public/data/portals/

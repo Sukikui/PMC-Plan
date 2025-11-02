@@ -107,6 +107,17 @@ export class PlayerCoordsApi {
         );
       }
       
+      // Handle JSON parsing errors
+      if (rawErrorMessage.includes('JSON') || 
+          rawErrorMessage.includes('Unexpected token') ||
+          rawErrorMessage.includes('Expected double-quoted property name')) {
+        throw new PlayerCoordsApiError(
+          PlayerCoordsApiErrorType.UNKNOWN,
+          rawErrorMessage,
+          'Réponse invalide du serveur (format incorrect)'
+        );
+      }
+      
       // Handle network/connection errors
       if (rawErrorMessage.includes('Failed to fetch') || 
           rawErrorMessage.includes('Load failed') ||

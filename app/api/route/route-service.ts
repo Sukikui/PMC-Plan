@@ -3,8 +3,7 @@ import {
   calculateEuclideanDistance,
   convertOverworldToNether 
 } from '../utils/shared';
-import { callNearestPortals, callLinkedPortal, calculateNetherNetworkDistance } from './route-utils';
-import { calculateNetherAddress } from '../utils/shared';
+import { callNearestPortals, callLinkedPortal } from './route-utils';
 import { RoutePoint } from './route-types';
 
 import { Place, Portal } from '../utils/shared'; // Add this import
@@ -70,32 +69,35 @@ export class RouteService {
     );
     
     let portal1NetherCoords;
-    let portal1Address;
-    
+    let portal1Address: string | undefined;
+
     if (linkedPortal1) {
       portal1NetherCoords = linkedPortal1.coordinates;
-      portal1Address = await calculateNetherAddress(portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z);
+      portal1Address = linkedPortal1.address;
     } else {
       const theoreticalCoords = convertOverworldToNether(portal1.coordinates.x, portal1.coordinates.z);
       portal1NetherCoords = { x: theoreticalCoords.x, y: 70, z: theoreticalCoords.z };
-      portal1Address = await calculateNetherAddress(portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z);
+      portal1Address = '';
     }
-    
+
     const portal2 = nearbyPortalsTo[0];
     const linkedPortal2 = await callLinkedPortal(
       portal2.coordinates.x, portal2.coordinates.y, portal2.coordinates.z, 'overworld', this.portals
     );
-    
+
     if (!linkedPortal2) {
       return NextResponse.json(directRoute);
     }
-    
-    const portal2Address = await calculateNetherAddress(linkedPortal2.coordinates.x, linkedPortal2.coordinates.y, linkedPortal2.coordinates.z);
+
+    const portal2Address = linkedPortal2.address;
     
     // Use pre-calculated distances from the portal searches
     const distanceToPortal1 = portal1.distance;
     
-    const netherDistance = calculateNetherNetworkDistance(portal1Address, portal2Address);
+    const netherDistance = calculateEuclideanDistance(
+      portal1NetherCoords.x, portal1NetherCoords.y, portal1NetherCoords.z,
+      linkedPortal2.coordinates.x, linkedPortal2.coordinates.y, linkedPortal2.coordinates.z
+    );
     
     const distanceFromPortal2 = portal2.distance;
     
@@ -133,7 +135,7 @@ export class RouteService {
               name: linkedPortal1?.name || ``,
               coordinates: portal1NetherCoords,
               world: "nether",
-              address: portal1Address.address
+              address: portal1Address
             }
           },
           ...(netherDistance > 0 ? [{
@@ -143,13 +145,13 @@ export class RouteService {
               id: linkedPortal1?.id || ``,
               name: linkedPortal1?.name || ``,
               coordinates: portal1NetherCoords,
-              address: portal1Address.address
+              address: portal1Address
             },
             to: {
               id: linkedPortal2.id,
               name: linkedPortal2.name,
               coordinates: linkedPortal2.coordinates,
-              address: portal2Address.address
+              address: portal2Address
             }
           }] : []),
           {
@@ -159,7 +161,7 @@ export class RouteService {
               name: linkedPortal2.name,
               coordinates: linkedPortal2.coordinates,
               world: "nether",
-              address: portal2Address.address
+              address: portal2Address
             },
             to: {
               id: portal2.id,
@@ -190,10 +192,10 @@ export class RouteService {
   }
 
   async handleNetherToNether(fromPoint: RoutePoint, toPoint: RoutePoint) {
-    const fromAddress = await calculateNetherAddress(fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z);
-    const toAddress = await calculateNetherAddress(toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z);
-    
-    const distance = calculateNetherNetworkDistance(fromAddress, toAddress);
+    const distance = calculateEuclideanDistance(
+      fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
+      toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z
+    );
     
     const steps = distance > 0 ? [
       {
@@ -202,13 +204,13 @@ export class RouteService {
         from: {
           name: fromPoint.name || "Position de départ",
           coordinates: fromPoint.coordinates,
-          address: fromAddress.address
+          address: fromPoint.address
         },
         to: {
           id: toPoint.id || "destination",
           name: toPoint.name || "Destination",
           coordinates: toPoint.coordinates,
-          address: toAddress.address
+          address: toPoint.address
         }
       }
     ] : [];
@@ -242,22 +244,25 @@ export class RouteService {
     );
     
     let portalNetherCoords;
-    let portalAddress;
-    
+    let portalAddress: string | undefined;
+
     if (linkedPortal) {
       portalNetherCoords = linkedPortal.coordinates;
-      portalAddress = await calculateNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
+      portalAddress = linkedPortal.address;
     } else {
       const theoreticalCoords = convertOverworldToNether(portal.coordinates.x, portal.coordinates.z);
       portalNetherCoords = { x: theoreticalCoords.x, y: 70, z: theoreticalCoords.z };
-      portalAddress = await calculateNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
+      portalAddress = '';
     }
-    
-    const toAddress = await calculateNetherAddress(toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z);
+
+    const toAddress = toPoint.address;
     
     const distanceToPortal = portal.distance;
     
-    const netherDistance = calculateNetherNetworkDistance(portalAddress, toAddress);
+    const netherDistance = calculateEuclideanDistance(
+      portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z,
+      toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z
+    );
     const totalDistance = distanceToPortal + netherDistance;
     
     return NextResponse.json({
@@ -288,7 +293,7 @@ export class RouteService {
             id: linkedPortal?.id || ``,
             name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
-            address: portalAddress.address
+            address: portalAddress
           }
         },
         ...(netherDistance > 0 ? [{
@@ -298,13 +303,13 @@ export class RouteService {
             id: linkedPortal?.id || ``,
             name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
-            address: portalAddress.address
+            address: portalAddress
           },
           to: {
             id: toPoint.id || "destination",
             name: toPoint.name || "Destination",
             coordinates: toPoint.coordinates,
-            address: toAddress.address
+            address: toAddress
           }
         }] : [])
       ]
@@ -312,8 +317,6 @@ export class RouteService {
   }
 
   async handleNetherToOverworld(fromPoint: RoutePoint, toPoint: RoutePoint) {
-    const fromAddress = await calculateNetherAddress(fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z);
-    
     const nearbyPortals = await callNearestPortals(
       toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z,
       'overworld', this.portals
@@ -332,18 +335,21 @@ export class RouteService {
     );
     
     let portalNetherCoords;
-    let portalAddress;
-    
+    let portalAddress: string | undefined;
+
     if (linkedPortal) {
       portalNetherCoords = linkedPortal.coordinates;
-      portalAddress = await calculateNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
+      portalAddress = linkedPortal.address;
     } else {
       const theoreticalCoords = convertOverworldToNether(portal.coordinates.x, portal.coordinates.z);
       portalNetherCoords = { x: theoreticalCoords.x, y: 70, z: theoreticalCoords.z };
-      portalAddress = await calculateNetherAddress(portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z);
+      portalAddress = '';
     }
     
-    const netherDistance = calculateNetherNetworkDistance(fromAddress, portalAddress);
+    const netherDistance = calculateEuclideanDistance(
+      fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
+      portalNetherCoords.x, portalNetherCoords.y, portalNetherCoords.z
+    );
     
     const distanceFromPortal = portal.distance;
     
@@ -362,13 +368,13 @@ export class RouteService {
           from: {
             name: fromPoint.name || "Position de départ", 
             coordinates: fromPoint.coordinates,
-            address: fromAddress.address
+            address: fromPoint.address
           },
           to: {
             id: linkedPortal?.id || ``,
             name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
-            address: portalAddress.address
+            address: portalAddress
           }
         }] : []),
         {
@@ -377,7 +383,7 @@ export class RouteService {
             id: linkedPortal?.id || ``,
             name: linkedPortal?.name || ``,
             coordinates: portalNetherCoords,
-            address: portalAddress.address
+            address: portalAddress
           },
           to: {
             id: portal.id,

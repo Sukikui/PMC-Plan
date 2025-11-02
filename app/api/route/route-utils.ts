@@ -102,11 +102,15 @@ export function resolveRoutePoint(
         { status: 404 }
       );
     }
+
+    const isPortal = 'address' in foundPlace;
+
     return {
       coordinates: foundPlace.coordinates,
       world: foundPlace.world,
       name: foundPlace.name,
-      id: foundPlace.id
+      id: foundPlace.id,
+      address: isPortal ? (foundPlace as Portal).address : undefined
     };
   } else {
     return {

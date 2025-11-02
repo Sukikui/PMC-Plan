@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export function useTheme() {
-  const [theme, setTheme] = useState('system');
+export type AppTheme = 'light' | 'dark' | 'system';
 
-  const applyTheme = useCallback((selectedTheme: string) => {
+export function useTheme() {
+  const [theme, setTheme] = useState<AppTheme>('system');
+
+  const applyTheme = useCallback((selectedTheme: AppTheme) => {
     const root = document.documentElement;
     if (selectedTheme === 'dark') {
       root.classList.add('dark');
@@ -22,12 +24,12 @@ export function useTheme() {
   // Effect to load and apply theme on initial mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('pmc-plan-theme');
-    const initialTheme = savedTheme && ['light', 'dark', 'system'].includes(savedTheme) ? savedTheme : 'system';
+    const initialTheme = savedTheme && ['light', 'dark', 'system'].includes(savedTheme) ? savedTheme as AppTheme : 'system';
     setTheme(initialTheme);
     applyTheme(initialTheme);
   }, [applyTheme]);
 
-  const handleThemeChange = (newTheme: string) => {
+  const handleThemeChange = (newTheme: AppTheme) => {
     setTheme(newTheme);
     applyTheme(newTheme);
     localStorage.setItem('pmc-plan-theme', newTheme);

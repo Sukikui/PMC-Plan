@@ -29,4 +29,5 @@ export interface RoutePoint {
   world: string;
   name?: string;
   id?: string;
+  address?: string;
 }
