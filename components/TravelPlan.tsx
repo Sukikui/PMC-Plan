@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { themeColors } from '../lib/theme-colors';
 
 interface Step {
@@ -54,10 +54,12 @@ export default function TravelPlan({
     manualCoords
 }: TravelPlanProps) {
     const [route, setRoute] = useState<RouteData | null>(null);
+    const routeRef = useRef(route);
+    useEffect(() => { routeRef.current = route; }, [route]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const buildFromParams = () => {
+    const buildFromParams = useCallback(() => {
         if (playerPosition) {
             return `from_x=${playerPosition.x}&from_y=${playerPosition.y}&from_z=${playerPosition.z}&from_world=${playerPosition.world}`;
         }
@@ -75,9 +77,9 @@ export default function TravelPlan({
         }
         
         return null;
-    };
+    }, [playerPosition, manualCoords]);
 
-    const calculateRoute = async () => {
+    const calculateRoute = useCallback(async () => {
         if (!selectedPlaceId) return;
 
         try {
@@ -92,7 +94,7 @@ export default function TravelPlan({
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`Erreur ${response.status}: ${errorText || 'Impossible de calculer l\'itinéraire'}`);
+                throw new Error(`Erreur ${response.status}: ${errorText || "Impossible de calculer l'itinéraire"}`);
             }
 
             const data: RouteData = await response.json();
@@ -103,12 +105,12 @@ export default function TravelPlan({
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedPlaceId, buildFromParams]);
 
-    const shouldRecalculate = () => {
-        if (!route || !playerPosition || route.steps.length === 0) return true;
+    const shouldRecalculate = useCallback((currentRoute: RouteData | null) => {
+        if (!currentRoute || !playerPosition || currentRoute.steps.length === 0) return true;
         
-        const currentFrom = route.player_from.coordinates;
+        const currentFrom = currentRoute.player_from.coordinates;
         const distance = Math.sqrt(
             Math.pow(playerPosition.x - currentFrom.x, 2) +
             Math.pow(playerPosition.y - currentFrom.y, 2) +
@@ -117,19 +119,19 @@ export default function TravelPlan({
 
         if (distance >= 5) return true;
 
-        const lastStepTo = route.steps[route.steps.length - 1]?.to;
+        const lastStepTo = currentRoute.steps[currentRoute.steps.length - 1]?.to;
         return lastStepTo?.id !== selectedPlaceId;
-    };
+    }, [playerPosition, selectedPlaceId]);
 
     useEffect(() => {
         if (selectedPlaceId && (playerPosition || (manualCoords?.x && manualCoords?.y && manualCoords?.z))) {
-            if (shouldRecalculate()) {
+            if (shouldRecalculate(routeRef.current)) {
                 calculateRoute();
             }
         } else {
             setRoute(null);
         }
-    }, [selectedPlaceId, playerPosition, manualCoords]);
+    }, [selectedPlaceId, playerPosition, manualCoords, calculateRoute, shouldRecalculate]);
 
     const getStepIcon = (type: string) => {
         const iconProps = "w-4 h-4";
@@ -247,9 +249,7 @@ export default function TravelPlan({
 
     const renderWorldBadge = (world: string) => {
         return (
-            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${
-                world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether
-            }`}>
+            <span className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${world === 'overworld' ? themeColors.world.overworld : themeColors.world.nether}`}>
                 {world}
             </span>
         );

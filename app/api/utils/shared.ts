@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import type { TradeItem as PrismaTradeItem, TradeOffer as PrismaTradeOffer } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export interface Portal {
   id: string;
@@ -12,6 +14,8 @@ export interface Portal {
   };
   description: string | null;
   address: string;
+  owners: string[];
+  slug?: string;
   "nether-associate": {
     coordinates: {
         x: number;
@@ -38,8 +42,7 @@ export interface TradeItem {
 export interface TradeOffer {
   gives: TradeItem;
   wants: TradeItem;
-  stock?: number | null;
-  active?: boolean;
+  negotiable?: boolean;
 }
 
 export interface Place {
@@ -52,8 +55,10 @@ export interface Place {
     z: number;
   };
   description: string | null;
+  image?: string | null;
+  imageUrl?: string | null;
   tags: string[];
-  owner: string | null;
+  owners?: string[];
   discord: string | null;
   trade: TradeOffer[] | null;
 }
@@ -116,51 +121,62 @@ export function convertNetherToOverworld(x: number, z: number): { x: number; z: 
   };
 }
 
-export async function loadPortals(): Promise<Portal[]> {
-  const portalsDir = path.join(process.cwd(), 'public', 'data', 'portals');
-  
-  try {
-    const files = await fs.readdir(portalsDir);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
-    
-    const portals: Portal[] = [];
-    
-    for (const file of jsonFiles) {
-      try {
-        const filePath = path.join(portalsDir, file);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const portalData = JSON.parse(content);
-        
-        // Ensure all required fields are present with proper null handling
-        const portal: Portal = {
-          id: portalData.id || '',
-          name: portalData.name || '',
-          world: portalData.world || 'overworld',
-          coordinates: portalData.coordinates || { x: 0, y: 0, z: 0 },
-          description: portalData.description || null,
-          address: portalData.address || '',
-          "nether-associate": portalData["nether-associate"] || null
-        };
-        
-        // If it's a Nether portal, calculate and add its address
-        if (portal.world === 'nether') {
-          const netherAddress = await calculateNetherAddress(portal.coordinates.x, portal.coordinates.y, portal.coordinates.z);
-          if (!netherAddress.address) {
-            throw new Error(`Failed to calculate nether address for portal ${portal.id} at coordinates (${portal.coordinates.x}, ${portal.coordinates.y}, ${portal.coordinates.z})`);
-          }
-          portal.address = netherAddress.address;
-        }
-        portals.push(portal);
-      } catch (error) {
-        console.warn(`Failed to load portal file ${file}:`, error);
-      }
-    }
-    
-    return portals;
-  } catch (error) {
-    console.warn('Failed to load portals directory:', error);
-    return [];
+const createNegotiableTradeItem = (): TradeItem => ({
+  item_id: '',
+  quantity: 0,
+  enchanted: false,
+  custom_name: null,
+});
+
+const toTradeItem = (item?: PrismaTradeItem | null): TradeItem => {
+  if (!item) {
+    return createNegotiableTradeItem();
   }
+
+  return {
+    custom_name: item.customName ?? null,
+    item_id: item.itemId,
+    quantity: item.quantity,
+    enchanted: item.enchanted,
+  };
+};
+
+const toTradeOffer = (offer: PrismaTradeOffer & { items: PrismaTradeItem[] }): TradeOffer | null => {
+  const gives = offer.items.find((item) => item.kind === 'gives');
+  if (!gives) {
+    return null;
+  }
+
+  const wants = offer.items.find((item) => item.kind === 'wants');
+
+  return {
+    gives: toTradeItem(gives),
+    wants: wants ? toTradeItem(wants) : createNegotiableTradeItem(),
+    negotiable: offer.negotiable,
+  };
+};
+
+export async function loadPortals(): Promise<Portal[]> {
+  const portalRecords = await prisma.portal.findMany({
+    where: { status: 'approved' },
+    orderBy: [{ name: 'asc' }],
+  });
+
+  return portalRecords.map((portal): Portal => ({
+    id: portal.slug,
+    slug: portal.slug,
+    name: portal.name,
+    world: portal.world,
+    coordinates: {
+      x: portal.coordX,
+      y: portal.coordY,
+      z: portal.coordZ,
+    },
+    description: portal.description ?? null,
+    address: portal.address ?? '',
+    owners: portal.ownerNames,
+    'nether-associate': null,
+  }));
 }
 
 export async function findNearestPortals(
@@ -319,44 +335,41 @@ export async function calculateNetherAddress(x: number, y: number, z: number): P
 }
 
 export async function loadPlaces(): Promise<Place[]> {
-  const placesDir = path.join(process.cwd(), 'public', 'data', 'places');
-  
-  try {
-    const files = await fs.readdir(placesDir);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
-    
-    const places: Place[] = [];
-    
-    for (const file of jsonFiles) {
-      try {
-        const filePath = path.join(placesDir, file);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const placeData = JSON.parse(content);
-        
-        // Ensure all required fields are present with proper null handling
-        const place: Place = {
-          id: placeData.id || '',
-          name: placeData.name || '',
-          world: placeData.world || 'overworld',
-          coordinates: placeData.coordinates || { x: 0, y: 0, z: 0 },
-          description: placeData.description || null,
-          tags: placeData.tags || [],
-          owner: placeData.owner || null,
-          discord: placeData.discord || null,
-          trade: placeData.trade || null
-        };
-        
-        places.push(place);
-      } catch (error) {
-        console.warn(`Failed to load place file ${file}:`, error);
-      }
-    }
-    
-    return places;
-  } catch (error) {
-    console.warn('Failed to load places directory:', error);
-    return [];
-  }
+  const placeRecords = await prisma.place.findMany({
+    where: { status: 'approved' },
+    include: {
+      tradeOffers: {
+        include: {
+          items: true,
+        },
+      },
+    },
+    orderBy: [{ name: 'asc' }],
+  });
+
+  return placeRecords.map((place) => {
+    const trades = place.tradeOffers
+      .map((offer) => toTradeOffer(offer))
+      .filter((offer): offer is TradeOffer => offer !== null);
+
+    return {
+      id: place.slug,
+      name: place.name,
+      world: place.world,
+      coordinates: {
+        x: place.coordX,
+        y: place.coordY,
+        z: place.coordZ,
+      },
+      description: place.description ?? null,
+      image: place.imageUrl ?? null,
+      imageUrl: place.imageUrl ?? null,
+      tags: place.tags,
+      owners: place.ownerNames ?? [],
+      discord: place.discordUrl ?? null,
+      trade: trades.length > 0 ? trades : null,
+    };
+  });
 }
 
 export async function loadNetherData(): Promise<NetherData> {

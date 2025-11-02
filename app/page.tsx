@@ -4,8 +4,10 @@ import { useState } from 'react';
 import DestinationPanel from '@/components/DestinationPanel';
 import PositionPanel from '@/components/PositionPanel';
 import TravelPlan from '@/components/TravelPlan';
-import InfoOverlay from '@/components/InfoOverlay';
+import { useOverlay } from '@/components/overlay/OverlayProvider';
 import SettingsPanel from '@/components/SettingsPanel';
+import Overlay from '@/components/ui/Overlay';
+import GlobalTradeOverlay from '@/components/GlobalTradeOverlay';
 import BetaLockScreen from '@/components/BetaLockScreen';
 import StartupScreen from '@/components/StartupScreen';
 import { themeColors } from '@/lib/theme-colors';
@@ -21,9 +23,21 @@ export default function Home() {
   const [manualCoords, setManualCoords] = useState<{x: string; y: string; z: string; world: 'overworld' | 'nether'}>({
     x: '', y: '', z: '', world: 'overworld'
   });
-  const [overlayOpen, setOverlayOpen] = useState(false);
-  const [overlayItem, setOverlayItem] = useState<Place | Portal | null>(null);
-  const [overlayType, setOverlayType] = useState<'place' | 'portal'>('place');
+  const { openPlaceInfo } = useOverlay();
+  const [isMarketOpen, setIsMarketOpen] = useState(false);
+  const [isMarketClosing, setIsMarketClosing] = useState(false);
+
+  const openMarket = () => {
+    setIsMarketClosing(false);
+    setIsMarketOpen(true);
+  };
+  const closeMarket = () => {
+    setIsMarketClosing(true);
+    setTimeout(() => {
+      setIsMarketOpen(false);
+      setIsMarketClosing(false);
+    }, 300);
+  };
 
   const handlePlaceSelect = (id: string, type: 'place' | 'portal') => {
     setSelectedPlaceId(id);
@@ -31,10 +45,10 @@ export default function Home() {
   };
 
   const handleInfoClick = (item: Place | Portal, type: 'place' | 'portal') => {
-    setOverlayItem(item);
-    setOverlayType(type);
-    setOverlayOpen(true);
+    openPlaceInfo(item, type, handlePlaceSelect);
   };
+
+  
 
   // Show lock screen if not unlocked and beta lock is not disabled
   const shouldShowLockScreen = process.env.NEXT_PUBLIC_DISABLE_BETA_LOCK !== 'true' && !isUnlocked;
@@ -78,16 +92,19 @@ export default function Home() {
         manualCoords={manualCoords}
       />
       
-      {/* Info Overlay */}
-      <InfoOverlay
-        isOpen={overlayOpen}
-        onClose={() => setOverlayOpen(false)}
-        item={overlayItem}
-        type={overlayType}
-      />
+      {/* InfoOverlay is rendered globally by OverlayProvider */}
 
-      {/* Settings Panel */}
-      <SettingsPanel />
+      {/* settings Panel */}
+      <SettingsPanel onOpenMarket={openMarket} />
+
+      {/* Global Market button is rendered by SettingsPanel (absolute above trigger/panel) */}
+
+      {/* Global Market Overlay */}
+      {isMarketOpen && (
+        <Overlay isOpen={isMarketOpen} onClose={closeMarket} closing={isMarketClosing}>
+          <GlobalTradeOverlay offers={null} onClose={closeMarket} closing={isMarketClosing} onSelectItem={handlePlaceSelect} />
+        </Overlay>
+      )}
     </div>
   );
 }

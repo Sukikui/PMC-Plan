@@ -155,6 +155,7 @@ export const themeColors = {
   gradient: {
     topSolid: 'bg-white/90 dark:bg-gray-900/95',
     topBlur: 'bg-gradient-to-b from-white/90 dark:from-gray-900/95 via-white/80 dark:via-gray-900/80 to-transparent',
+    topSolidBlur: 'bg-gradient-to-b from-white dark:from-gray-900 from-0% via-white dark:via-gray-900 via-30% via-white/70 dark:via-gray-900/70 via-50% via-white/30 dark:via-gray-900/30 via-75% to-transparent',
     bottomSolid: 'bg-white dark:bg-gray-900',
     bottomBlur: 'bg-gradient-to-t from-white dark:from-gray-900 via-white/90 dark:via-gray-900/90 to-transparent',
   },

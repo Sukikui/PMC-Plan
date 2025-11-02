@@ -275,7 +275,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             </div>
                             <button
                               onClick={(e) => handleInfoClick(e, place, 'place')}
-                              className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.secondary} ${themeColors.shadow.button} ${themeColors.transitionAll} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                              className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.secondary} ${themeColors.shadow.button} ${themeColors.transitionAll} ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
                               aria-label="Plus d'informations"
                               style={{ marginTop: '4px' }}
                             >
@@ -343,7 +343,7 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
                             </div>
                             <button
                               onClick={(e) => handleInfoClick(e, portal, 'portal')}
-                              className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.secondary} ${themeColors.shadow.button} ${themeColors.transitionAll} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                              className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.secondary} ${themeColors.shadow.button} ${themeColors.transitionAll} ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
                               aria-label="Plus d'informations"
                               style={{ marginTop: '4px' }}
                             >

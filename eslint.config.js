@@ -44,7 +44,7 @@ export default tseslint.config(
   },
 
   {
-    files: ["src/**/*.{ts,tsx}"],
+    files: ["app/**/*.{ts,tsx}"],
     rules: {
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,

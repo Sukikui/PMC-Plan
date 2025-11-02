@@ -211,25 +211,24 @@ Calculates the optimal route between two locations using the full routing algori
     - `RouteService` constructor is initialized with `places` and `portals`.
     - `callNearestPortals()` in `app/api/route/route-utils.ts`
     - `callLinkedPortal()` in `app/api/route/route-utils.ts`
-    - `calculateNetherAddress()` in `app/api/utils/shared.ts`
-    - `calculateNetherNetworkDistance()` in `app/api/route/route-utils.ts`
+    - `calculateEuclideanDistance()` in `app/api/utils/shared.ts`
 
 **Note:** You must provide either coordinates (`x`, `y`, `z`) or `place_id` for both source and destination.
 
 #### Internal Logic
 
 - **`Overworld to Overworld`**: 
-  1. Calculates direct euclidean distance
-  2. Searches for portals within `directDistance` radius from start and end points
-  3. For each route option, finds linked nether portals (or calculates theoretical coordinates)
-  4. Calculates total nether route distance: `distanceToPortal1 + netherDistance + distanceFromPortal2`
-  5. **Decision rule**: `if (totalNetherDistance < directDistance)` → nether route, else direct route
-  6. Falls back to direct route if: no portals found, no linked nether portal at destination
+  1. Calculates direct euclidean distance.
+  2. Searches for portals within `directDistance` radius from start and end points.
+  3. For each route option, finds linked nether portals (or calculates theoretical coordinates).
+  4. Calculates total nether route distance: `distanceToPortal1 + netherDistance + distanceFromPortal2`. The `netherDistance` is the direct euclidean distance between the nether portals.
+  5. **Decision rule**: `if (totalNetherDistance < directDistance)` → nether route, else direct route.
+  6. Falls back to direct route if: no portals found, or no linked nether portal at destination.
 
-- **`Nether to Nether`**: Uses nether network transport with address calculation
-- **`Overworld to Nether`**: Finds nearest overworld portal, links to nether, calculates route
-- **`Nether to Overworld`**: Finds nearest overworld portal to destination, calculates route from nether start
-- Includes nether addresses for all nether positions using `/nether-address` logic
+- **`Nether to Nether`**: Calculates the direct euclidean distance between the two points in the Nether.
+- **`Overworld to Nether`**: Finds the nearest overworld portal, links to the nether, and then calculates the euclidean distance to the destination in the Nether.
+- **`Nether to Overworld`**: Finds the nearest overworld portal to the destination, links to the nether, and then calculates the euclidean distance from the start point in the Nether to the linked portal.
+- Nether addresses for portals are read from the database. For theoretical portals or raw coordinates, the address will be empty.
 - Handles theoretical portal coordinates when linked portals don't exist (8:1 conversion)
 
 **Response:**
@@ -361,7 +360,7 @@ curl "http://localhost:3000/api/route?from_x=1000&from_y=65&from_z=-500&from_wor
 
 ### GET `/places`
 
-Returns a list of all available places from the data files.
+Returns a list of all approved places stored in the Prisma-backed database.
 
 **Parameters:**
 None
@@ -374,24 +373,22 @@ None
 ```json
 [
   {
-    "id": "start_village",
-    "name": "Village de Départ",
+    "id": "village_suki",
+    "name": "Village de Suki",
     "world": "overworld",
-    "coordinates": {"x": -100, "y": 65, "z": -200},
-    "tags": ["village", "spawn"],
-    "description": "Point de départ pour tester le voyage via nether",
-    "owner": "Notch",
-    "discord": null
-  },
-  {
-    "id": "end_city",
-    "name": "Cité d'Arrivée",
-    "world": "overworld",
-    "coordinates": {"x": 4500, "y": 70, "z": 300},
-    "tags": ["city", "destination"],
-    "description": "Destination finale du voyage de test",
-    "owner": null,
-    "discord": "https://discord.gg/exemple123"
+    "coordinates": {"x": 5000, "y": 70, "z": 300},
+    "tags": ["village", "base"],
+    "description": "Ancien village caché...",
+    "image": "https://cdn.example.com/village_suki.png",
+    "owners": ["Suki"],
+    "discord": "https://discord.gg/exemple123",
+    "trade": [
+      {
+        "gives": {"item_id": "emerald", "quantity": 5, "enchanted": true},
+        "wants": {"item_id": "diamond", "quantity": 1, "enchanted": false},
+        "negotiable": false
+      }
+    ]
   }
 ]
 ```
@@ -406,7 +403,7 @@ curl "http://localhost:3000/api/places"
 
 ### GET `/portals`
 
-Returns a list of all available portals from the data files.
+Returns a list of all approved portals stored in the database.
 
 **Parameters:**
 - `merge-nether-portals` (boolean, optional) - If `true`, links Overworld portals with their corresponding Nether portals by matching their `id`. The matched Nether portal is added as a `nether-associate` object to the Overworld portal, and the original Nether portal is removed from the list to avoid redundancy.
@@ -416,17 +413,16 @@ Returns a list of all available portals from the data files.
 - `handleError()` in `app/api/utils/api-utils.ts`
 - `loadPortals()` in `app/api/utils/shared.ts`
 - `callLinkedPortal()` in `app/api/route/route-utils.ts` (only in merge mode)
-- `calculateNetherAddress()` in `app/api/utils/shared.ts` (only in merge mode)
 
 #### Internal Logic
 
-- **Default Mode**: Returns a raw list of all portals from data files.
+- **Default Mode**: Returns a raw list of all approved portals fetched via Prisma.
 - **Merge Mode (`merge-nether-portals=true`)**:
     - For each Overworld portal, it attempts to find a corresponding Nether portal.
     - An Overworld portal is associated with a Nether portal only if **both** of these conditions are met:
         1.  They share the **same `id`**.
         2.  The Nether portal is the "official" linked portal according to Minecraft's mechanics (verified using the `/api/linked-portal` logic).
-    - If an association is made, the Overworld portal is augmented with a `nether-associate` object. This object contains the associated Nether portal's `coordinates`, `address` (obtained via `/nether-address`), and `description`.
+    - If an association is made, the Overworld portal is augmented with a `nether-associate` object. This object contains the associated Nether portal's `coordinates`, `address` (read directly from the portal data), and `description`.
     - The associated Nether portal is then excluded from the main list to avoid redundancy.
     - Any Nether portals that do not have a matching and officially linked Overworld counterpart (i.e., unassociated Nether portals) are included in the final response as standalone entries.
 

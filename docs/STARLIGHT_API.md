@@ -213,7 +213,3 @@ Try these URLs directly in your browser:
 - **Output format:** PNG images
 - **Max dimensions:** 3840x3840 pixels
 - **Caching:** API has built-in caching
-
----
-
-**🚀 Ready to integrate beautiful Minecraft renders into PMC Plan!**
