@@ -8,6 +8,7 @@ import ItemInline from '@/components/trade/ItemInline';
 import PlusIcon from './icons/PlusIcon';
 import CrossIcon from './icons/CrossIcon';
 import ClearIcon from './icons/ClearIcon';
+import AdminCreatorInfo from '@/components/admin/AdminCreatorInfo';
 
 interface TradeOverlayProps {
   place: Place;
@@ -126,6 +127,7 @@ export default function TradeOverlay({ place, typeStyles, onBack, onClose, conte
   // Render full overlay with header and wrapper
   return (
     <div className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles!.shadow} w-full max-w-lg min-w-0 h-[95vh] border ${typeStyles!.border} ${themeColors.transition} flex flex-col`} style={{ width: 'min(32rem, calc(100vw - 2rem))' }}>
+      {!contentOnly && <AdminCreatorInfo createdById={place.createdById} createdAt={place.createdAt} updatedAt={place.updatedAt} />}
       {/* Header */}
       <div className={`flex-shrink-0 p-6 border-b ${typeStyles!.headerBorder} ${typeStyles!.headerBg} ${themeColors.transition} rounded-t-xl`}>
         <div className="flex items-center justify-between">

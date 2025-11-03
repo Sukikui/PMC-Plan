@@ -16,6 +16,9 @@ export interface Portal {
   address: string;
   owners: string[];
   slug?: string;
+  createdById: string;
+  createdAt: Date;
+  updatedAt: Date;
   "nether-associate": {
     coordinates: {
         x: number;
@@ -60,7 +63,9 @@ export interface Place {
   tags: string[];
   owners?: string[];
   discord: string | null;
-  trade: TradeOffer[] | null;
+  createdById: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface NetherAddress {
@@ -176,6 +181,9 @@ export async function loadPortals(): Promise<Portal[]> {
     address: portal.address ?? '',
     owners: portal.ownerNames,
     'nether-associate': null,
+    createdById: portal.createdById,
+    createdAt: portal.createdAt,
+    updatedAt: portal.updatedAt,
   }));
 }
 
@@ -368,6 +376,9 @@ export async function loadPlaces(): Promise<Place[]> {
       owners: place.ownerNames ?? [],
       discord: place.discordUrl ?? null,
       trade: trades.length > 0 ? trades : null,
+      createdById: place.createdById,
+      createdAt: place.createdAt,
+      updatedAt: place.updatedAt,
     };
   });
 }

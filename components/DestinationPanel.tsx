@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ClearIcon from './icons/ClearIcon';
 import PlusIcon from './icons/PlusIcon';
+import AddPlaceButton from './AddPlaceButton';
 
 import { Portal, Place } from '../app/api/utils/shared';
 import { getWorldBadge } from '../lib/ui-utils';
@@ -239,12 +240,12 @@ export default function DestinationPanel({ onPlaceSelect, selectedId, onInfoClic
             (filteredPlaces.length === 0 && filteredPortals.length === 0) ? (
               <div className={`flex flex-col items-center justify-center py-12 ${themeColors.destinationPanel.emptyStateText} text-center space-y-4`}>
                 <p>Aucun résultat. (｡•́︿•̀｡)</p>
-                <a href="https://github.com/Sukikui/PMC-Plan/issues/new/choose" target="_blank" rel="noopener noreferrer" className={`${themeColors.link} pl-3 pr-4 py-2 ${themeColors.util.roundedFull} ${themeColors.transitionAll} flex items-center gap-2`}>
+                <AddPlaceButton className={`${themeColors.link} pl-3 pr-4 py-2 ${themeColors.util.roundedFull} ${themeColors.transitionAll} flex items-center gap-2`}>
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
                   </svg>
                   Ajouter un lieu ou un portail
-                </a>
+                </AddPlaceButton>
               </div>
             ) : (
               <div className="space-y-6">
