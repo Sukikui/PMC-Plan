@@ -1,76 +1,24 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { themeColors } from '@/lib/theme-colors';
 import ItemVisualizer from '@/components/trade/ItemVisualizer';
-import { Prisma } from '@prisma/client';
+import { slugify, parseCoordinateTriplet, renderCoordinateInputs, CoordinatesInput, SubHeader, parseTags, generateFormId } from './form-utils';
+import { TradeOffer as SharedTradeOffer, TradeItem as SharedTradeItem } from '@/app/api/utils/shared';
+import { useEntityForm } from './useEntityForm';
+import FormActions from './FormActions';
+import CommonFields from './CommonFields';
 
-// Helper functions from AddPortalOverlay
 const inputClass = `${themeColors.input.search} border ${themeColors.util.roundedLg} px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`;
-const sectionTitleClass = `text-sm font-semibold ${themeColors.text.secondary} ${themeColors.transition}`;
 
-const SubHeader: React.FC<{ title: string; description?: string }> = ({ title, description }) => (
-  <div className="space-y-0.5">
-    <h3 className={sectionTitleClass}>{title}</h3>
-    {description && (
-      <p className={`text-xs ${themeColors.text.quaternary}`}>{description}</p>
-    )}
-  </div>
-);
-
-const slugify = (value: string) => {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64);
-};
-
-const parseOwners = (input: string): string[] => {
-  return input
-    .split(/[\n,;]+/)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-};
-
-const parseTags = (input: string): string[] => {
-  return Array.from(
-    new Set(
-      input
-        .split(/[\n,;]+/)
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0)
-    )
-  );
-};
-
-const parseCoordinateTriplet = (coords: any) => {
-  const x = Number(coords.x);
-  const y = Number(coords.y);
-  const z = Number(coords.z);
-  if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(z)) {
-    return null;
-  }
-  return { x, y, z };
-};
-
-const generateFormId = () => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return Math.random().toString(36).slice(2, 10);
-};
-
-const createTradeItem = () => ({
+const createTradeItem = (): FormTradeItem => ({
   item_id: '',
-  quantity: 0,
-  custom_name: '',
+  quantity: '',
+  custom_name: null,
   enchanted: false,
 });
 
-const createTradeOffer = () => ({
+const createTradeOffer = (): FormTradeOffer => ({
   id: generateFormId(),
   gives: createTradeItem(),
   wants: createTradeItem(),
@@ -79,35 +27,79 @@ const createTradeOffer = () => ({
 
 const blankCoords = { x: '', y: '', z: '' };
 
-export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCancel }) {
-  const [placeName, setPlaceName] = useState(initialData?.name || '');
-  const [placeSlug, setPlaceSlug] = useState(initialData?.slug || '');
-  const [placeSlugManuallyEdited, setPlaceSlugManuallyEdited] = useState(!!initialData?.slug);
-  const [placeWorld, setPlaceWorld] = useState(initialData?.world || 'overworld');
-  const [placeCoords, setPlaceCoords] = useState(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
-  const [placeOwnersInput, setPlaceOwnersInput] = useState(initialData?.owners?.join(', ') || '');
+interface FormTradeItem extends Omit<SharedTradeItem, 'quantity'> {
+  quantity: string | number;
+}
+
+interface FormTradeOffer extends Omit<SharedTradeOffer, 'gives' | 'wants'> {
+  id: string;
+  gives: FormTradeItem;
+  wants: FormTradeItem;
+}
+
+export interface InitialPlaceData {
+  type: 'place';
+  name: string;
+  id: string;
+  world: string;
+  coordinates: { x: number; y: number; z: number };
+  owners?: string[];
+  tags?: string[];
+  description?: string;
+  discord?: string | null;
+  imageUrl?: string;
+  trade?: FormTradeOffer[] | null;
+}
+
+export interface PlaceFormPayload {
+  slug: string;
+  name: string;
+  world: 'overworld' | 'nether';
+  coordinates: { x: number; y: number; z: number };
+  description: string | null;
+  owners: string[];
+  tags: string[];
+  discordUrl: string | null;
+  imageUrl: string | null;
+  tradeOffers: Array<{
+    negotiable: boolean;
+    items: Array<{
+      kind: 'gives' | 'wants';
+      itemId: string;
+      quantity: number;
+      enchanted: boolean;
+      customName: string | null;
+    }>;
+  }>;
+}
+
+interface PlaceFormProps {
+  mode?: 'add' | 'edit';
+  initialData?: InitialPlaceData;
+  onSubmit: (payload: PlaceFormPayload) => Promise<void>;
+  onCancel: () => void;
+}
+
+export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCancel }: PlaceFormProps) {
+  const { name, setName, slug, setSlug, slugManuallyEdited, setSlugManuallyEdited, ownersInput, setOwnersInput, ownersList, description, setDescription } = useEntityForm(initialData?.name, initialData?.id, initialData?.owners, initialData?.description);
+  const [placeWorld, setPlaceWorld] = useState<'overworld' | 'nether'>(initialData?.world === 'nether' ? 'nether' : 'overworld');
+  const [placeCoords, setPlaceCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
   const [placeTagsInput, setPlaceTagsInput] = useState(initialData?.tags?.join(', ') || '');
-  const [placeDescription, setPlaceDescription] = useState(initialData?.description || '');
   const [placeDiscordUrl, setPlaceDiscordUrl] = useState(initialData?.discord || '');
   const [placeImageUrl, setPlaceImageUrl] = useState(initialData?.imageUrl || '');
   const [placeImagePreviewError, setPlaceImagePreviewError] = useState(false);
-  const [placeTradeOffers, setPlaceTradeOffers] = useState(
-    initialData?.trade?.map(offer => ({ ...offer, id: generateFormId() })) || []
+  const [placeTradeOffers, setPlaceTradeOffers] = useState<FormTradeOffer[]>(
+    initialData?.trade?.map(offer => ({
+      ...offer,
+      id: generateFormId(),
+      gives: { ...offer.gives, quantity: String(offer.gives.quantity), custom_name: offer.gives.custom_name ?? null },
+      wants: { ...offer.wants, quantity: String(offer.wants.quantity), custom_name: offer.wants.custom_name ?? null },
+    })) || []
   );
   const [placeSubmitting, setPlaceSubmitting] = useState(false);
   const [placeSubmitError, setPlaceSubmitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!placeSlugManuallyEdited) {
-      setPlaceSlug(slugify(placeName));
-    }
-  }, [placeName, placeSlugManuallyEdited]);
 
-  useEffect(() => {
-    setPlaceImagePreviewError(false);
-  }, [placeImageUrl]);
-
-  const placeOwnersList = useMemo(() => parseOwners(placeOwnersInput), [placeOwnersInput]);
   const placeTagsList = useMemo(() => parseTags(placeTagsInput), [placeTagsInput]);
 
   const addTradeOffer = () => {
@@ -118,11 +110,11 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
     setPlaceTradeOffers((prev) => prev.filter((offer) => offer.id !== offerId));
   };
 
-  const updateTradeItem = <K extends keyof any>(
+  const updateTradeItem = <K extends keyof FormTradeItem>(
     offerId: string,
     kind: 'gives' | 'wants',
     field: K,
-    value: any[K]
+    value: FormTradeItem[K]
   ) => {
     setPlaceTradeOffers((prev) =>
       prev.map((offer) => {
@@ -151,12 +143,12 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
     if (placeSubmitting) return;
     setPlaceSubmitError(null);
 
-    if (!placeName.trim()) {
+    if (!name.trim()) {
       setPlaceSubmitError('Le nom du lieu est requis.');
       return;
     }
 
-    const targetSlug = slugify(placeSlugManuallyEdited ? placeSlug : placeName);
+    const targetSlug = slugify(slugManuallyEdited ? slug : name);
     if (!targetSlug) {
       setPlaceSubmitError('Veuillez renseigner un identifiant valide.');
       return;
@@ -174,7 +166,7 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
         setPlaceSubmitError('Chaque offre doit préciser au moins un objet proposé.');
         return;
       }
-      const givesQty = Number.parseInt(offer.gives.quantity, 10);
+      const givesQty = Number.parseInt(String(offer.gives.quantity), 10);
       if (!Number.isFinite(givesQty) || givesQty <= 0) {
         setPlaceSubmitError('La quantité proposée doit être un entier positif.');
         return;
@@ -186,7 +178,7 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
           setPlaceSubmitError('Précisez l\'objet demandé ou marquez l\'offre comme négociable.');
           return;
         }
-        const wantsQty = Number.parseInt(offer.wants.quantity, 10);
+        const wantsQty = Number.parseInt(String(offer.wants.quantity), 10);
         if (!Number.isFinite(wantsQty) || wantsQty <= 0) {
           setPlaceSubmitError('La quantité demandée doit être un entier positif.');
           return;
@@ -194,12 +186,18 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
       }
     }
 
-    const tradeOffersPayload = placeTradeOffers.map((offer) => {
-      const items: Prisma.TradeItemCreateManyOfferInput[] = [
+    const tradeOffersPayload: PlaceFormPayload['tradeOffers'] = placeTradeOffers.map((offer) => {
+      const items: {
+        kind: 'gives' | 'wants';
+        itemId: string;
+        quantity: number;
+        enchanted: boolean;
+        customName: string | null;
+      }[] = [
         {
           kind: 'gives',
           itemId: offer.gives.item_id.trim(),
-          quantity: Math.max(1, Number.parseInt(offer.gives.quantity, 10) || 1),
+          quantity: Math.max(1, Number.parseInt(String(offer.gives.quantity), 10) || 1),
           enchanted: offer.gives.enchanted,
           customName: offer.gives.custom_name?.trim() || null,
         },
@@ -207,16 +205,16 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
 
       if (!offer.negotiable && offer.wants.item_id.trim()) {
         items.push({
-          kind: 'wants' as const,
+          kind: 'wants',
           itemId: offer.wants.item_id.trim(),
-          quantity: Math.max(1, Number.parseInt(offer.wants.quantity, 10) || 1),
+          quantity: Math.max(1, Number.parseInt(String(offer.wants.quantity), 10) || 1),
           enchanted: offer.wants.enchanted,
           customName: offer.wants.custom_name?.trim() || null,
         });
       }
 
       return {
-        negotiable: offer.negotiable,
+        negotiable: offer.negotiable ?? false,
         items,
       };
     });
@@ -228,11 +226,11 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
 
     const payload = {
       slug: targetSlug,
-      name: placeName.trim(),
+      name: name.trim(),
       world: placeWorld,
       coordinates: coords,
-      description: placeDescription.trim() || null,
-      owners: placeOwnersList,
+      description: description.trim() || null,
+      owners: ownersList,
       tags: placeTagsList,
       discordUrl: placeDiscordUrl.trim() || null,
       imageUrl: placeImageUrl.trim() || null,
@@ -244,50 +242,29 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
     setPlaceSubmitting(false);
   };
 
-  const renderOwnersInput = (
-    value: string,
-    setValue: (next: string) => void,
-    placeholder = 'Doviculus22, spacenewbie'
-  ) => (
-    <div className="space-y-1">
-      <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Propriétaires (séparés par une virgule)</label>
-      <textarea
-        className={`${inputClass} resize-y min-h-[40px] leading-5`}
-        placeholder={placeholder}
-        value={value}
-        rows={1}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-          }
-        }}
-        onChange={(event) => setValue(event.target.value.replace(/\n+/g, ', '))}
-      />
-    </div>
-  );
 
-  const renderCoordinateInputs = (
-    coords: any,
-    setCoords: React.Dispatch<React.SetStateAction<any>>,
-    label?: string
-  ) => (
-    <div className="space-y-1">
-      {label && <label className={`text-xs font-medium ${themeColors.text.secondary}`}>{label}</label>}
-      <div className="grid grid-cols-3 gap-2">
-        {(['x', 'y', 'z'] as Array<keyof any>).map((axis) => (
-          <input
-            key={axis}
-            type="number"
-            inputMode="numeric"
-            className={inputClass}
-            placeholder={axis.toUpperCase()}
-            value={coords[axis]}
-            onChange={(event) => setCoords((prev) => ({ ...prev, [axis]: event.target.value }))}
-          />
-        ))}
-      </div>
-    </div>
-  );
+
+  const handlePlaceDelete = async () => {
+    if (!initialData?.id) return;
+
+    setPlaceSubmitting(true);
+    try {
+      const response = await fetch(`/api/places/${initialData.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la suppression du lieu.');
+      }
+
+      onCancel(); // Close the form after successful deletion
+    } catch (error: unknown) {
+      setPlaceSubmitError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } finally {
+      setPlaceSubmitting(false);
+    }
+  };
 
   const renderTradeOffersSection = () => (
     <div className="space-y-3">
@@ -344,15 +321,14 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
                         offer.gives.enchanted
                           ? 'bg-purple-100/60 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700'
                           : 'bg-gray-100/30 dark:bg-gray-700/15 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200/40 dark:hover:bg-gray-600/20'
-                      }`}
-                    >
+                      }`}                    >
                       {offer.gives.enchanted ? 'Item enchanté' : 'Item non enchanté'}
                     </button>
                   </div>
                                       <input
                                         className={inputClass}
                                         placeholder="Nom personnalisé (facultatif)"
-                                        value={offer.gives.custom_name || ''}
+                                        value={offer.gives.custom_name ?? ''}
                                         onChange={(event) => updateTradeItem(offer.id, 'gives', 'custom_name', event.target.value)}
                                       />
                                     </div>
@@ -401,7 +377,7 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
                                     <input
                                       className={`${inputClass} ${disabledClass}`}
                                       placeholder="Nom personnalisé (facultatif)"
-                                      value={offer.wants.custom_name || ''}
+                                      value={offer.wants.custom_name ?? ''}
                                       onChange={(event) => updateTradeItem(offer.id, 'wants', 'custom_name', event.target.value)}
                                       disabled={wantDisabled}
                                     />                  {offer.negotiable && (
@@ -451,32 +427,22 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
 
   return (
     <form className="space-y-5" onSubmit={handlePlaceSubmit}>
+      <CommonFields
+        name={name}
+        setName={setName}
+        slug={slug}
+        setSlug={setSlug}
+        slugManuallyEdited={slugManuallyEdited}
+        setSlugManuallyEdited={setSlugManuallyEdited}
+        ownersInput={ownersInput}
+        setOwnersInput={setOwnersInput}
+        description={description}
+        setDescription={setDescription}
+        namePlaceholder="Marché impérial de Valnyfrost"
+        slugPlaceholder="valny-marche-imperial"
+      />
+
       <div className="space-y-4">
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Nom du lieu</label>
-          <input
-            className={inputClass}
-            value={placeName}
-            onChange={(event) => setPlaceName(event.target.value)}
-            placeholder="Marché impérial de Valnyfrost"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Identifiant (slug)</label>
-          <input
-            className={inputClass}
-            value={placeSlugManuallyEdited ? placeSlug : slugify(placeName)}
-            onChange={(event) => {
-              setPlaceSlug(event.target.value);
-              setPlaceSlugManuallyEdited(true);
-            }}
-            placeholder="valny-marche-imperial"
-          />
-        </div>
-
-        {renderOwnersInput(placeOwnersInput, setPlaceOwnersInput, 'Doviculus22, spacenewbie')}
-
         <div className="space-y-1">
           <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Tags (séparés par une virgule)</label>
           <textarea
@@ -490,16 +456,6 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
               }
             }}
             onChange={(event) => setPlaceTagsInput(event.target.value.replace(/\n+/g, ', '))}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Description (optionnel)</label>
-          <textarea
-            className={`${inputClass} min-h-[80px] resize-y`}
-            value={placeDescription}
-            onChange={(event) => setPlaceDescription(event.target.value)}
-            placeholder="Présentez rapidement votre lieu, ses services et comment y accéder."
           />
         </div>
 
@@ -523,7 +479,7 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
                 />
               ) : (
                 <div className="p-4 text-center text-xs text-red-500">
-                  Impossible de charger cette image. Vérifiez l\'URL ou essayez une autre source.
+                  Impossible de charger cette image. Vérifiez l&apos;URL ou essayez une autre source.
                 </div>
               )}
             </div>
@@ -582,24 +538,15 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
         <div className={`text-sm ${themeColors.travelPlan.errorIcon}`}>{placeSubmitError}</div>
       )}
 
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className={`px-4 py-2 text-sm ${themeColors.util.roundedLg} border ${themeColors.border.primary} ${themeColors.transitionAll} text-gray-700 dark:text-gray-200 bg-transparent hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-100/20 dark:hover:bg-blue-500/10`}
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={placeSubmitting}
-          className={`px-4 py-2 text-sm ${placeSubmitting ? themeColors.button.primaryDisabled : themeColors.button.primary} ${themeColors.util.roundedLg} ${themeColors.transitionAll}`}
-        >
-          {placeSubmitting
-            ? (mode === 'add' ? 'Création…' : 'Modification…')
-            : (mode === 'add' ? 'Créer le lieu' : 'Modifier le lieu')}
-        </button>
-      </div>
+      <FormActions
+        onCancel={onCancel}
+        isSubmitting={placeSubmitting}
+        submitText={mode === 'add' ? 'Créer le lieu' : 'Modifier le lieu'}
+        submittingText={mode === 'add' ? 'Création…' : 'Modification…'}
+        onDelete={mode === 'edit' ? handlePlaceDelete : undefined}
+        entityType="place"
+        entitySlug={initialData?.id || ''}
+      />
     </form>
   );
 }

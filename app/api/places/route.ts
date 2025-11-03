@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadPlaces } from '../utils/shared';
-import { handleError } from '../utils/api-utils';
+import { handleError, sanitizeOwners, sanitizeTags } from '../utils/api-utils';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
@@ -17,73 +17,9 @@ export async function GET() {
   }
 }
 
-const coordinateSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  z: z.number(),
-});
+import { CreatePlaceSchema } from '../utils/schemas';
 
-const slugSchema = z
-  .string()
-  .min(1)
-  .max(64)
-  .regex(/^[a-z0-9-]+$/, 'Le slug ne doit contenir que des lettres minuscules, des chiffres et des tirets.');
 
-const ownerSchema = z.string().min(1).max(64);
-const tagSchema = z.string().min(1).max(32);
-
-const tradeItemSchema = z.object({
-  kind: z.enum(['gives', 'wants']),
-  itemId: z.string().min(1).max(80),
-  quantity: z.number().int().positive(),
-  enchanted: z.boolean(),
-  customName: z.string().max(120).nullable().optional(),
-});
-
-const tradeOfferSchema = z
-  .object({
-    negotiable: z.boolean(),
-    items: z.array(tradeItemSchema).min(1),
-  })
-  .superRefine((offer, ctx) => {
-    const hasGives = offer.items.some((item) => item.kind === 'gives');
-    if (!hasGives) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Chaque offre doit contenir au moins un item proposé.',
-        path: ['items'],
-      });
-    }
-    if (!offer.negotiable) {
-      const hasWants = offer.items.some((item) => item.kind === 'wants');
-      if (!hasWants) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Les offres non négociables doivent préciser un item demandé.',
-          path: ['items'],
-        });
-      }
-    }
-  });
-
-const CreatePlaceSchema = z.object({
-  slug: slugSchema,
-  name: z.string().min(1).max(120),
-  world: z.enum(['overworld', 'nether']),
-  coordinates: coordinateSchema,
-  description: z.string().max(2000).nullable().optional(),
-  owners: z.array(ownerSchema).optional(),
-  tags: z.array(tagSchema).optional(),
-  discordUrl: z.string().url().max(256).nullable().optional(),
-  imageUrl: z.string().url().max(512).nullable().optional(),
-  tradeOffers: z.array(tradeOfferSchema).optional(),
-});
-
-const sanitizeOwners = (owners?: string[]) =>
-  Array.from(new Set((owners ?? []).map((owner) => owner.trim()).filter(Boolean)));
-
-const sanitizeTags = (tags?: string[]) =>
-  Array.from(new Set((tags ?? []).map((tag) => tag.trim()).filter(Boolean)));
 
 export async function POST(request: NextRequest) {
   try {

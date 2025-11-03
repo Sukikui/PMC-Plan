@@ -129,6 +129,7 @@ enum ApprovalStatus {
   pending
   approved
   rejected
+  removed
 }
 
 enum Role {

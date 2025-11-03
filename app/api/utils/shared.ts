@@ -63,6 +63,7 @@ export interface Place {
   tags: string[];
   owners?: string[];
   discord: string | null;
+  trade?: TradeOffer[] | null;
   createdById: string;
   createdAt: Date;
   updatedAt: Date;

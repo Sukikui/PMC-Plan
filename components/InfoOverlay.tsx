@@ -18,6 +18,7 @@ import Overlay from '@/components/ui/Overlay';
 import { useOverlayPanelAnimation } from '@/components/ui/useOverlayPanelAnimation';
 import AdminCreatorInfo from '@/components/admin/AdminCreatorInfo';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
+import { generateFormId } from '@/components/form/form-utils';
 
 
 interface InfoOverlayProps {
@@ -75,7 +76,51 @@ export default function InfoOverlay({
 
   const handleEditClick = () => {
     if (item) {
-      openFormOverlay('edit', { ...item, type });
+      if (type === 'place') {
+        const place = item as Place;
+        openFormOverlay('edit', {
+          type: 'place',
+          name: place.name,
+          id: place.id,
+          world: place.world as 'overworld' | 'nether',
+          coordinates: place.coordinates,
+          owners: place.owners,
+          tags: place.tags,
+          description: place.description ?? undefined,
+          discord: place.discord ?? undefined,
+          imageUrl: place.imageUrl ?? undefined,
+          trade: place.trade?.map(t => ({
+            ...t,
+            id: generateFormId(),
+            negotiable: t.negotiable ?? false,
+            gives: {
+              ...t.gives,
+              quantity: String(t.gives.quantity),
+              custom_name: t.gives.custom_name ?? null,
+            },
+            wants: {
+              ...t.wants,
+              quantity: String(t.wants.quantity),
+              custom_name: t.wants.custom_name ?? null,
+            }
+          })) ?? undefined,
+        });
+      } else {
+        const portal = item as Portal;
+        openFormOverlay('edit', {
+          type: 'portal',
+          variant: portal['nether-associate'] ? 'linked' : portal.world as 'overworld' | 'nether',
+          name: portal.name,
+          id: portal.id,
+          owners: portal.owners,
+          coordinates: portal['nether-associate'] ? undefined : portal.coordinates,
+          address: portal.world === 'nether' && !portal['nether-associate'] ? portal.address : undefined,
+          overworldCoordinates: portal['nether-associate'] ? portal.coordinates : undefined,
+          netherCoordinates: portal['nether-associate']?.coordinates,
+          description: portal.description ?? undefined,
+          netherAddress: portal['nether-associate']?.address,
+        });
+      }
     }
   };
 

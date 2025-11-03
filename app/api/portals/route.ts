@@ -5,7 +5,7 @@ import {
   calculateNetherAddress
 } from '../utils/shared';
 import { callLinkedPortal } from '../route/route-utils';
-import { handleError, parseQueryParams } from '../utils/api-utils';
+import { handleError, parseQueryParams, sanitizeOwners } from '../utils/api-utils';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
@@ -73,52 +73,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const coordinateSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  z: z.number(),
-});
+import { CreatePortalSchema } from '../utils/schemas';
 
-const slugSchema = z
-  .string()
-  .min(1)
-  .max(64)
-  .regex(/^[a-z0-9-]+$/, 'Le slug ne doit contenir que des lettres minuscules, des chiffres et des tirets.');
 
-const ownerSchema = z.string().min(1).max(64);
-
-const singlePortalSchema = z.object({
-  mode: z.literal('single'),
-  portal: z.object({
-    slug: slugSchema,
-    name: z.string().min(1).max(120),
-    world: z.enum(['overworld', 'nether']),
-    coordinates: coordinateSchema,
-    description: z.string().max(1000).optional(),
-    address: z.string().max(120).optional(),
-    ownerNames: z.array(ownerSchema).optional(),
-  }),
-});
-
-const linkedPortalSchema = z.object({
-  mode: z.literal('linked'),
-  slug: slugSchema,
-  name: z.string().min(1).max(120),
-  owners: z.array(ownerSchema).optional(),
-  overworld: z.object({
-    coordinates: coordinateSchema,
-    description: z.string().max(1000).optional(),
-  }),
-  nether: z.object({
-    coordinates: coordinateSchema,
-    description: z.string().max(1000).optional(),
-    address: z.string().max(120).optional(),
-  }),
-});
-
-const CreatePortalSchema = z.discriminatedUnion('mode', [singlePortalSchema, linkedPortalSchema]);
-
-const sanitizeOwners = (owners?: string[]) => Array.from(new Set((owners ?? []).map((owner) => owner.trim()).filter(Boolean)));
 
 export async function POST(request: NextRequest) {
   try {

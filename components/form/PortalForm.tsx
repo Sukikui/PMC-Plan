@@ -1,65 +1,80 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { themeColors } from '@/lib/theme-colors';
+import { slugify, parseCoordinateTriplet, CoordinatesInput, SubHeader } from './form-utils';
+import { useEntityForm } from './useEntityForm';
+import FormActions from './FormActions';
+import CommonFields from './CommonFields';
 
-// Helper functions from AddPortalOverlay
 const inputClass = `${themeColors.input.search} border ${themeColors.util.roundedLg} px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`;
-const sectionTitleClass = `text-sm font-semibold ${themeColors.text.secondary} ${themeColors.transition}`;
-
-const SubHeader: React.FC<{ title: string; description?: string }> = ({ title, description }) => (
-  <div className="space-y-0.5">
-    <h3 className={sectionTitleClass}>{title}</h3>
-    {description && (
-      <p className={`text-xs ${themeColors.text.quaternary}`}>{description}</p>
-    )}
-  </div>
-);
-
-const slugify = (value: string) => {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64);
-};
-
-const parseOwners = (input: string): string[] => {
-  return input
-    .split(/[\n,;]+/)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-};
-
-const parseCoordinateTriplet = (coords: any) => {
-  const x = Number(coords.x);
-  const y = Number(coords.y);
-  const z = Number(coords.z);
-  if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(z)) {
-    return null;
-  }
-  return { x, y, z };
-};
 
 const blankCoords = { x: '', y: '', z: '' };
 
-export default function PortalForm({ mode = 'add', initialData, onSubmit, onCancel }) {
+export interface InitialPortalData {
+  type: 'portal';
+  variant: 'overworld' | 'nether' | 'linked';
+  name: string;
+  id: string;
+  owners?: string[];
+  coordinates?: { x: number; y: number; z: number }; // For single portals
+  address?: string; // For single nether portals
+  overworldCoordinates?: { x: number; y: number; z: number }; // For linked portals
+  netherCoordinates?: { x: number; y: number; z: number }; // For linked portals
+  description?: string;
+  netherAddress?: string; // For linked nether portals
+}
+
+type SinglePortalPayload = {
+  mode: 'single';
+  portal: {
+    slug: string;
+    name: string;
+    world: 'overworld' | 'nether';
+    coordinates: { x: number; y: number; z: number };
+    description?: string;
+    address?: string;
+    ownerNames: string[];
+  };
+}
+
+type LinkedPortalPayload = {
+  mode: 'linked';
+  slug: string;
+  name: string;
+  owners: string[];
+  description?: string;
+  overworld: {
+    coordinates: { x: number; y: number; z: number };
+    description?: string;
+  };
+  nether: {
+    coordinates: { x: number; y: number; z: number };
+    description?: string;
+    address?: string;
+  };
+}
+
+export type PortalFormPayload = SinglePortalPayload | LinkedPortalPayload;
+
+interface PortalFormProps {
+  mode?: 'add' | 'edit';
+  initialData?: InitialPortalData;
+  onSubmit: (payload: PortalFormPayload) => Promise<void>;
+  onCancel: () => void;
+}
+
+export default function PortalForm({ mode = 'add', initialData, onSubmit, onCancel }: PortalFormProps) {
+  const { name, setName, slug, setSlug, slugManuallyEdited, setSlugManuallyEdited, ownersInput, setOwnersInput, ownersList, description, setDescription } = useEntityForm(initialData?.name, initialData?.id, initialData?.owners, initialData?.description);
   const [portalVariant, setPortalVariant] = useState(initialData?.variant || 'overworld');
-  const [name, setName] = useState(initialData?.name || '');
-  const [slug, setSlug] = useState(initialData?.slug || '');
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initialData?.slug);
-  const [ownersInput, setOwnersInput] = useState(initialData?.owners?.join(', ') || '');
-  const [singleCoords, setSingleCoords] = useState(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
+  const [singleCoords, setSingleCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
   const [singleAddress, setSingleAddress] = useState(initialData?.address || '');
   const [singleAddressManual, setSingleAddressManual] = useState(!!initialData?.address);
   const [singleAddressLoading, setSingleAddressLoading] = useState(false);
   const [singleAddressError, setSingleAddressError] = useState<string | null>(null);
 
-  const [overworldCoords, setOverworldCoords] = useState(initialData?.overworldCoordinates ? { x: String(initialData.overworldCoordinates.x), y: String(initialData.overworldCoordinates.y), z: String(initialData.overworldCoordinates.z) } : blankCoords);
-  const [netherCoords, setNetherCoords] = useState(initialData?.netherCoordinates ? { x: String(initialData.netherCoordinates.x), y: String(initialData.netherCoordinates.y), z: String(initialData.netherCoordinates.z) } : blankCoords);
-  const [description, setDescription] = useState(initialData?.description || '');
+  const [overworldCoords, setOverworldCoords] = useState<CoordinatesInput>(initialData?.overworldCoordinates ? { x: String(initialData.overworldCoordinates.x), y: String(initialData.overworldCoordinates.y), z: String(initialData.overworldCoordinates.z) } : blankCoords);
+  const [netherCoords, setNetherCoords] = useState<CoordinatesInput>(initialData?.netherCoordinates ? { x: String(initialData.netherCoordinates.x), y: String(initialData.netherCoordinates.y), z: String(initialData.netherCoordinates.z) } : blankCoords);
   const [netherAddress, setNetherAddress] = useState(initialData?.netherAddress || '');
   const [netherAddressManual, setNetherAddressManual] = useState(!!initialData?.netherAddress);
   const [netherAddressLoading, setNetherAddressLoading] = useState(false);
@@ -69,18 +84,10 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isLinkedVariant = portalVariant === 'linked';
-  const singleWorld = portalVariant === 'nether' ? 'nether' : 'overworld';
+  const singleWorld: 'overworld' | 'nether' = portalVariant === 'nether' ? 'nether' : 'overworld';
 
   const singleAddressRequestId = useRef(0);
   const linkedAddressRequestId = useRef(0);
-
-  useEffect(() => {
-    if (!slugManuallyEdited) {
-      setSlug(slugify(name));
-    }
-  }, [name, slugManuallyEdited]);
-
-  const ownersList = useMemo(() => parseOwners(ownersInput), [ownersInput]);
 
   useEffect(() => {
     if (portalVariant === 'linked') {
@@ -283,37 +290,43 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
     );
   };
 
-  const renderOwnersInput = (
-    value: string,
-    setValue: (next: string) => void,
-    placeholder = 'Doviculus22, spacenewbie'
-  ) => (
-    <div className="space-y-1">
-      <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Propriétaires (séparés par une virgule)</label>
-      <textarea
-        className={`${inputClass} resize-y min-h-[40px] leading-5`}
-        placeholder={placeholder}
-        value={value}
-        rows={1}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-          }
-        }}
-        onChange={(event) => setValue(event.target.value.replace(/\n+/g, ', '))}
-      />
-    </div>
-  );
+
+  const handlePortalDelete = async () => {
+    if (!initialData?.id) return;
+
+    setSubmitting(true);
+    try {
+      let url = `/api/portals/${initialData.id}`;
+      if (initialData.variant !== 'linked') {
+        url += `?world=${initialData.variant}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la suppression du portail.');
+      }
+
+      onCancel(); // Close the form after successful deletion
+    } catch (error: unknown) {
+      setSubmitError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const renderCoordinateInputs = (
-    coords: any,
-    setCoords: React.Dispatch<React.SetStateAction<any>>,
+    coords: CoordinatesInput,
+    setCoords: React.Dispatch<React.SetStateAction<CoordinatesInput>>,
     label?: string
   ) => (
     <div className="space-y-1">
       {label && <label className={`text-xs font-medium ${themeColors.text.secondary}`}>{label}</label>}
       <div className="grid grid-cols-3 gap-2">
-        {(['x', 'y', 'z'] as Array<keyof any>).map((axis) => (
+        {(['x', 'y', 'z'] as Array<keyof CoordinatesInput>).map((axis) => (
           <input
             key={axis}
             type="number"
@@ -356,7 +369,7 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
               onAutoRecalculate();
             }
           }}
-          className={`px-3 py-1 text-xs rounded-full font-medium transition-colors duration-300 ${
+          className={`px-3 py-1 text-xs rounded-full font-medium transition-colors duration-300 ${ 
             !manual
               ? 'bg-blue-100/50 dark:bg-blue-800/20 text-blue-700 dark:text-blue-300'
               : 'bg-gray-100/30 dark:bg-gray-700/15 text-gray-700 dark:text-gray-300 hover:bg-gray-200/40 dark:hover:bg-gray-600/20'
@@ -367,7 +380,7 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
         <button
           type="button"
           onClick={() => setManual(true)}
-          className={`px-3 py-1 text-xs rounded-full font-medium transition-colors duration-300 ${
+          className={`px-3 py-1 text-xs rounded-full font-medium transition-colors duration-300 ${ 
             manual
               ? 'bg-blue-100/50 dark:bg-blue-800/20 text-blue-700 dark:text-blue-300'
               : 'bg-gray-100/30 dark:bg-gray-700/15 text-gray-700 dark:text-gray-300 hover:bg-gray-200/40 dark:hover:bg-gray-600/20'
@@ -383,7 +396,7 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
     </div>
   );
 
-  const renderSingleForm = (world: any) => {
+  const renderSingleForm = (world: 'overworld' | 'nether') => {
     return (
       <div className="space-y-4">
         <div className="space-y-3">
@@ -430,41 +443,20 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Nom du portail</label>
-          <input
-            className={inputClass}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Portail du marché impérial de Valnyfrost"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Identifiant (slug)</label>
-          <input
-            className={inputClass}
-            value={slugManuallyEdited ? slug : slugify(name)}
-            onChange={(event) => {
-              setSlug(event.target.value);
-              setSlugManuallyEdited(true);
-            }}
-            placeholder="valny-portail-marche-imperial"
-          />
-        </div>
-
-        {renderOwnersInput(ownersInput, setOwnersInput)}
-
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Description (optionnel)</label>
-          <textarea
-            className={`${inputClass} min-h-[80px] resize-y`}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
-        </div>
-      </div>
+      <CommonFields
+        name={name}
+        setName={setName}
+        slug={slug}
+        setSlug={setSlug}
+        slugManuallyEdited={slugManuallyEdited}
+        setSlugManuallyEdited={setSlugManuallyEdited}
+        ownersInput={ownersInput}
+        setOwnersInput={setOwnersInput}
+        description={description}
+        setDescription={setDescription}
+        namePlaceholder="Portail du marché impérial de Valnyfrost"
+        slugPlaceholder="valny-portail-marche-imperial"
+      />
 
       <div className="space-y-6">
         <div className="space-y-1">
@@ -473,7 +465,7 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
             <button
               type="button"
               onClick={() => setPortalVariant('overworld')}
-              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
+              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${ 
                 portalVariant === 'overworld'
                   ? themeColors.world.overworld
                   : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
@@ -484,7 +476,7 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
             <button
               type="button"
               onClick={() => setPortalVariant('nether')}
-              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
+              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${ 
                 portalVariant === 'nether'
                   ? themeColors.world.nether
                   : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
@@ -495,9 +487,9 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
             <button
               type="button"
               onClick={() => setPortalVariant('linked')}
-              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
+              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${ 
                 portalVariant === 'linked'
-                  ? 'bg-purple-100/60 dark:bg-purple-800/30 text-purple-700 dark:text-purple-300'
+                  ? 'bg-purple-100/50 dark:bg-purple-800/20 text-purple-700 dark:text-purple-300'
                   : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
               }`}
             >
@@ -513,24 +505,15 @@ export default function PortalForm({ mode = 'add', initialData, onSubmit, onCanc
         <div className={`text-sm ${themeColors.travelPlan.errorIcon}`}>{submitError}</div>
       )}
 
-      <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className={`px-4 py-2 text-sm ${themeColors.util.roundedLg} border ${themeColors.border.primary} ${themeColors.transitionAll} text-gray-700 dark:text-gray-200 bg-transparent hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-100/20 dark:hover:bg-blue-500/10`}
-        >
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={submitting}
-          className={`px-4 py-2 text-sm ${submitting ? themeColors.button.primaryDisabled : themeColors.button.primary} ${themeColors.util.roundedLg} ${themeColors.transitionAll}`}
-        >
-          {submitting
-            ? (mode === 'add' ? 'Création…' : 'Modification…')
-            : (mode === 'add' ? 'Créer le portail' : 'Modifier le portail')}
-        </button>
-      </div>
+      <FormActions
+        onCancel={onCancel}
+        isSubmitting={submitting}
+        submitText={mode === 'add' ? 'Créer le portail' : 'Modifier le portail'}
+        submittingText={mode === 'add' ? 'Création…' : 'Modification…'}
+        onDelete={mode === 'edit' ? handlePortalDelete : undefined}
+        entityType="portal"
+        entitySlug={initialData?.id || ''}
+      />
     </form>
   );
 }

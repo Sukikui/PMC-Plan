@@ -3,7 +3,7 @@
 
 import { useSession, signIn } from 'next-auth/react';
 import { useOverlay } from './overlay/OverlayProvider';
-import { themeColors } from '@/lib/theme-colors';
+
 
 interface AddPlaceButtonProps {
   className?: string;

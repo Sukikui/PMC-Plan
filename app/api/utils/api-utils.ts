@@ -22,3 +22,9 @@ export function parseQueryParams<T extends z.ZodSchema>(
   
   return schema.parse(params);
 }
+
+export const sanitizeOwners = (owners?: string[]) =>
+  Array.from(new Set((owners ?? []).map((owner) => owner.trim()).filter(Boolean)));
+
+export const sanitizeTags = (tags?: string[]) =>
+  Array.from(new Set((tags ?? []).map((tag) => tag.trim()).filter(Boolean)));
