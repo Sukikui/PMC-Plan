@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import CrossIcon from './icons/CrossIcon';
+import PencilIcon from './icons/PencilIcon';
 import InfoIcon from './icons/InfoIcon';
 import ShopIcon from './icons/ShopIcon';
 import ClearIcon from './icons/ClearIcon';
@@ -14,6 +16,9 @@ import { themeColors } from '../lib/theme-colors';
 import { getRenderUrl } from '../lib/starlight-skin-api';
 import Overlay from '@/components/ui/Overlay';
 import { useOverlayPanelAnimation } from '@/components/ui/useOverlayPanelAnimation';
+import AdminCreatorInfo from '@/components/admin/AdminCreatorInfo';
+import { useOverlay } from '@/components/overlay/OverlayProvider';
+
 
 interface InfoOverlayProps {
   isOpen: boolean;
@@ -34,8 +39,10 @@ export default function InfoOverlay({
   withinOverlay = false,
   closing = false,
 }: InfoOverlayProps) {
+  const { data: session } = useSession();
   const [showOwnerTooltip, setShowOwnerTooltip] = useState(false);
   const [showTradeView, setShowTradeView] = useState(false);
+  const { openFormOverlay } = useOverlay();
   const [tradeSearchQuery, setTradeSearchQuery] = useState<string>('');
   const [showBottomBlur, setShowBottomBlur] = useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -65,6 +72,12 @@ export default function InfoOverlay({
       }
     }, 300);
   }, [withinOverlay, onClose, localClosing]);
+
+  const handleEditClick = () => {
+    if (item) {
+      openFormOverlay('edit', { ...item, type });
+    }
+  };
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -187,6 +200,8 @@ export default function InfoOverlay({
 
   const typeStyles = getTypeStyles();
 
+  const canEdit = session?.user?.role === 'admin' || session?.user?.id === item.createdById;
+
   const panel = (
     <div
       className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${typeStyles.shadow} w-full max-w-2xl min-w-0 h-[min(90vh,calc(100vh-4rem))] border ${typeStyles.border} flex flex-col transition-all duration-300 ease-out`}
@@ -197,7 +212,7 @@ export default function InfoOverlay({
       }}
     >
           {/* Header */}
-          <div className={`flex-shrink-0 p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition} rounded-t-xl`}>
+          <div className={`flex-shrink-0 p-6 border-b ${typeStyles.headerBorder} ${typeStyles.headerBg} ${themeColors.transition} rounded-t-xl z-10`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="mb-2">
@@ -314,15 +329,27 @@ export default function InfoOverlay({
                 </div>
               )}
 
-              <button
-                onClick={handleClose}
-                className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
-                aria-label="Fermer"
-              >
-                <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-              </button>
+              <div className="flex flex-col items-end">
+                <button
+                  onClick={handleClose}
+                  className={`ml-2 p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                  aria-label="Fermer"
+                >
+                  <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
+                </button>
+                {canEdit && (
+                  <button
+                    onClick={handleEditClick}
+                    className={`ml-2 p-1 mt-2 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                    aria-label="Modifier"
+                  >
+                    <PencilIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+      <AdminCreatorInfo createdById={item.createdById} createdAt={item.createdAt} updatedAt={item.updatedAt} />
 
           {/* Content - conditionally render Info or Trade content */}
           <div className="relative flex-1 min-h-0 rounded-b-xl overflow-hidden">

@@ -1,15 +1,10 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { themeColors } from '@/lib/theme-colors';
+import AddPlaceButton from '../AddPlaceButton';
 
-interface ExternalLinksProps {
-  onAddPortal?: () => void;
-  onAddPlace?: () => void;
-  disableAddPortal?: boolean;
-}
-
-const ExternalLinks: React.FC<ExternalLinksProps> = ({ onAddPortal, onAddPlace, disableAddPortal }) => {
+const ExternalLinks: React.FC = () => {
   const linkClass = `flex items-center gap-2 text-xs ${themeColors.link} px-2 py-2 w-full text-left ${themeColors.util.roundedFull} ${themeColors.transitionAll}`;
 
   return (
@@ -26,44 +21,12 @@ const ExternalLinks: React.FC<ExternalLinksProps> = ({ onAddPortal, onAddPlace, 
         Télécharger PlayerCoordsAPI
       </a>
 
-      {onAddPortal ? (
-        <button
-          type="button"
-          onClick={onAddPortal}
-          disabled={disableAddPortal}
-          className={`${linkClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
-          </svg>
-          Ajouter un lieu ou un portail
-        </button>
-      ) : (
-        <a 
-          href="https://github.com/Sukikui/PMC-Plan/issues/new/choose"
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={linkClass}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
-          </svg>
-          Ajouter un lieu ou un portail
-        </a>
-      )}
-
-      {onAddPlace && (
-        <button
-          type="button"
-          onClick={onAddPlace}
-          className={linkClass}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
-          </svg>
-          Ajouter un lieu (bientôt)
-        </button>
-      )}
+      <AddPlaceButton className={`${linkClass} disabled:opacity-50 disabled:cursor-not-allowed`}>
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
+        </svg>
+        Ajouter un lieu ou un portail
+      </AddPlaceButton>
 
       <a 
         href="https://github.com/Sukikui/PMC-Plan"

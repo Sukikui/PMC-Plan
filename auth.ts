@@ -32,11 +32,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       // On first sign-in, enrich the token with Discord profile info
       if (account?.provider === 'discord' && profile) {
-        const p = profile as DiscordProfile
-        token.username = p.username ?? token.username
-        token.globalName = p.global_name ?? p.name ?? token.globalName
+        const p = profile as DiscordProfile;
+        if (user) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { username: p.username },
+          });
+        }
+        token.username = p.username ?? token.username;
+        token.globalName = p.global_name ?? p.name ?? token.globalName;
         // NextAuth sets token.picture from user.image; keep ours if provided
-        if (user?.image) token.picture = user.image
+        if (user?.image) token.picture = user.image;
       }
       return token
     },
