@@ -84,6 +84,7 @@ export const themeColors = {
     primary: 'bg-blue-500 text-white hover:bg-blue-600',
     primaryDisabled: 'bg-blue-400 text-white cursor-not-allowed',
     danger: 'bg-red-500 text-white hover:bg-red-600',
+    redDisabled: 'bg-red-400 text-white cursor-not-allowed',
     secondary: 'bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700',
     ghost: 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
     round: 'w-12 h-12 rounded-full bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700',

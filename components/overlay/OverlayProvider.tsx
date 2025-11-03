@@ -6,6 +6,8 @@ import Overlay from '@/components/ui/Overlay';
 import GlobalTradeOverlay from '@/components/GlobalTradeOverlay';
 import FormOverlay from '@/components/form/FormOverlay';
 import type { Place, Portal } from '@/app/api/utils/shared';
+import type { InitialPlaceData } from '@/components/form/PlaceForm';
+import type { InitialPortalData } from '@/components/form/PortalForm';
 
 type OverlayType = 'place' | 'portal';
 
@@ -20,7 +22,7 @@ interface FormOverlayState {
   isOpen: boolean;
   isClosing: boolean;
   mode: 'add' | 'edit';
-  initialData?: any;
+  initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' });
 }
 
 interface OverlayContextValue {
@@ -29,7 +31,7 @@ interface OverlayContextValue {
   closeOverlay: () => void;
   openMarket: (onSelectItem?: (id: string, type: OverlayType) => void) => void;
   closeMarket: () => void;
-  openFormOverlay: (mode: 'add' | 'edit', initialData?: any) => void;
+  openFormOverlay: (mode: 'add' | 'edit', initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' })) => void;
 }
 
 const OverlayContext = createContext<OverlayContextValue | null>(null);
@@ -97,7 +99,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 300);
   };
 
-  const openFormOverlay = (mode: 'add' | 'edit', initialData?: any) => {
+  const openFormOverlay = (mode: 'add' | 'edit', initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' })) => {
     setFormOverlayState({ isOpen: true, isClosing: false, mode, initialData });
   };
 
@@ -135,7 +137,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )}
       {formOverlayState.isOpen && (
         <Overlay isOpen={formOverlayState.isOpen} onClose={closeFormOverlay} closing={formOverlayState.isClosing}>
-          <FormOverlay mode={formOverlayState.mode} initialData={formOverlayState.initialData} onClose={closeFormOverlay} closing={formOverlayState.isClosing} />
+          <FormOverlay mode={formOverlayState.mode} initialData={formOverlayState.initialData as (InitialPlaceData | InitialPortalData)} onClose={closeFormOverlay} closing={formOverlayState.isClosing} />
         </Overlay>
       )}
     </OverlayContext.Provider>

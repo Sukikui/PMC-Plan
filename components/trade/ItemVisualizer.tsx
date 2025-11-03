@@ -38,7 +38,7 @@ const ItemVisualizer: React.FC<ItemVisualizerProps> = ({ itemId, enchanted, clas
             setError('No texture found');
           }
         }
-      } catch (e) {
+      } catch {
         if (!isCancelled) {
           setTexture(null);
           setError('Invalid item ID');

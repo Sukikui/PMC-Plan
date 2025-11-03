@@ -6,7 +6,17 @@ import { useOverlayPanelAnimation } from '@/components/ui/useOverlayPanelAnimati
 import PlaceForm from './PlaceForm';
 import PortalForm from './PortalForm';
 
-export default function FormOverlay({ initialData, mode = 'add', onClose, closing }) {
+import type { InitialPlaceData, PlaceFormPayload } from './PlaceForm';
+import type { InitialPortalData, PortalFormPayload } from './PortalForm';
+
+interface FormOverlayProps {
+  initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' });
+  mode?: 'add' | 'edit';
+  onClose: () => void;
+  closing: boolean;
+}
+
+export default function FormOverlay({ initialData, mode = 'add', onClose, closing }: FormOverlayProps) {
   const [activeCategory, setActiveCategory] = useState(initialData?.type || 'portal');
   const animIn = useOverlayPanelAnimation(!closing, { closing });
 
@@ -16,8 +26,8 @@ export default function FormOverlay({ initialData, mode = 'add', onClose, closin
       ? 'Modifier le lieu'
       : 'Modifier le portail';
 
-  const handleSubmit = async (entityType, payload) => {
-    const url = mode === 'add' ? `/api/${entityType}s` : `/api/${entityType}s/${initialData.id}`;
+  const handleSubmit = async (entityType: 'place' | 'portal', payload: PlaceFormPayload | PortalFormPayload) => {
+    const url = mode === 'add' ? `/api/${entityType}s` : `/api/${entityType}s/${initialData!.id}`;
     const method = mode === 'add' ? 'POST' : 'PUT';
 
     const response = await fetch(url, {
@@ -37,11 +47,11 @@ export default function FormOverlay({ initialData, mode = 'add', onClose, closin
     onClose();
   };
 
-  const handlePlaceSubmit = async (payload) => {
+  const handlePlaceSubmit = async (payload: PlaceFormPayload) => {
     await handleSubmit('place', payload);
   };
 
-  const handlePortalSubmit = async (payload) => {
+  const handlePortalSubmit = async (payload: PortalFormPayload) => {
     await handleSubmit('portal', payload);
   };
 
@@ -121,14 +131,14 @@ export default function FormOverlay({ initialData, mode = 'add', onClose, closin
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 aria-hidden={activeCategory !== 'portal'}
               >
-                <PortalForm mode={mode} initialData={initialData?.type === 'portal' ? initialData : null} onSubmit={handlePortalSubmit} onCancel={onClose} />
+                <PortalForm mode={mode} initialData={initialData?.type === 'portal' ? initialData : undefined} onSubmit={handlePortalSubmit} onCancel={onClose} />
               </div>
               <div
                 className={`w-1/2 min-w-0 flex-shrink-0 h-full overflow-y-auto px-6 pt-16 pb-14 ${themeColors.panel.primary} ${themeColors.transition}`}
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 aria-hidden={activeCategory !== 'place'}
               >
-                <PlaceForm mode={mode} initialData={initialData?.type === 'place' ? initialData : null} onSubmit={handlePlaceSubmit} onCancel={onClose} />
+                <PlaceForm mode={mode} initialData={initialData?.type === 'place' ? initialData : undefined} onSubmit={handlePlaceSubmit} onCancel={onClose} />
               </div>
             </div>
           </div>
