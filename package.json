@@ -26,7 +26,7 @@
     "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.18.0",
     "@vercel/analytics": "^1.5.0",
-    "next": "^15.5.3",
+    "next": "15.5.9",
     "next-auth": "^5.0.0-beta.30",
     "pixi.js": "^8.13.2",
     "prisma": "^6.18.0",
@@ -60,4 +60,3 @@
     "typescript-eslint": "^8.46.2"
   }
 }
-
