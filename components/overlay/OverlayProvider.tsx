@@ -6,8 +6,9 @@ import Overlay from '@/components/ui/Overlay';
 import GlobalTradeOverlay from '@/components/GlobalTradeOverlay';
 import FormOverlay from '@/components/form/FormOverlay';
 import type { Place, Portal } from '@/app/api/utils/shared';
-import type { InitialPlaceData } from '@/components/form/PlaceForm';
-import type { InitialPortalData } from '@/components/form/PortalForm';
+import type { SelectDestinationHandler } from '@/lib/destination/selection';
+import type { InitialPlaceData, PlaceFormPayload } from '@/components/form/place/PlaceForm';
+import type { InitialPortalData, PortalFormPayload } from '@/components/form/portal/PortalForm';
 
 type OverlayType = 'place' | 'portal';
 
@@ -15,7 +16,7 @@ interface OverlayState {
   isOpen: boolean;
   item: Place | Portal | null;
   type: OverlayType;
-  onSelectItem?: (id: string, type: OverlayType) => void;
+  onSelectItem?: SelectDestinationHandler;
 }
 
 interface FormOverlayState {
@@ -26,10 +27,10 @@ interface FormOverlayState {
 }
 
 interface OverlayContextValue {
-  openPlaceInfoById: (placeId: string, onSelectItem?: (id: string, type: OverlayType) => void) => Promise<void>;
-  openPlaceInfo: (item: Place | Portal, type: OverlayType, onSelectItem?: (id: string, type: OverlayType) => void) => void;
+  openPlaceInfoById: (placeId: string, onSelectItem?: SelectDestinationHandler) => Promise<void>;
+  openPlaceInfo: (item: Place | Portal, type: OverlayType, onSelectItem?: SelectDestinationHandler) => void;
   closeOverlay: () => void;
-  openMarket: (onSelectItem?: (id: string, type: OverlayType) => void) => void;
+  openMarket: (onSelectItem?: SelectDestinationHandler) => void;
   closeMarket: () => void;
   openFormOverlay: (mode: 'add' | 'edit', initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' })) => void;
 }
@@ -45,7 +46,7 @@ export function useOverlay() {
 interface MarketState {
   isOpen: boolean;
   isClosing: boolean;
-  onSelectItem?: (id: string, type: OverlayType) => void;
+  onSelectItem?: SelectDestinationHandler;
 }
 
 export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -63,7 +64,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, []);
 
-  const openPlaceInfoById = async (placeId: string, onSelectItem?: (id: string, type: OverlayType) => void) => {
+  const openPlaceInfoById = async (placeId: string, onSelectItem?: SelectDestinationHandler) => {
     try {
       const res = await fetch('/api/places');
       if (!res.ok) return;
@@ -77,7 +78,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const openPlaceInfo = (item: Place | Portal, type: OverlayType, onSelectItem?: (id: string, type: OverlayType) => void) => {
+  const openPlaceInfo = (item: Place | Portal, type: OverlayType, onSelectItem?: SelectDestinationHandler) => {
     setState({ isOpen: true, item, type, onSelectItem });
   };
 
@@ -89,7 +90,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 300);
   };
 
-  const openMarket = (onSelectItem?: (id: string, type: OverlayType) => void) => {
+  const openMarket = (onSelectItem?: SelectDestinationHandler) => {
     setMarketState({ isOpen: true, isClosing: false, onSelectItem });
   };
   const closeMarket = () => {
@@ -101,6 +102,37 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const openFormOverlay = (mode: 'add' | 'edit', initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' })) => {
     setFormOverlayState({ isOpen: true, isClosing: false, mode, initialData });
+  };
+
+  const handleFormSaved = (entityType: 'place' | 'portal', payload: PlaceFormPayload | PortalFormPayload) => {
+    if (entityType !== 'place' || formOverlayState.mode !== 'edit' || formOverlayState.initialData?.type !== 'place') {
+      return;
+    }
+
+    const placePayload = payload as PlaceFormPayload;
+    setState((prev) => {
+      if (prev.type !== 'place' || !prev.item || prev.item.id !== formOverlayState.initialData?.id) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        item: {
+          ...prev.item,
+          id: placePayload.slug,
+          name: placePayload.name,
+          world: placePayload.world,
+          coordinates: placePayload.coordinates,
+          description: placePayload.description,
+          address: placePayload.address,
+          category: placePayload.category,
+          owners: placePayload.owners,
+          tags: placePayload.tags,
+          discord: placePayload.discordUrl,
+          images: placePayload.images,
+        } satisfies Place,
+      };
+    });
   };
 
   const closeFormOverlay = () => {
@@ -137,7 +169,13 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
       )}
       {formOverlayState.isOpen && (
         <Overlay isOpen={formOverlayState.isOpen} onClose={closeFormOverlay} closing={formOverlayState.isClosing}>
-          <FormOverlay mode={formOverlayState.mode} initialData={formOverlayState.initialData as (InitialPlaceData | InitialPortalData)} onClose={closeFormOverlay} closing={formOverlayState.isClosing} />
+          <FormOverlay
+            mode={formOverlayState.mode}
+            initialData={formOverlayState.initialData as (InitialPlaceData | InitialPortalData)}
+            onClose={closeFormOverlay}
+            onSaved={handleFormSaved}
+            closing={formOverlayState.isClosing}
+          />
         </Overlay>
       )}
     </OverlayContext.Provider>

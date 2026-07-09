@@ -4,7 +4,7 @@ import {
   loadPortals,
 } from '../utils/shared';
 import { QuerySchema } from './route-types';
-import { RouteService } from './route-service';
+import { RouteService } from './service/route-service';
 import { handleError, parseQueryParams } from '../utils/api-utils';
 import { resolveRoutePoint } from './route-utils';
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const portals = await loadPortals();
 
     // Resolve from point
-    const fromPointResult = resolveRoutePoint(
+    const fromPointResult = await resolveRoutePoint(
       hasFromPlace,
       params.from_place_id,
       params.from_x,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const fromPoint = fromPointResult;
 
     // Resolve to point
-    const toPointResult = resolveRoutePoint(
+    const toPointResult = await resolveRoutePoint(
       hasToPlace,
       params.to_place_id,
       params.to_x,

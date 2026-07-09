@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   loadPortals, 
   Portal,
-  calculateNetherAddress
+  resolveNetherAddressForWorld
 } from '../utils/shared';
 import { callLinkedPortal } from '../route/route-utils';
 import { handleError, parseQueryParams, sanitizeOwners } from '../utils/api-utils';
@@ -44,12 +44,17 @@ export async function GET(request: NextRequest) {
             if (officialLinkedPortal && officialLinkedPortal.id === candidatePortal.id) {
                 // If yes, associate them
                 netherPortalsMap.delete(owPortal.id);
+                const netherAddress = await resolveNetherAddressForWorld(
+                  'nether',
+                  candidatePortal.coordinates,
+                  candidatePortal.address
+                );
 
                 return {
                     ...owPortal,
                     'nether-associate': {
                         coordinates: candidatePortal.coordinates,
-                        address: candidatePortal.address,
+                        address: netherAddress ?? '',
                         description: candidatePortal.description
                     }
                 };
@@ -91,16 +96,11 @@ export async function POST(request: NextRequest) {
     if (payload.mode === 'single') {
       const owners = sanitizeOwners(payload.portal.ownerNames);
       const slugValue = payload.portal.slug.toLowerCase();
-      let address = payload.portal.address?.trim() || null;
-
-      if (payload.portal.world === 'nether' && !address) {
-        const netherAddress = await calculateNetherAddress(
-          payload.portal.coordinates.x,
-          payload.portal.coordinates.y,
-          payload.portal.coordinates.z
-        );
-        address = netherAddress.address ?? null;
-      }
+      const address = await resolveNetherAddressForWorld(
+        payload.portal.world,
+        payload.portal.coordinates,
+        payload.portal.address
+      );
 
       const created = await prisma.portal.create({
         data: {
@@ -135,16 +135,11 @@ export async function POST(request: NextRequest) {
     // linked portals
     const owners = sanitizeOwners(payload.owners);
     const slugValue = payload.slug.toLowerCase();
-    let netherAddress = payload.nether.address?.trim() || null;
-
-    if (!netherAddress) {
-      const netherComputed = await calculateNetherAddress(
-        payload.nether.coordinates.x,
-        payload.nether.coordinates.y,
-        payload.nether.coordinates.z
-      );
-      netherAddress = netherComputed.address ?? null;
-    }
+    const netherAddress = await resolveNetherAddressForWorld(
+      'nether',
+      payload.nether.coordinates,
+      payload.nether.address
+    );
 
     const result = await prisma.$transaction(async (tx) => {
       const overworldPortal = await tx.portal.create({

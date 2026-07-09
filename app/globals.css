@@ -177,3 +177,104 @@ input[type='number'] {
 .dark .mc-glint {
   inset: 0.5px;
 }
+
+@keyframes route-step-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-step-reveal {
+  opacity: 0;
+  animation: route-step-reveal 260ms ease-out forwards;
+  animation-delay: var(--route-step-delay, 0ms);
+}
+
+@keyframes map-icon-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.35) translateY(3px);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1.14) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.map-icon-reveal {
+  opacity: 0;
+  transform-origin: center;
+  animation: map-icon-reveal var(--map-icon-reveal-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--map-reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+@keyframes map-icon-to-point {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  42% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.14);
+  }
+}
+
+.map-icon-to-point {
+  opacity: 1;
+  transform-origin: center;
+  animation: map-icon-to-point var(--map-icon-to-point-duration, 300ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--map-reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+@keyframes map-tooltip-preview-card-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.012);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.map-tooltip-preview-card-enter {
+  animation: map-tooltip-preview-card-enter var(--map-tooltip-preview-duration, 240ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: bottom center;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-step-reveal,
+  .map-icon-reveal,
+  .map-tooltip-preview-card-enter {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  .map-icon-to-point {
+    opacity: 0;
+    animation: none;
+    transform: none;
+  }
+
+}

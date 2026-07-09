@@ -162,15 +162,17 @@ describe('API Endpoints', () => {
         expect(place).toHaveProperty('id');
         expect(place).toHaveProperty('name');
         expect(place).toHaveProperty('world');
+        expect(place).toHaveProperty('category');
         expect(place).toHaveProperty('coordinates');
         expect(place).toHaveProperty('tags');
         expect(place).toHaveProperty('description');
-        expect(place).toHaveProperty('owner');
+        expect(place).toHaveProperty('owners');
         expect(place).toHaveProperty('discord');
         expect(Array.isArray(place.tags)).toBe(true);
+        expect(Array.isArray(place.owners)).toBe(true);
         expect(place.description === null || typeof place.description === 'string').toBe(true);
-        expect(place.owner === null || typeof place.owner === 'string').toBe(true);
         expect(place.discord === null || typeof place.discord === 'string').toBe(true);
+        expect(['construction', 'commerce', 'zone_communautaire', 'ferme']).toContain(place.category);
       });
     });
 

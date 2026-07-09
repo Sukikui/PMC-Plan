@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { DEFAULT_PLACE_CATEGORY, PLACE_CATEGORIES } from '@/lib/place/categories';
+import { MAX_PLACE_IMAGE_URLS, PLACE_IMAGE_URL_MAX_LENGTH } from '@/lib/place/images';
 
 export const coordinateSchema = z.object({
   x: z.number(),
@@ -14,6 +16,7 @@ export const slugSchema = z
 
 export const ownerSchema = z.string().min(1).max(64);
 export const tagSchema = z.string().min(1).max(32);
+export const placeImageUrlSchema = z.string().trim().url().max(PLACE_IMAGE_URL_MAX_LENGTH);
 
 export const tradeItemSchema = z.object({
   kind: z.enum(['gives', 'wants']),
@@ -53,12 +56,14 @@ export const CreatePlaceSchema = z.object({
   slug: slugSchema,
   name: z.string().min(1).max(120),
   world: z.enum(['overworld', 'nether']),
+  category: z.enum(PLACE_CATEGORIES).default(DEFAULT_PLACE_CATEGORY),
   coordinates: coordinateSchema,
   description: z.string().max(2000).nullable().optional(),
+  address: z.string().max(120).nullable().optional(),
   owners: z.array(ownerSchema).optional(),
   tags: z.array(tagSchema).optional(),
   discordUrl: z.string().url().max(256).nullable().optional(),
-  imageUrl: z.string().url().max(512).nullable().optional(),
+  images: z.array(placeImageUrlSchema).max(MAX_PLACE_IMAGE_URLS).optional(),
   tradeOffers: z.array(tradeOfferSchema).optional(),
 });
 

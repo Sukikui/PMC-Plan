@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { z } from 'zod';
 import { Prisma, World } from '@prisma/client';
-import { calculateNetherAddress } from '../../utils/shared';
+import { resolveNetherAddressForWorld } from '../../utils/shared';
 import { handleError, sanitizeOwners } from '../../utils/api-utils';
 
 import { UpdatePortalSchema } from '../../utils/schemas';
@@ -50,16 +50,11 @@ export async function PUT(request: NextRequest, context: any) {
     if (payload.mode === 'single') {
       const owners = sanitizeOwners(payload.portal.ownerNames);
       const slugValue = payload.portal.slug.toLowerCase();
-      let address = payload.portal.address?.trim() || null;
-
-      if (payload.portal.world === 'nether' && !address) {
-        const netherAddress = await calculateNetherAddress(
-          payload.portal.coordinates.x,
-          payload.portal.coordinates.y,
-          payload.portal.coordinates.z
-        );
-        address = netherAddress.address ?? null;
-      }
+      const address = await resolveNetherAddressForWorld(
+        payload.portal.world,
+        payload.portal.coordinates,
+        payload.portal.address
+      );
 
       const updated = await prisma.portal.update({
         where: { uid: portal.uid },
@@ -94,16 +89,11 @@ export async function PUT(request: NextRequest, context: any) {
     // linked portals
     const owners = sanitizeOwners(payload.owners);
     const slugValue = payload.slug.toLowerCase();
-    let netherAddress = payload.nether.address?.trim() || null;
-
-    if (!netherAddress) {
-      const netherComputed = await calculateNetherAddress(
-        payload.nether.coordinates.x,
-        payload.nether.coordinates.y,
-        payload.nether.coordinates.z
-      );
-      netherAddress = netherComputed.address ?? null;
-    }
+    const netherAddress = await resolveNetherAddressForWorld(
+      'nether',
+      payload.nether.coordinates,
+      payload.nether.address
+    );
 
     const result = await prisma.$transaction(async (tx) => {
       const overworldPortal = await tx.portal.update({

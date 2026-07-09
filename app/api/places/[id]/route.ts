@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { z } from 'zod';
 import { Prisma, ApprovalStatus } from '@prisma/client';
+import { resolveNetherAddressForWorld } from '../../utils/shared';
+import { normalizePlaceImages } from '@/lib/place/images';
 
 
 import { UpdatePlaceSchema } from '../../utils/schemas';
@@ -39,8 +41,9 @@ export async function PUT(request: NextRequest, context: any) {
     const owners = sanitizeOwners(payload.owners);
     const tags = sanitizeTags(payload.tags);
     const description = payload.description?.trim() || null;
+    const address = await resolveNetherAddressForWorld(payload.world, payload.coordinates, payload.address);
     const discordUrl = payload.discordUrl?.trim() || null;
-    const imageUrl = payload.imageUrl?.trim() || null;
+    const images = normalizePlaceImages(payload.images);
 
     const tradeOffersData = 
       payload.tradeOffers?.map((offer) => ({
@@ -75,14 +78,16 @@ export async function PUT(request: NextRequest, context: any) {
         slug: payload.slug.toLowerCase(),
         name: payload.name,
         world: payload.world,
+        category: payload.category,
         coordX: payload.coordinates.x,
         coordY: payload.coordinates.y,
         coordZ: payload.coordinates.z,
         description,
-        imageUrl,
+        address,
         tags,
         ownerNames: owners,
         discordUrl,
+        images,
         tradeOffers: tradeOffersData.length
           ? {
               create: tradeOffersData,
@@ -97,13 +102,12 @@ export async function PUT(request: NextRequest, context: any) {
       return updatedPlace;
     });
 
-    const updatedImageUrl = updatedPlace.imageUrl ?? null;
     return NextResponse.json(
       {
         place: {
           slug: updatedPlace.slug,
           name: updatedPlace.name,
-          imageUrl: updatedImageUrl,
+          images: updatedPlace.images,
         },
       },
       { status: 200 }

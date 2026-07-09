@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getItemInfo, getTextures } from '@/lib/minecraft-items';
+import { getItemInfo, getTextures } from '@/lib/minecraft/items';
 import EnchantedImage from './EnchantedImage';
 import { themeColors } from '@/lib/theme-colors';
 

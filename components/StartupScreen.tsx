@@ -6,19 +6,18 @@ import { themeColors } from '../lib/theme-colors';
 
 interface StartupScreenProps {
   onUnlock: () => void;
+  ready?: boolean;
 }
 
-export default function StartupScreen({ onUnlock }: StartupScreenProps) {
+export default function StartupScreen({ onUnlock, ready = true }: StartupScreenProps) {
   // The useTheme hook handles theme loading and application
   useTheme();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (ready) {
       onUnlock();
-    }, 1000); // 1 second auto unlock
-
-    return () => clearTimeout(timer);
-  }, [onUnlock]);
+    }
+  }, [onUnlock, ready]);
 
   return (
     <div className={`fixed inset-0 ${themeColors.background.lockScreen} flex flex-col items-center justify-center z-50 ${themeColors.transition}`}>

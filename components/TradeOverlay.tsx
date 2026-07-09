@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { Place, TradeOffer } from '../app/api/utils/shared';
 import { themeColors } from '../lib/theme-colors';
-import { getItemInfo } from '../lib/minecraft-items';
+import { getItemInfo } from '../lib/minecraft/items';
 import ItemInline from '@/components/trade/ItemInline';
 import PlusIcon from './icons/PlusIcon';
 import CrossIcon from './icons/CrossIcon';
 import ClearIcon from './icons/ClearIcon';
 import AdminCreatorInfo from '@/components/admin/AdminCreatorInfo';
+import IconActionButton from '@/components/ui/IconActionButton';
 
 interface TradeOverlayProps {
   place: Place;
@@ -141,22 +142,22 @@ export default function TradeOverlay({ place, typeStyles, onBack, onClose, conte
           {/* Back and Close buttons */}
           <div className="flex gap-2">
             {onBack && (
-              <button
+              <IconActionButton
                 onClick={onBack}
-                className={`p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                className="flex-shrink-0"
                 aria-label="Retour aux informations"
               >
                 <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary} transform rotate-45`} />
-              </button>
+              </IconActionButton>
             )}
             {onClose && (
-              <button
+              <IconActionButton
                 onClick={onClose}
-                className={`p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                className="flex-shrink-0"
                 aria-label="Fermer"
               >
                 <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-              </button>
+              </IconActionButton>
             )}
           </div>
         </div>
