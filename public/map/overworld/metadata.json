@@ -1,0 +1,18 @@
+{
+  "cellSize": 16,
+  "selectionMin": {
+    "x": -7167,
+    "z": -7167
+  },
+  "selectionMax": {
+    "x": 21503,
+    "z": 7167
+  },
+  "gridOrigin": {
+    "x": -7168,
+    "z": -7168
+  },
+  "width": 1792,
+  "height": 896,
+  "image": "/map/overworld/biomes-16-light.png"
+}

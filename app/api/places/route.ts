@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loadPlaces } from '../utils/shared';
+import { loadPlaces, resolveNetherAddressForWorld } from '../utils/shared';
 import { handleError, sanitizeOwners, sanitizeTags } from '../utils/api-utils';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { normalizePlaceImages } from '@/lib/place/images';
 
 export async function GET() {
   try {
     const places = await loadPlaces();
     return NextResponse.json(places);
   } catch (error) {
-    // The loadPlaces function already logs warnings for individual file errors.
-    // This catch block will handle more critical errors, like the directory not existing.
     return handleError(error, 'Failed to load places');
   }
 }
@@ -34,8 +33,9 @@ export async function POST(request: NextRequest) {
     const owners = sanitizeOwners(payload.owners);
     const tags = sanitizeTags(payload.tags);
     const description = payload.description?.trim() || null;
+    const address = await resolveNetherAddressForWorld(payload.world, payload.coordinates, payload.address);
     const discordUrl = payload.discordUrl?.trim() || null;
-    const imageUrl = payload.imageUrl?.trim() || null;
+    const images = normalizePlaceImages(payload.images);
 
     const tradeOffersData = 
       payload.tradeOffers?.map((offer) => ({
@@ -51,20 +51,22 @@ export async function POST(request: NextRequest) {
         },
       })) ?? [];
 
-  const placeData: Prisma.PlaceCreateInput = {
-    slug: payload.slug.toLowerCase(),
-    name: payload.name,
-    world: payload.world,
-    coordX: payload.coordinates.x,
-    coordY: payload.coordinates.y,
-    coordZ: payload.coordinates.z,
-    description,
-    imageUrl,
-    tags,
-    ownerNames: owners,
-    discordUrl,
-    status: 'pending',
-    creator: { connect: { id: session.user.id } },
+    const placeData: Prisma.PlaceCreateInput = {
+      slug: payload.slug.toLowerCase(),
+      name: payload.name,
+      world: payload.world,
+      category: payload.category,
+      coordX: payload.coordinates.x,
+      coordY: payload.coordinates.y,
+      coordZ: payload.coordinates.z,
+      description,
+      address,
+      images,
+      tags,
+      ownerNames: owners,
+      discordUrl,
+      status: 'pending',
+      creator: { connect: { id: session.user.id } },
       tradeOffers: tradeOffersData.length
         ? {
             create: tradeOffersData,
@@ -76,13 +78,12 @@ export async function POST(request: NextRequest) {
       data: placeData,
     });
 
-    const createdImageUrl = created.imageUrl ?? null;
     return NextResponse.json(
       {
         place: {
           slug: created.slug,
           name: created.name,
-          imageUrl: createdImageUrl,
+          images: created.images,
         },
       },
       { status: 201 }

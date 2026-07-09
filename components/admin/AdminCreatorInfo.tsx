@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { themeColors } from '@/lib/theme-colors';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 interface AdminCreatorInfoProps {
   createdById: string;
@@ -14,7 +15,7 @@ interface AdminCreatorInfoProps {
 interface CreatorInfo {
   name: string;
   username: string;
-  image: string;
+  image: string | null;
 }
 
 export default function AdminCreatorInfo({ createdById, createdAt: createdAtStr, updatedAt: updatedAtStr }: AdminCreatorInfoProps) {
@@ -71,9 +72,7 @@ export default function AdminCreatorInfo({ createdById, createdAt: createdAtStr,
                         <div className={`text-xs font-medium ${themeColors.text.secondary} mb-2`}>Créé par</div>
                         <div className={`${themeColors.adminBubble.profileCard} ${themeColors.blurSm} border ${themeColors.border.secondary} ${themeColors.util.roundedLg} p-3 ${themeColors.transition}`}>
                             <div className="flex items-center gap-2">
-                                {creatorInfo.image && (
-                                    <img src={creatorInfo.image} alt="Avatar" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
-                                )}
+                                <UserAvatar src={creatorInfo.image} alt={`Avatar de ${creatorInfo.name || creatorInfo.username || 'l’utilisateur'}`} className="w-8 h-8" />
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-baseline gap-2 min-w-0">
                                         <span className={`text-sm font-medium ${themeColors.text.primary} truncate`}>

@@ -1,0 +1,19 @@
+{
+  "cellSize": 16,
+  "selectionMin": {
+    "x": -1000,
+    "z": -1000
+  },
+  "selectionMax": {
+    "x": 2700,
+    "z": 1000
+  },
+  "gridOrigin": {
+    "x": -1000,
+    "z": -1000
+  },
+  "width": 232,
+  "height": 126,
+  "image": "",
+  "fallbackBackground": "#3a1612"
+}

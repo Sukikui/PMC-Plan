@@ -30,6 +30,10 @@ module.exports = {
       }
     }]
   },
+  moduleNameMapper: {
+    '^@/auth$': '<rootDir>/tests/mocks/auth.ts',
+    '^@/(.*)$': '<rootDir>/$1'
+  },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   verbose: true

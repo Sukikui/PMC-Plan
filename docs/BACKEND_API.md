@@ -192,12 +192,12 @@ Calculates the optimal route between two locations using the full routing algori
 - `from_y` (number, optional) - Source Y coordinate
 - `from_z` (number, optional) - Source Z coordinate
 - `from_world` (string, optional) - Source world (`overworld` or `nether`, default: `overworld`)
-- `from_place_id` (string, optional) - Source place ID from places.json
+- `from_place_id` (string, optional) - Source place ID stored in Prisma
 - `to_x` (number, optional) - Destination X coordinate
 - `to_y` (number, optional) - Destination Y coordinate
 - `to_z` (number, optional) - Destination Z coordinate
 - `to_world` (string, optional) - Destination world (`overworld` or `nether`, default: `overworld`)
-- `to_place_id` (string, optional) - Destination place ID from places.json
+- `to_place_id` (string, optional) - Destination place ID stored in Prisma
 
 #### Key Functions Used
 - **`route.ts` (Handler):**
@@ -206,7 +206,7 @@ Calculates the optimal route between two locations using the full routing algori
     - `normalizeWorldName()` in `lib/world-utils.ts`
     - `loadPlaces()` in `app/api/utils/shared.ts`
     - `loadPortals()` in `app/api/utils/shared.ts`
-    - `RouteService` class in `app/api/route/route-service.ts`
+    - `RouteService` class in `app/api/route/service/route-service.ts`
 - **`route-service.ts` (Service):**
     - `RouteService` constructor is initialized with `places` and `portals`.
     - `callNearestPortals()` in `app/api/route/route-utils.ts`
@@ -228,7 +228,8 @@ Calculates the optimal route between two locations using the full routing algori
 - **`Nether to Nether`**: Calculates the direct euclidean distance between the two points in the Nether.
 - **`Overworld to Nether`**: Finds the nearest overworld portal, links to the nether, and then calculates the euclidean distance to the destination in the Nether.
 - **`Nether to Overworld`**: Finds the nearest overworld portal to the destination, links to the nether, and then calculates the euclidean distance from the start point in the Nether to the linked portal.
-- Nether addresses for portals are read from the database. For theoretical portals or raw coordinates, the address will be empty.
+- Nether route points expose an `address` whenever their Nether address is known or can be computed. This includes Nether portals, Nether places, theoretical portal coordinates, and raw Nether coordinate inputs.
+- Stored Nether addresses are read from the database first. If a Nether point has no stored address, the route resolver computes one from its coordinates.
 - Handles theoretical portal coordinates when linked portals don't exist (8:1 conversion)
 
 **Response:**
@@ -376,10 +377,15 @@ None
     "id": "village_suki",
     "name": "Village de Suki",
     "world": "overworld",
+    "category": "construction",
     "coordinates": {"x": 5000, "y": 70, "z": 300},
+    "address": null,
     "tags": ["village", "base"],
     "description": "Ancien village caché...",
-    "image": "https://cdn.example.com/village_suki.png",
+    "images": [
+      "https://cdn.example.com/village_suki.png",
+      "https://cdn.example.com/village_suki_2.png"
+    ],
     "owners": ["Suki"],
     "discord": "https://discord.gg/exemple123",
     "trade": [
@@ -392,6 +398,12 @@ None
   }
 ]
 ```
+
+For places in the Nether, `address` contains the nearest Nether highway address when available. It is `null` for Overworld places.
+
+`category` is the functional place category used by the interactive map icons. Allowed values are `construction`, `commerce`, `zone_communautaire`, and `ferme`. When omitted during creation or update, the API defaults it to `construction`.
+
+Places can store up to 10 image URLs directly on the `Place.images` database field. Create and update payloads accept an `images` array; an empty or omitted array means the place has no image.
 
 **Examples:**
 ```bash

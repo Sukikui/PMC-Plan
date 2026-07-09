@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getItemInfo, MinecraftItemData } from '@/lib/minecraft-items';
+import { getItemInfo, MinecraftItemData } from '@/lib/minecraft/items';
 import { themeColors } from '@/lib/theme-colors';
 import { getItemBadgeLarge } from '@/lib/ui-utils';
 import ItemVisualizer from './ItemVisualizer';

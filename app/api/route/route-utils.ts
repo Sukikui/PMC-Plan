@@ -2,7 +2,8 @@ import {
   Portal, 
   calculateEuclideanDistance,
   convertOverworldToNether, 
-  NetherAddress // Import NetherAddress from shared.ts
+  NetherAddress,
+  resolveNetherAddressForWorld
 } from '../utils/shared';
 import { RoutePoint } from './route-types';
 import { NextResponse } from 'next/server';
@@ -80,7 +81,7 @@ export function calculateNetherNetworkDistance(address1: NetherAddress, address2
   );
 }
 
-export function resolveRoutePoint(
+export async function resolveRoutePoint(
   isPlace: boolean,
   placeId: string | undefined | null,
   x: number | undefined,
@@ -90,7 +91,7 @@ export function resolveRoutePoint(
   places: Place[],
   portals: Portal[],
   pointType: 'from' | 'to'
-): RoutePoint | NextResponse {
+): Promise<RoutePoint | NextResponse> {
   if (isPlace) {
     let foundPlace: Place | Portal | undefined = places.find(p => p.id === placeId);
     if (!foundPlace) {
@@ -103,23 +104,32 @@ export function resolveRoutePoint(
       );
     }
 
-    const isPortal = 'address' in foundPlace;
+    const address = await resolveNetherAddressForWorld(
+      foundPlace.world,
+      foundPlace.coordinates,
+      foundPlace.address
+    );
 
     return {
       coordinates: foundPlace.coordinates,
       world: foundPlace.world,
       name: foundPlace.name,
       id: foundPlace.id,
-      address: isPortal ? (foundPlace as Portal).address : undefined
+      address: address ?? undefined
     };
   } else {
+    const coordinates = {
+      x: x!,
+      y: y!,
+      z: z!
+    };
+    const resolvedWorld = world || 'overworld';
+    const address = await resolveNetherAddressForWorld(resolvedWorld, coordinates);
+
     return {
-      coordinates: {
-        x: x!,
-        y: y!,
-        z: z!
-      },
-      world: world || 'overworld'
+      coordinates,
+      world: resolvedWorld,
+      address: address ?? undefined
     };
   }
 }

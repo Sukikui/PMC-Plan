@@ -53,7 +53,7 @@ describe('Route API Integration Tests - Real Behavior Validation', () => {
       expect(route.steps[2].from.address).toBe('Spawn');
       expect(route.steps[2].to.id).toBe('portail_village_suki');
       expect(route.steps[2].to.address).toBe('Est 7 droite');
-      expect(route.steps[2].distance).toBe(600);
+      expect(route.steps[2].distance).toBeCloseTo(583.11, 2);
       
       // Step 4: Portal crossing nether → overworld
       expect(route.steps[3].type).toBe('portal');

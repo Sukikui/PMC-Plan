@@ -10,13 +10,15 @@ import InfoIcon from '@/components/icons/InfoIcon';
 import ItemInline from '@/components/trade/ItemInline';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
 import { useOverlayPanelAnimation } from '@/components/ui/useOverlayPanelAnimation';
+import IconActionButton from '@/components/ui/IconActionButton';
+import type { SelectDestinationHandler } from '@/lib/destination/selection';
 
 interface GlobalTradeOverlayProps {
   offers?: TradeOffer[] | null;
   onBack?: () => void;
   onClose?: () => void;
   closing?: boolean;
-  onSelectItem?: (id: string, type: 'place' | 'portal') => void;
+  onSelectItem?: SelectDestinationHandler;
 }
 
 type GlobalOffer = { offer: TradeOffer; place: { id: string; name: string; owners: string[] } };
@@ -105,22 +107,22 @@ export default function GlobalTradeOverlay({ offers = null, onBack, onClose, clo
 
           <div className="flex gap-2 flex-shrink-0">
             {onBack && (
-              <button
+              <IconActionButton
                 onClick={onBack}
-                className={`p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                className="flex-shrink-0"
                 aria-label="Retour"
               >
                 <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary} transform rotate-45`} />
-              </button>
+              </IconActionButton>
             )}
             {onClose && (
-              <button
+              <IconActionButton
                 onClick={onClose}
-                className={`p-1 ${themeColors.util.roundedFull} ${themeColors.button.secondary} border ${themeColors.border.light} ${themeColors.shadow.button} transition-all duration-200 ${themeColors.util.hoverScale} ${themeColors.util.activeScale} flex-shrink-0 ${themeColors.interactive.hoverBorder}`}
+                className="flex-shrink-0"
                 aria-label="Fermer"
               >
                 <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-              </button>
+              </IconActionButton>
             )}
           </div>
         </div>

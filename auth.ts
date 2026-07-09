@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import Discord from "next-auth/providers/discord"
 import { prisma } from "@/lib/prisma"
+import { getDiscordDisplayName, getDiscordImage } from "@/lib/discord-user"
 import type { User } from "@prisma/client"
 import type { JWT } from "next-auth/jwt"
 import type { DiscordProfile } from "@/types/discord-profile"
@@ -30,30 +31,58 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = (user as User).role
         token.id = user.id as string
       }
-      // On first sign-in, enrich the token with Discord profile info
+
       if (account?.provider === 'discord' && profile) {
         const p = profile as DiscordProfile;
+        const currentUser = user as User | undefined;
+        const discordDisplayName = getDiscordDisplayName(p);
+        const discordImage = getDiscordImage(p);
+
         if (user) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { username: p.username },
-          });
+          const updates: {
+            username?: string;
+            name?: string | null;
+            image?: string | null;
+          } = {};
+
+          if (p.username && p.username !== currentUser?.username) {
+            updates.username = p.username;
+          }
+
+          if (discordDisplayName && discordDisplayName !== currentUser?.name) {
+            updates.name = discordDisplayName;
+          }
+
+          if (discordImage !== (currentUser?.image ?? null)) {
+            updates.image = discordImage;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: updates,
+            });
+          }
         }
+
         token.username = p.username ?? token.username;
-        token.globalName = p.global_name ?? p.name ?? token.globalName;
-        // NextAuth sets token.picture from user.image; keep ours if provided
-        if (user?.image) token.picture = user.image;
+        token.globalName = discordDisplayName ?? token.globalName;
+        token.name = discordDisplayName ?? token.name;
+
+        if (discordImage) {
+          token.picture = discordImage;
+        }
       }
+
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.role = (token as JWT).role
         session.user.id = token.id as string
-        // Surface Discord fields on session
         if (token.username) session.user.username = token.username
         if (token.globalName) session.user.globalName = token.globalName
-        if (token.picture && !session.user.image) session.user.image = token.picture
+        if (typeof token.picture === "string") session.user.image = token.picture
       }
       return session
     }
