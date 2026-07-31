@@ -5,6 +5,7 @@ import FloatingStatusBubble from '@/components/ui/FloatingStatusBubble';
 import { themeColors } from '../lib/theme-colors';
 
 const HELP_MESSAGES = {
+  'Synchronisation indisponible sur Safari': 'Utilisez Chrome ou Firefox pour synchroniser votre position',
   'Vous n\'êtes pas dans un monde': 'Rejoignez le serveur pour synchroniser',
   'Timeout de connexion': 'Vérifiez votre connexion réseau',
   'Erreur inconnue': 'Veuillez contacter le support'

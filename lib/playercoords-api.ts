@@ -18,6 +18,21 @@ export interface PlayerCoordsApiOptions {
   timeout?: number;
 }
 
+const SAFARI_USER_AGENT_EXCLUSIONS = /Chrome|Chromium|CriOS|FxiOS|EdgiOS|OPiOS|Android/i;
+
+export function isSafariBrowser(
+  userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent
+): boolean {
+  return /Safari/i.test(userAgent) && !SAFARI_USER_AGENT_EXCLUSIONS.test(userAgent);
+}
+
+export function isSafariPlayerCoordsSyncBlocked(
+  userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent,
+  protocol = typeof location === 'undefined' ? '' : location.protocol
+): boolean {
+  return protocol === 'https:' && isSafariBrowser(userAgent);
+}
+
 export enum PlayerCoordsApiErrorType {
   CONNECTION_FAILED = 'CONNECTION_FAILED',
   NOT_IN_WORLD = 'NOT_IN_WORLD',
