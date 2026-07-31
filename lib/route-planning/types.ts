@@ -17,6 +17,7 @@ export interface RouteStep {
   distance?: number;
   from: RouteLocation;
   to: RouteLocation;
+  path?: RouteCoordinates[];
 }
 
 export interface RouteData {

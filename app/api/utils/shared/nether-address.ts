@@ -1,7 +1,6 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { netherAxesData } from '@/lib/nether/network-data';
 import { calculateEuclideanDistance } from './spatial';
-import type { Coordinates, NetherAddress, NetherData, NetherStop } from './types';
+import type { Coordinates, NetherAddress, NetherData, NetherStop } from '@/lib/api/types';
 
 type NearestStopCandidate = {
   axisName: string;
@@ -131,9 +130,7 @@ function determineDirection(
 }
 
 export async function loadNetherData(): Promise<NetherData> {
-  const netherPath = path.join(process.cwd(), 'public', 'data', 'nether_axes.json');
-  const content = await fs.readFile(netherPath, 'utf-8');
-  return JSON.parse(content);
+  return netherAxesData;
 }
 
 export async function calculateNetherAddress(x: number, y: number, z: number): Promise<NetherAddress> {

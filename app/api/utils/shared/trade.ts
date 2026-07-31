@@ -1,5 +1,5 @@
 import type { TradeItem as PrismaTradeItem, TradeOffer as PrismaTradeOffer } from '@prisma/client';
-import type { TradeItem, TradeOffer } from './types';
+import type { TradeItem, TradeOffer } from '@/lib/api/types';
 
 const createNegotiableTradeItem = (): TradeItem => ({
   item_id: '',
@@ -33,5 +33,6 @@ export const toTradeOffer = (offer: PrismaTradeOffer & { items: PrismaTradeItem[
     gives: toTradeItem(gives),
     wants: wants ? toTradeItem(wants) : createNegotiableTradeItem(),
     negotiable: offer.negotiable,
+    description: offer.description ?? null,
   };
 };

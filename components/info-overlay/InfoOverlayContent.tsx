@@ -3,12 +3,14 @@
 import ClearIcon from '@/components/icons/ClearIcon';
 import InfoIcon from '@/components/icons/InfoIcon';
 import ShopIcon from '@/components/icons/ShopIcon';
-import TradeOverlay from '@/components/TradeOverlay';
-import type { Place, Portal } from '@/app/api/utils/shared';
+import TradeOfferList from '@/components/trade/TradeOfferList';
+import { OverlaySlideTrack } from '@/components/ui/OverlaySlider';
+import type { Place, Portal } from '@/lib/api/types';
 import { themeColors } from '@/lib/theme-colors';
 import type React from 'react';
+import InfoImageCarousel from './InfoImageCarousel';
+import InfoOverlayBody from './InfoOverlayBody';
 import InfoOverlayDetails from './InfoOverlayDetails';
-import PlaceImageCarousel from './PlaceImageCarousel';
 
 interface InfoOverlayContentProps {
   contentRef: React.RefObject<HTMLDivElement | null>;
@@ -35,57 +37,53 @@ export default function InfoOverlayContent({
   const hasTrade = Boolean(placeItem?.trade?.length);
 
   return (
-    <div className="relative flex-1 min-h-0 rounded-b-xl overflow-hidden">
-      <div className="relative w-full h-full">
-        <div
-          className="absolute inset-0 transition-transform duration-300 ease-in-out"
-          style={{ transform: showTradeView ? 'translateX(-100%)' : 'translateX(0)' }}
-        >
-          <div
-            ref={!showTradeView ? contentRef : undefined}
-            className={`h-full overflow-y-auto px-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} ${hasTrade ? 'pt-[4.5rem] pb-12' : 'pt-9 pb-12 rounded-b-xl'}`}
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {placeItem && (
-              <PlaceImageCarousel images={placeItem.images ?? []} itemId={item.id} itemName={item.name} />
-            )}
-            <InfoOverlayDetails item={item} type={type} />
-          </div>
-        </div>
-
-        <div
-          className="absolute inset-0 transition-transform duration-300 ease-in-out"
-          style={{ transform: showTradeView ? 'translateX(0)' : 'translateX(100%)' }}
-        >
-          {placeItem?.trade && placeItem.trade.length > 0 && (
-            <div
-              ref={showTradeView ? contentRef : undefined}
-              className={`h-full overflow-y-auto px-6 pt-[4.5rem] pb-12 ${themeColors.panel.primary} ${themeColors.transition} rounded-b-xl`}
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              <TradeOverlay
-                place={placeItem}
-                contentOnly={true}
-                searchQuery={tradeSearchQuery}
-                onSearchChange={onTradeSearchQueryChange}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className={`absolute top-0 left-0 right-0 h-20 gradient-top-solid-blur z-10 pointer-events-none ${themeColors.transition}`} />
-      {hasTrade && (
+    <InfoOverlayBody
+      floatingContent={hasTrade ? (
         <TradeToggle
           searchQuery={tradeSearchQuery}
           showTradeView={showTradeView}
           onSearchQueryChange={onTradeSearchQueryChange}
           onShowTradeViewChange={onShowTradeViewChange}
         />
-      )}
-      <div className={`absolute bottom-0 left-0 right-0 h-2 ${themeColors.gradient.bottomSolid} z-10 pointer-events-none ${themeColors.transition} ${showBottomBlur ? 'opacity-100' : 'opacity-0'}`} />
-      <div className={`absolute bottom-2 left-0 right-0 h-8 ${themeColors.gradient.bottomBlur} z-10 pointer-events-none ${themeColors.transition} ${showBottomBlur ? 'opacity-100' : 'opacity-0'}`} />
-    </div>
+      ) : null}
+      showBottomBlur={showBottomBlur}
+    >
+      <div className="relative w-full h-full">
+        <OverlaySlideTrack
+          activeValue={showTradeView ? 'trade' : 'information'}
+          slides={[
+            {
+              value: 'information',
+              elementRef: !showTradeView ? contentRef : undefined,
+              className: `h-full overflow-y-auto px-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} ${hasTrade ? 'pt-[4.5rem] pb-12' : 'pt-9 pb-12 rounded-b-xl'} [&::-webkit-scrollbar]:hidden [scrollbar-width:none]`,
+              content: (
+                <>
+                  {placeItem && (
+                    <InfoImageCarousel
+                      carouselId={item.id}
+                      images={(placeItem.images ?? []).map((src, index) => ({
+                        id: `${item.id}-${index}`,
+                        src,
+                        alt: `Image ${index + 1} de ${item.name}`,
+                      }))}
+                    />
+                  )}
+                  <InfoOverlayDetails item={item} type={type} />
+                </>
+              ),
+            },
+            {
+              value: 'trade',
+              elementRef: showTradeView ? contentRef : undefined,
+              className: `h-full overflow-y-auto px-6 pt-[4.5rem] pb-12 ${themeColors.panel.primary} ${themeColors.transition} rounded-b-xl [&::-webkit-scrollbar]:hidden [scrollbar-width:none]`,
+              content: placeItem?.trade?.length
+                ? <TradeOfferList place={placeItem} searchQuery={tradeSearchQuery} />
+                : null,
+            },
+          ]}
+        />
+      </div>
+    </InfoOverlayBody>
   );
 }
 
@@ -119,7 +117,7 @@ function TradeToggle({
           }`}
         >
           <ShopIcon className="w-4 h-4" />
-          Commerce
+          Offres
         </button>
 
         <div className={`relative flex-1 ml-2 transition-all duration-300 ease-in-out ${showTradeView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>

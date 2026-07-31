@@ -1,54 +1,125 @@
 'use client';
 
 import React, { useState } from 'react';
+import ContentOverlayFrame from '@/components/overlay/ContentOverlayFrame';
+import OverlayHeader from '@/components/ui/OverlayHeader';
+import OverlaySlider from '@/components/ui/OverlaySlider';
+import { canManageContent } from '@/lib/content-permissions';
 import { themeColors } from '@/lib/theme-colors';
-import { useOverlayPanelAnimation } from '@/components/ui/useOverlayPanelAnimation';
-import IconActionButton from '@/components/ui/IconActionButton';
-import CrossIcon from '@/components/icons/CrossIcon';
 import PlaceForm from './place/PlaceForm';
 import PortalForm from './portal/PortalForm';
+import ServiceForm, {
+  type InitialServiceData,
+} from './service/ServiceForm';
 import { invalidateMainScreenDataCaches } from '@/lib/preload/main-screen';
+import SpaceForm from '@/components/spaces/SpaceForm';
+import { useSession } from 'next-auth/react';
+import { useAdminMode } from '@/components/admin/AdminModeProvider';
+import { requestJson } from '@/lib/api-client';
+import {
+  createSpaceRequest,
+  deleteSpaceRequest,
+  invalidateSpacesCache,
+  transferSpaceRequest,
+  updateSpaceRequest,
+} from '@/lib/spaces/client';
 
 import type { InitialPlaceData, PlaceFormPayload } from './place/PlaceForm';
 import type { InitialPortalData, PortalFormPayload } from './portal/PortalForm';
+import type { Space, SpaceInput } from '@/lib/spaces/types';
+import {
+  createServiceRequest,
+  deleteServiceRequest,
+  updateServiceRequest,
+} from '@/lib/services/client';
+import type { ServiceInput } from '@/lib/services/types';
+import {
+  getMapEntryDeleteEndpoint,
+  getMapEntrySaveEndpoint,
+} from './form-endpoints';
 
-interface FormOverlayProps {
-  initialData?: (InitialPlaceData & { type: 'place' }) | (InitialPortalData & { type: 'portal' });
-  mode?: 'add' | 'edit';
-  onClose: () => void;
-  onSaved?: (entityType: 'place' | 'portal', payload: PlaceFormPayload | PortalFormPayload) => void;
-  closing: boolean;
+type FormInitialData = (
+  (InitialPlaceData & { type: 'place' })
+  | (InitialPortalData & { type: 'portal' })
+  | InitialServiceData
+  | (Space & { type: 'space' })
+);
+
+export type FormCategory = 'portal' | 'place' | 'service' | 'space';
+
+export interface OpenFormOverlayOptions {
+  initialCategory?: FormCategory;
+  initialData?: FormInitialData;
+  mode: 'add' | 'edit';
+  onSpaceSaved?: (space: Space) => void;
 }
 
-export default function FormOverlay({ initialData, mode = 'add', onClose, onSaved, closing }: FormOverlayProps) {
-  const [activeCategory, setActiveCategory] = useState(initialData?.type || 'portal');
-  const animIn = useOverlayPanelAnimation(!closing, { closing });
+interface FormOverlayProps extends OpenFormOverlayOptions {
+  onClose: () => void;
+  onSaved?: (
+    entityType: 'place' | 'portal',
+    payload: PlaceFormPayload | PortalFormPayload,
+  ) => void | Promise<void>;
+  onSpaceDeleted?: (space: Space) => void;
+}
+
+const categoryTabs = [
+  { value: 'place', label: 'Lieu' },
+  { value: 'portal', label: 'Portail' },
+  { value: 'space', label: 'Espace' },
+  { value: 'service', label: 'Service' },
+] as const;
+
+export default function FormOverlay({
+  initialCategory,
+  initialData,
+  mode,
+  onClose,
+  onSaved,
+  onSpaceDeleted,
+  onSpaceSaved,
+}: FormOverlayProps) {
+  const { data: session } = useSession();
+  const { effectiveRole } = useAdminMode();
+  const [activeCategory, setActiveCategory] = useState<FormCategory>(
+    initialData?.type ?? initialCategory ?? 'place',
+  );
 
   const title = mode === 'add'
-    ? 'Ajouter un lieu ou un portail'
-    : activeCategory === 'place'
-      ? 'Modifier le lieu'
-      : 'Modifier le portail';
+    ? 'Ajouter du contenu'
+    : {
+        place: 'Modifier le lieu',
+        portal: 'Modifier le portail',
+        service: 'Modifier le service',
+        space: 'Modifier l’espace',
+      }[activeCategory];
+  const editor = mode === 'edit' ? initialData?.lastEditor : undefined;
+  const showLastEditor = Boolean(
+    editor
+    && initialData
+    && canManageContent(effectiveRole, session?.user?.id, initialData),
+  );
 
   const handleSubmit = async (entityType: 'place' | 'portal', payload: PlaceFormPayload | PortalFormPayload) => {
-    const url = mode === 'add' ? `/api/${entityType}s` : `/api/${entityType}s/${initialData!.id}`;
+    const mapEntryData = initialData?.type === 'place'
+      || initialData?.type === 'portal'
+      ? initialData
+      : undefined;
+    const url = getMapEntrySaveEndpoint(entityType, mode, mapEntryData);
     const method = mode === 'add' ? 'POST' : 'PUT';
+    const entityLabel = entityType === 'place' ? 'lieu' : 'portail';
 
-    const response = await fetch(url, {
+    await requestJson(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
-    });
+    }, `Impossible de ${mode === 'add' ? 'créer' : 'modifier'} le ${entityLabel}.`);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Impossible de ${mode === 'add' ? 'créer' : 'modifier'} le ${entityType}.`);
-    }
-
+    invalidateSpacesCache();
     invalidateMainScreenDataCaches();
-    onSaved?.(entityType, payload);
+    await onSaved?.(entityType, payload);
     onClose();
   };
 
@@ -60,92 +131,173 @@ export default function FormOverlay({ initialData, mode = 'add', onClose, onSave
     await handleSubmit('portal', payload);
   };
 
+  const handleDelete = async () => {
+    if (
+      !initialData
+      || initialData.type === 'service'
+      || initialData.type === 'space'
+    ) {
+      throw new Error('Contenu à supprimer introuvable.');
+    }
+    const entityLabel = initialData.type === 'place' ? 'lieu' : 'portail';
+    await requestJson(getMapEntryDeleteEndpoint(initialData), {
+      method: 'DELETE',
+    }, `Impossible de supprimer le ${entityLabel}.`);
+    invalidateSpacesCache();
+    invalidateMainScreenDataCaches();
+    onClose();
+  };
+
+  const handleSpaceSubmit = async (input: SpaceInput) => {
+    const saved = mode === 'edit' && initialData?.type === 'space'
+      ? await updateSpaceRequest(initialData.slug, input)
+      : await createSpaceRequest(input);
+    onSpaceSaved?.(saved);
+    onClose();
+  };
+
+  const handleSpaceDelete = async () => {
+    if (initialData?.type !== 'space') {
+      throw new Error('Espace à supprimer introuvable.');
+    }
+    await deleteSpaceRequest(initialData.slug);
+    onSpaceDeleted?.(initialData);
+    onClose();
+  };
+
+  const handleServiceSubmit = async (input: ServiceInput) => {
+    if (mode === 'edit' && initialData?.type === 'service') {
+      await updateServiceRequest(initialData.slug, input);
+    } else {
+      await createServiceRequest(input);
+    }
+    onClose();
+  };
+
+  const handleServiceDelete = async () => {
+    if (initialData?.type !== 'service') {
+      throw new Error('Service à supprimer introuvable.');
+    }
+    await deleteServiceRequest(initialData.slug);
+    onClose();
+  };
+
+  const handleSpaceTransfer = async (
+    userId: string,
+    confirmation: string,
+  ) => {
+    if (initialData?.type !== 'space') {
+      throw new Error('Espace à transférer introuvable.');
+    }
+    const saved = await transferSpaceRequest(
+      initialData.slug,
+      userId,
+      confirmation,
+    );
+    onSpaceSaved?.(saved);
+    onClose();
+  };
+
+  const slides = [
+    {
+      value: 'place' as const,
+      className: 'pt-16',
+      content: (
+        <PlaceForm
+          mode={mode}
+          initialData={initialData?.type === 'place' ? initialData : undefined}
+          onSubmit={handlePlaceSubmit}
+          onCancel={onClose}
+          onDelete={initialData?.type === 'place' && initialData.canDelete
+            ? handleDelete
+            : undefined}
+        />
+      ),
+    },
+    {
+      value: 'portal' as const,
+      className: 'pt-16',
+      content: (
+        <PortalForm
+          mode={mode}
+          initialData={initialData?.type === 'portal' ? initialData : undefined}
+          onSubmit={handlePortalSubmit}
+          onCancel={onClose}
+          onDelete={initialData?.type === 'portal' && initialData.canDelete
+            ? handleDelete
+            : undefined}
+        />
+      ),
+    },
+    ...(mode === 'add' || initialData?.type === 'space' ? [{
+      value: 'space' as const,
+      className: 'pt-16',
+      content: session?.user ? (
+        <SpaceForm
+          effectiveRole={effectiveRole}
+          mode={mode}
+          onCancel={onClose}
+          onDelete={initialData?.type === 'space'
+            ? handleSpaceDelete
+            : undefined}
+          onSubmit={handleSpaceSubmit}
+          onTransfer={initialData?.type === 'space'
+            ? handleSpaceTransfer
+            : undefined}
+          space={initialData?.type === 'space'
+            ? initialData
+            : undefined}
+          user={session.user}
+        />
+      ) : (
+        <p className={`text-sm ${themeColors.text.tertiary}`}>
+          Chargement du compte...
+        </p>
+      ),
+    }] : []),
+    ...(mode === 'add' || initialData?.type === 'service' ? [{
+      value: 'service' as const,
+      className: 'pt-16',
+      content: (
+        <ServiceForm
+          initialData={initialData?.type === 'service'
+            ? initialData
+            : undefined}
+          mode={mode}
+          onCancel={onClose}
+          onDelete={initialData?.type === 'service' && initialData.canDelete
+            ? handleServiceDelete
+            : undefined}
+          onSubmit={handleServiceSubmit}
+        />
+      ),
+    }] : []),
+  ];
+
   return (
-    <div className="flex w-full justify-center items-center h-full">
-      <div
-        className={`relative ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${themeColors.shadow.overlay.place} w-full max-w-3xl min-w-0 h-[min(90vh,calc(100vh-4rem))] border ${themeColors.border.primary} flex flex-col transition-all duration-300 ease-out`}
-        style={{
-          width: 'min(48rem, calc(100vw - 2rem))',
-          transform: animIn ? 'translateY(0)' : 'translateY(100%)',
-          opacity: animIn ? 1 : 0,
-        }}
-      >
-        <div className={`flex-shrink-0 p-6 border-b ${themeColors.border.primary} ${themeColors.panel.primary} ${themeColors.transition} rounded-t-xl flex items-start justify-between`}>
-          <div>
-            <h2 className={`text-2xl font-bold ${themeColors.text.primary} ${themeColors.transition}`}>{title}</h2>
-            {mode === 'add' && (
-              <p className={`text-sm ${themeColors.text.tertiary}`}>Sélectionnez la catégorie puis complétez le formulaire correspondant.</p>
-            )}
-          </div>
-          <IconActionButton
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-          >
-            <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-          </IconActionButton>
-        </div>
-
-        <div className="relative flex-1 min-h-0 overflow-hidden rounded-b-xl">
-          <div className={`absolute top-0 left-0 right-0 h-20 gradient-top-solid-blur z-10 pointer-events-none ${themeColors.transition}`} />
-          <div className={`absolute bottom-0 left-0 right-0 h-2 ${themeColors.gradient.bottomSolid} z-10 pointer-events-none ${themeColors.transition}`} />
-          <div className={`absolute bottom-2 left-0 right-0 h-8 ${themeColors.gradient.bottomBlur} z-10 pointer-events-none ${themeColors.transition}`} />
-
-          {mode === 'add' && (
-            <div className="absolute top-0 left-0 right-0 px-6 pt-4 pb-2 z-20 flex gap-2 items-center">
-              <button
-                type="button"
-                aria-pressed={activeCategory === 'portal'}
-                onClick={() => setActiveCategory('portal')}
-                className={`${themeColors.toggle.base} ${
-                  activeCategory === 'portal'
-                    ? themeColors.toggle.activeBlue
-                    : themeColors.toggle.inactive
-                }`}
-              >
-                Portail
-              </button>
-              <button
-                type="button"
-                aria-pressed={activeCategory === 'place'}
-                onClick={() => setActiveCategory('place')}
-                className={`${themeColors.toggle.base} ${
-                  activeCategory === 'place'
-                    ? themeColors.toggle.activeBlue
-                    : themeColors.toggle.inactive
-                }`}
-              >
-                Lieu
-              </button>
-            </div>
-          )}
-
-          <div className="relative h-full">
-            <div
-              className="flex h-full transition-transform duration-300 ease-in-out"
-              style={{
-                width: '200%',
-                transform: activeCategory === 'portal' ? 'translateX(0%)' : 'translateX(-50%)',
-              }}
-            >
-              <div
-                className={`w-1/2 min-w-0 flex-shrink-0 h-full overflow-y-auto px-6 pt-16 pb-14 ${themeColors.panel.primary} ${themeColors.transition}`}
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                aria-hidden={activeCategory !== 'portal'}
-              >
-                <PortalForm mode={mode} initialData={initialData?.type === 'portal' ? initialData : undefined} onSubmit={handlePortalSubmit} onCancel={onClose} />
-              </div>
-              <div
-                className={`w-1/2 min-w-0 flex-shrink-0 h-full overflow-y-auto px-6 pt-16 pb-14 ${themeColors.panel.primary} ${themeColors.transition}`}
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                aria-hidden={activeCategory !== 'place'}
-              >
-                <PlaceForm mode={mode} initialData={initialData?.type === 'place' ? initialData : undefined} onSubmit={handlePlaceSubmit} onCancel={onClose} />
-              </div>
-            </div>
-          </div>
-        </div>
+    <ContentOverlayFrame
+      ariaLabel={title}
+      editor={editor}
+      header={(
+        <OverlayHeader
+          title={title}
+          subtitle={mode === 'add'
+            ? 'Sélectionnez la catégorie puis complétez le formulaire correspondant.'
+            : undefined}
+          onClose={onClose}
+        />
+      )}
+      shadowClass={themeColors.shadow.overlay.place}
+      showLastEditor={showLastEditor}
+    >
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-xl">
+        <OverlaySlider
+          activeValue={activeCategory}
+          onChange={setActiveCategory}
+          tabs={mode === 'add' ? categoryTabs : []}
+          slides={slides}
+        />
       </div>
-    </div>
+    </ContentOverlayFrame>
   );
 }

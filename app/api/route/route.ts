@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     const finalFromWorld = fromPoint.world;
     const finalToWorld = toPoint.world;
 
-    const routeService = new RouteService(places, portals);
+    const routeService = new RouteService(portals);
 
     if (finalFromWorld === 'overworld' && finalToWorld === 'overworld') {
       return await routeService.handleOverworldToOverworld(fromPoint, toPoint);

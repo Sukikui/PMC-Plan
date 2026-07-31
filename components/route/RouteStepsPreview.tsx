@@ -79,7 +79,7 @@ function NetherAddressBadge({ address, className = '' }: { address: string; clas
 
 function StatusCard({ title, description, tone = 'default' }: { title: string; description: string; tone?: 'default' | 'error' }) {
   return (
-    <div className={`${themeColors.panel.secondary} border ${tone === 'error' ? themeColors.syncNotification.errorBorder : themeColors.border.secondary} ${themeColors.util.roundedLg} p-4 ${themeColors.transition}`}>
+    <div className={`${themeColors.panel.inset} border ${tone === 'error' ? themeColors.syncNotification.errorBorder : themeColors.border.secondary} ${themeColors.util.roundedLg} p-4 ${themeColors.transition}`}>
       <div className={`text-sm font-semibold ${tone === 'error' ? themeColors.feedback.errorText : themeColors.text.primary}`}>
         {title}
       </div>

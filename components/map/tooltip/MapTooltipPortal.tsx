@@ -2,6 +2,8 @@
 
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import SpaceLogo from '@/components/spaces/SpaceLogo';
+import { getSpaceColorWithAlpha, getSpaceForeground } from '@/lib/spaces/colors';
 import { themeColors } from '@/lib/theme-colors';
 import { PLACE_PREVIEW_ANIMATION_DURATION_MS } from '../core/map-constants';
 import {
@@ -65,8 +67,12 @@ function MapTooltipItem({
     return {
       maxWidth: `${MAP_TOOLTIP_LABEL_MAX_WIDTH_REM}rem`,
       ...(measuredWidth ? { width: `${measuredWidth}px` } : {}),
+      ...(tooltip.markerColor ? {
+        backgroundColor: getSpaceColorWithAlpha(tooltip.markerColor, 0.75),
+        color: getSpaceForeground(tooltip.markerColor),
+      } : {}),
     };
-  }, [tooltipLabel]);
+  }, [tooltip.markerColor, tooltipLabel]);
 
   useLayoutEffect(() => {
     const tooltipNode = tooltipRef.current;
@@ -152,11 +158,23 @@ function MapTooltipItem({
         data-map-tooltip-point-id={tooltip.pointId}
         style={tooltipFixedStyle ?? { left: 0, top: 0, transform: 'translate3d(-50%, -100%, 0)', visibility: 'hidden' }}
       >
-        <div
-          className={`px-2.5 py-1 text-center text-xs font-medium leading-snug ${themeColors.util.roundedXl} ${themeColors.map.tooltip} break-words`}
-          style={tooltipLabelStyle}
-        >
-          {tooltip.label}
+        <div className="flex items-center gap-1.5">
+          {tooltip.spaceLogo && (
+            <SpaceLogo
+              color={tooltip.spaceLogo.color}
+              logoBackground={tooltip.spaceLogo.logoBackground}
+              logoUrl={tooltip.spaceLogo.logoSrc}
+              logoZoom={tooltip.spaceLogo.logoZoom}
+              name={tooltip.spaceLogo.name}
+              size="tooltip"
+            />
+          )}
+          <div
+            className={`break-words px-2.5 py-1 text-center text-xs font-medium leading-snug ${themeColors.util.roundedXl} ${themeColors.map.tooltip}`}
+            style={tooltipLabelStyle}
+          >
+            {tooltip.label}
+          </div>
         </div>
       </div>
     </>

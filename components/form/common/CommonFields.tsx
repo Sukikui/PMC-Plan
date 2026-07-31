@@ -1,61 +1,89 @@
-import React from 'react';
-import { themeColors } from '@/lib/theme-colors';
-import { renderOwnersInput, slugify } from './form-utils';
-
-const inputClass = `${themeColors.input.search} border ${themeColors.util.roundedLg} px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`;
+import type { ReactNode } from 'react';
+import { CONTENT_FIELD_LIMITS } from '@/lib/content/constraints';
+import FormField from './FormField';
+import { formInputClassName, formTextareaClassName } from './form-styles';
+import type { EntityFormController } from './useEntityForm';
 
 interface CommonFieldsProps {
-  name: string;
-  setName: (name: string) => void;
-  slug: string;
-  setSlug: (slug: string) => void;
-  slugManuallyEdited: boolean;
-  setSlugManuallyEdited: (edited: boolean) => void;
-  ownersInput: string;
-  setOwnersInput: (owners: string) => void;
-  description: string;
-  setDescription: (description: string) => void;
+  afterName?: ReactNode;
+  afterSlug?: ReactNode;
+  descriptionOptional?: boolean;
+  descriptionPlaceholder: string;
+  disabled?: boolean;
+  form: EntityFormController;
+  nameLabel?: string;
   namePlaceholder: string;
   slugPlaceholder: string;
 }
 
-export default function CommonFields({ name, setName, slug, setSlug, slugManuallyEdited, setSlugManuallyEdited, ownersInput, setOwnersInput, description, setDescription, namePlaceholder, slugPlaceholder }: CommonFieldsProps) {
+export default function CommonFields({
+  afterName,
+  afterSlug,
+  descriptionOptional = true,
+  descriptionPlaceholder,
+  disabled = false,
+  form,
+  nameLabel = 'Nom',
+  namePlaceholder,
+  slugPlaceholder,
+}: CommonFieldsProps) {
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Nom</label>
+      <FormField
+        counter={{ current: form.name.length, max: CONTENT_FIELD_LIMITS.name }}
+        label={nameLabel}
+      >
         <input
-          className={inputClass}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          className={formInputClassName}
+          disabled={disabled}
+          maxLength={CONTENT_FIELD_LIMITS.name}
+          value={form.name}
+          onChange={(event) => form.setName(event.target.value)}
           placeholder={namePlaceholder}
         />
-      </div>
+      </FormField>
 
-      <div className="space-y-1">
-        <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Identifiant (slug)</label>
+      {afterName}
+
+      <FormField
+        counter={{
+          current: (form.slugManuallyEdited ? form.slug : form.input.slug).length,
+          max: CONTENT_FIELD_LIMITS.slug,
+        }}
+        label="Identifiant (slug)"
+      >
         <input
-          className={inputClass}
-          value={slugManuallyEdited ? slug : slugify(name)}
+          className={formInputClassName}
+          disabled={disabled}
+          maxLength={CONTENT_FIELD_LIMITS.slug}
+          value={form.slugManuallyEdited ? form.slug : form.input.slug}
           onChange={(event) => {
-            setSlug(event.target.value);
-            setSlugManuallyEdited(true);
+            form.setSlug(event.target.value);
+            form.setSlugManuallyEdited(true);
           }}
           placeholder={slugPlaceholder}
         />
-      </div>
+      </FormField>
 
-      {renderOwnersInput(ownersInput, setOwnersInput)}
+      {afterSlug}
 
-      <div className="space-y-1">
-        <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Description (optionnel)</label>
+      <FormField
+        counter={{
+          current: form.description.length,
+          max: CONTENT_FIELD_LIMITS.description,
+        }}
+        label={`Description${descriptionOptional ? ' (optionnel)' : ''}`}
+      >
         <textarea
-          className={`${inputClass} min-h-[80px] resize-y`}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          placeholder="Présentez rapidement votre lieu, ses services et comment y accéder."
+          className={`${formTextareaClassName} min-h-[80px] resize-y`}
+          disabled={disabled}
+          maxLength={CONTENT_FIELD_LIMITS.description}
+          value={form.description}
+          onChange={(event) => form.setDescription(event.target.value)}
+          placeholder={descriptionPlaceholder}
         />
-      </div>
+      </FormField>
+
     </div>
   );
 }

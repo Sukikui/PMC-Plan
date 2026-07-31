@@ -4,17 +4,17 @@ import { useState } from 'react';
 import type React from 'react';
 import { themeColors } from '@/lib/theme-colors';
 import {
+  MAP_ICON_BASE_SIZE_PX,
+  MAP_ICON_HITBOX_BASE_SIZE_PX,
   MAP_ICON_REVEAL_DURATION_MS,
   MAP_ICON_TO_POINT_DURATION_MS,
   MAP_POINT_BASE_Z_INDEX,
   MAP_POINT_HOVER_Z_INDEX,
+  getScaledMapIconSizePx,
   getStableRevealDelay,
 } from '../core/map-constants';
 import { isMapTooltipPreviewElement } from '../tooltip/map-tooltip';
 import type { InteractiveMapPoint, PointRenderMode, ScreenMapPoint } from '../core/map-types';
-
-const ICON_BASE_SIZE_REM = 2.33;
-const ICON_HITBOX_BASE_SIZE_REM = 2.67;
 
 interface MapPointsLayerProps {
   points: ScreenMapPoint[];
@@ -22,6 +22,7 @@ interface MapPointsLayerProps {
   iconScale: number;
   animatePointTransitions: boolean;
   focusedPointId?: string;
+  routePointIds?: ReadonlySet<string>;
   raisedPointId: string | null;
   setRaisedPointId: (pointId: string | null) => void;
   hoveredPointRef: React.MutableRefObject<{ id: string; startedAt: number } | null>;
@@ -39,6 +40,7 @@ export default function MapPointsLayer({
   iconScale,
   animatePointTransitions,
   focusedPointId,
+  routePointIds,
   raisedPointId,
   setRaisedPointId,
   hoveredPointRef,
@@ -52,38 +54,43 @@ export default function MapPointsLayer({
   return (
     <>
       {points.map((point) => {
-        const pointClass = point.kind === 'place'
-          ? themeColors.map.pointPlace
-          : themeColors.map.pointNether;
+        const pointShape = isPortalPoint(point) ? 'diamond' : 'circle';
         const isSelectedPoint = focusedPointId === point.id;
-        const iconSrc = point.iconSrc && (isSelectedPoint || pointRenderMode !== 'points')
+        const isRoutePoint = routePointIds?.has(point.id) ?? false;
+        const iconSrc = point.iconSrc && (isSelectedPoint || isRoutePoint || pointRenderMode !== 'points')
           ? point.iconSrc
           : undefined;
-        const isIconReveal = (isSelectedPoint || pointRenderMode === 'icons') && !!iconSrc;
-        const isIconExit = !isSelectedPoint && pointRenderMode === 'icons-to-points' && !!iconSrc;
+        const isIconReveal = (isSelectedPoint || isRoutePoint || pointRenderMode === 'icons') && !!iconSrc;
+        const isIconExit = !isSelectedPoint && !isRoutePoint &&
+          pointRenderMode === 'icons-to-points' && !!iconSrc;
         const isPointRaised = raisedPointId === point.id || isSelectedPoint;
+        const isDimmedRouteIcon = pointRenderMode === 'icons' &&
+          !!routePointIds &&
+          !routePointIds.has(point.id);
         const revealDelay = getStableRevealDelay(point.id);
         const pointZIndex = isPointRaised
           ? MAP_POINT_HOVER_Z_INDEX
           : MAP_POINT_BASE_Z_INDEX + Math.round(point.screen.top);
 
         return (
-          <div
+          <button
             key={point.id}
-            className={`group absolute flex cursor-pointer items-center justify-center outline-none ${iconSrc ? '' : 'h-3 w-3'}`}
+            type="button"
+            className={`group absolute flex cursor-pointer items-center justify-center border-0 bg-transparent p-0 outline-none transition-opacity duration-300 ${iconSrc ? '' : 'h-3 w-3'} ${isDimmedRouteIcon ? 'opacity-40 hover:opacity-60 focus-visible:opacity-60' : 'opacity-100'}`}
             style={{
               left: `${point.screen.left}px`,
               top: `${point.screen.top}px`,
-              ...(iconSrc ? getIconBoxStyle(ICON_HITBOX_BASE_SIZE_REM, iconScale) : {}),
+              ...(iconSrc ? getIconBoxStyle(MAP_ICON_HITBOX_BASE_SIZE_PX, iconScale) : {}),
               zIndex: pointZIndex,
               transform: 'translate3d(-50%, -50%, 0)',
               willChange: 'left, top',
             }}
             aria-label={point.label}
             aria-current={isSelectedPoint ? 'location' : undefined}
-            role="button"
-            tabIndex={0}
             data-map-point-id={point.id}
+            onClick={(event) => {
+              if (event.detail === 0) onPointSelect?.(point);
+            }}
             onMouseEnter={() => {
               setRaisedPointId(point.id);
               if (point.label) {
@@ -112,12 +119,6 @@ export default function MapPointsLayer({
             onBlur={() => {
               hidePointTooltip();
             }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onPointSelect?.(point);
-              }
-            }}
           >
             {isIconReveal ? (
               <IconPoint
@@ -132,17 +133,19 @@ export default function MapPointsLayer({
               <IconToPoint
                 iconSrc={iconSrc}
                 iconScale={iconScale}
-                pointClass={pointClass}
+                markerColor={point.markerColor}
+                pointShape={pointShape}
                 revealDelay={revealDelay}
                 animateExit={animatePointTransitions}
               />
             ) : (
               <DotPoint
-                pointClass={pointClass}
+                markerColor={point.markerColor}
+                pointShape={pointShape}
                 isRaised={isPointRaised}
               />
             )}
-          </div>
+          </button>
         );
       })}
     </>
@@ -171,7 +174,7 @@ function IconPoint({
       aria-hidden="true"
       className={`${shouldAnimate ? 'map-icon-reveal' : ''} block`}
       style={{
-        ...getIconBoxStyle(ICON_BASE_SIZE_REM, iconScale),
+        ...getIconBoxStyle(MAP_ICON_BASE_SIZE_PX, iconScale),
         '--map-reveal-delay': `${revealDelay}ms`,
         '--map-icon-reveal-duration': `${MAP_ICON_REVEAL_DURATION_MS}ms`,
       } as React.CSSProperties}
@@ -187,13 +190,15 @@ function IconPoint({
 function IconToPoint({
   iconSrc,
   iconScale,
-  pointClass,
+  markerColor,
+  pointShape,
   revealDelay,
   animateExit,
 }: {
   iconSrc: string;
   iconScale: number;
-  pointClass: string;
+  markerColor?: string;
+  pointShape: MapPointShape;
   revealDelay: number;
   animateExit: boolean;
 }) {
@@ -204,12 +209,12 @@ function IconToPoint({
       aria-hidden="true"
       className="relative block"
       style={{
-        ...getIconBoxStyle(ICON_BASE_SIZE_REM, iconScale),
+        ...getIconBoxStyle(MAP_ICON_BASE_SIZE_PX, iconScale),
         '--map-reveal-delay': `${revealDelay}ms`,
         '--map-icon-to-point-duration': `${MAP_ICON_TO_POINT_DURATION_MS}ms`,
       } as React.CSSProperties}
     >
-      <span className={`absolute left-1/2 top-1/2 block h-2 w-2 -translate-x-1/2 -translate-y-1/2 border border-white ${pointClass} ${themeColors.util.roundedFull}`} />
+      <PointMarker color={markerColor} shape={pointShape} />
       <span
         className={`${shouldAnimate ? 'map-icon-to-point' : 'opacity-0'} absolute inset-0 block bg-contain bg-center bg-no-repeat`}
         style={{ backgroundImage: `url(${iconSrc})` }}
@@ -218,21 +223,53 @@ function IconToPoint({
   );
 }
 
-const getIconBoxStyle = (baseSizeRem: number, iconScale: number) => {
-  const sizePx = Math.round(baseSizeRem * 16 * iconScale);
+const getIconBoxStyle = (baseSizePx: number, iconScale: number) => {
+  const sizePx = getScaledMapIconSizePx(baseSizePx, iconScale);
   return { width: `${sizePx}px`, height: `${sizePx}px` };
 };
 
 function DotPoint({
-  pointClass,
+  markerColor,
+  pointShape,
   isRaised,
 }: {
-  pointClass: string;
+  markerColor?: string;
+  pointShape: MapPointShape;
   isRaised: boolean;
 }) {
   return (
     <span className="relative block h-4 w-4">
-      <span className={`absolute left-1/2 top-1/2 block h-2 w-2 -translate-x-1/2 -translate-y-1/2 border border-white ${pointClass} ${themeColors.util.roundedFull} transition-transform duration-150 ease-out ${isRaised ? 'scale-150' : 'group-hover:scale-150 group-focus-visible:scale-150'}`} />
+      <PointMarker color={markerColor} shape={pointShape} isRaised={isRaised} />
     </span>
   );
 }
+
+type MapPointShape = 'circle' | 'diamond';
+
+function PointMarker({
+  color,
+  shape,
+  isRaised,
+}: {
+  color?: string;
+  shape: MapPointShape;
+  isRaised?: boolean;
+}) {
+  const shapeClass = shape === 'diamond' ? 'rotate-45 rounded-[1px]' : themeColors.util.roundedFull;
+  const raisedClass = isRaised === undefined
+    ? ''
+    : isRaised
+      ? 'scale-150'
+      : 'group-hover:scale-150 group-focus-visible:scale-150';
+
+  return (
+    <span
+      className={`absolute left-1/2 top-1/2 block h-2 w-2 -translate-x-1/2 -translate-y-1/2 border ${themeColors.map.pointBorder} ${themeColors.map.point} ${shapeClass} transition-transform duration-150 ease-out ${raisedClass}`}
+      style={color ? { backgroundColor: color } : undefined}
+    />
+  );
+}
+
+const isPortalPoint = (point: InteractiveMapPoint) => (
+  point.kind === 'portal-overworld' || point.kind === 'portal-nether'
+);

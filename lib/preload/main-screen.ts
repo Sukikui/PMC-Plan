@@ -1,27 +1,10 @@
-import type { Place, Portal } from '@/app/api/utils/shared';
+import type { Place, Portal } from '@/lib/api/types';
+import { createCachedList } from '@/lib/client/cached-list';
+import type { MapEntryManagement } from '@/lib/map-entry/types';
 import { mapMetadataByWorld } from '@/lib/map/metadata';
 
-interface MainScreenDataCache<T> {
-  data: T | null;
-  promise: Promise<T> | null;
-}
-
-const placesCache: MainScreenDataCache<Place[]> = {
-  data: null,
-  promise: null,
-};
-
-const portalsCache: MainScreenDataCache<Portal[]> = {
-  data: null,
-  promise: null,
-};
-
-const mergedPortalsCache: MainScreenDataCache<Portal[]> = {
-  data: null,
-  promise: null,
-};
-
 const MAIN_SCREEN_DATA_INVALIDATED_EVENT = 'pmc:main-screen-data-invalidated';
+const MAP_ENTRY_MANAGEMENT_UPDATED_EVENT = 'pmc:map-entry-management-updated';
 
 let overworldMapImageLoaded = false;
 let overworldMapImagePromise: Promise<void> | null = null;
@@ -36,41 +19,26 @@ const fetchJson = async <T>(url: string, errorMessage: string): Promise<T> => {
   return response.json();
 };
 
-const loadCached = <T>(
-  cache: MainScreenDataCache<T>,
-  loader: () => Promise<T>
-): Promise<T> => {
-  if (cache.data) {
-    return Promise.resolve(cache.data);
-  }
+const places = createCachedList<Place>({
+  eventName: MAIN_SCREEN_DATA_INVALIDATED_EVENT,
+  load: () => fetchJson('/api/places', 'Impossible de charger les lieux.'),
+});
+const portals = createCachedList<Portal>({
+  eventName: MAIN_SCREEN_DATA_INVALIDATED_EVENT,
+  load: () => fetchJson('/api/portals', 'Impossible de charger les portails.'),
+});
+const mergedPortals = createCachedList<Portal>({
+  eventName: MAIN_SCREEN_DATA_INVALIDATED_EVENT,
+  load: () => fetchJson(
+    '/api/portals?merge-nether-portals=true',
+    'Impossible de charger les portails.',
+  ),
+});
 
-  if (!cache.promise) {
-    cache.promise = loader()
-      .then((data) => {
-        cache.data = data;
-        return data;
-      })
-      .catch((error) => {
-        cache.promise = null;
-        throw error;
-      });
-  }
-
-  return cache.promise;
-};
-
-export const loadPlacesData = () =>
-  loadCached(placesCache, () =>
-    fetchJson<Place[]>('/api/places', 'Impossible de charger les lieux.')
-  );
+export const loadPlacesData = places.fetchAll;
 
 export const loadPortalsData = ({ mergeNetherPortals = false } = {}) => {
-  const cache = mergeNetherPortals ? mergedPortalsCache : portalsCache;
-  const url = mergeNetherPortals ? '/api/portals?merge-nether-portals=true' : '/api/portals';
-
-  return loadCached(cache, () =>
-    fetchJson<Portal[]>(url, 'Impossible de charger les portails.')
-  );
+  return (mergeNetherPortals ? mergedPortals : portals).fetchAll();
 };
 
 export const preloadOverworldMapImage = () => {
@@ -93,7 +61,7 @@ export const preloadOverworldMapImage = () => {
         overworldMapImagePromise = null;
         reject(new Error('Impossible de charger l’image de la carte.'));
       };
-      image.src = mapMetadataByWorld.overworld.image;
+      image.src = mapMetadataByWorld.overworld.overview.image;
     });
   }
 
@@ -110,25 +78,61 @@ export const preloadMainScreenResources = async () => {
 };
 
 export const invalidateMainScreenDataCaches = () => {
-  placesCache.data = null;
-  placesCache.promise = null;
-  portalsCache.data = null;
-  portalsCache.promise = null;
-  mergedPortalsCache.data = null;
-  mergedPortalsCache.promise = null;
+  places.invalidate({ notify: false });
+  portals.invalidate({ notify: false });
+  mergedPortals.invalidate({ notify: false });
+  places.notify();
+};
+
+export const applyMapEntryManagementUpdate = (
+  management: MapEntryManagement,
+) => {
+  places.update((records) => patchMapEntryRecords(records, management));
+  portals.update((records) => patchMapEntryRecords(records, management));
+  mergedPortals.update((records) => patchMapEntryRecords(records, management));
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event(MAIN_SCREEN_DATA_INVALIDATED_EVENT));
+    window.dispatchEvent(new CustomEvent(
+      MAP_ENTRY_MANAGEMENT_UPDATED_EVENT,
+      { detail: management },
+    ));
   }
+};
+
+export const subscribeToMapEntryManagementUpdates = (
+  listener: (management: MapEntryManagement) => void,
+) => {
+  if (typeof window === 'undefined') return () => {};
+
+  const handleUpdate = (event: Event) => {
+    listener((event as CustomEvent<MapEntryManagement>).detail);
+  };
+  window.addEventListener(MAP_ENTRY_MANAGEMENT_UPDATED_EVENT, handleUpdate);
+  return () => {
+    window.removeEventListener(MAP_ENTRY_MANAGEMENT_UPDATED_EVENT, handleUpdate);
+  };
 };
 
 export const subscribeToMainScreenDataInvalidation = (listener: () => void) => {
-  if (typeof window === 'undefined') {
-    return () => {};
-  }
-
-  window.addEventListener(MAIN_SCREEN_DATA_INVALIDATED_EVENT, listener);
-  return () => {
-    window.removeEventListener(MAIN_SCREEN_DATA_INVALIDATED_EVENT, listener);
-  };
+  return places.subscribe(listener);
 };
+
+export const getMapEntryManagementPatch = (
+  management: MapEntryManagement,
+) => ({
+  owners: management.owners,
+  lastEditor: management.lastEditor,
+  primaryManagerId: management.access.primaryManagerId,
+  managerIds: management.access.managerIds,
+  primaryManager: management.primaryManager,
+});
+
+function patchMapEntryRecords(
+  records: Array<Place | Portal>,
+  management: MapEntryManagement,
+) {
+  records.forEach((record) => {
+    if (record.mapEntryId !== management.access.mapEntryId) return;
+    Object.assign(record, getMapEntryManagementPatch(management));
+  });
+}

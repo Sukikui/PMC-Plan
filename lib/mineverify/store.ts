@@ -1,89 +1,102 @@
-import { randomUUID } from 'crypto';
+import { prisma } from '@/lib/prisma';
 import type { MineVerifyRequestRecord, MineVerifyRequestStatus } from './types';
 
 const PENDING_REQUEST_TTL_MS = 10 * 60 * 1000;
-const TERMINAL_RETENTION_MS = 10 * 60 * 1000;
+const TERMINAL_RETENTION_MS = 24 * 60 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 60 * 1000;
 
-interface MineVerifyMemoryStore {
-  requests: Map<string, MineVerifyRequestRecord>;
-}
+let lastCleanupAt = 0;
 
-const globalForMineVerify = globalThis as unknown as {
-  mineVerifyStore: MineVerifyMemoryStore | undefined;
-};
-
-const store = globalForMineVerify.mineVerifyStore ?? {
-  requests: new Map<string, MineVerifyRequestRecord>(),
-};
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForMineVerify.mineVerifyStore = store;
-}
-
-export function createMineVerifyRequest(userId: string) {
-  cleanupMineVerifyRequests();
-  expireOpenRequestsForUser(userId);
+export async function createMineVerifyRequest(userId: string) {
+  await cleanupMineVerifyRequests(true);
 
   const now = new Date();
-  const request: MineVerifyRequestRecord = {
-    requestId: randomUUID(),
-    userId,
-    code: null,
-    expiresAt: null,
-    minecraftUuid: null,
-    minecraftName: null,
-    validatedAt: null,
-    expiredAt: null,
-    createdAt: now,
-    updatedAt: now,
-  };
 
-  store.requests.set(request.requestId, request);
-  return request;
+  return prisma.$transaction(async (tx) => {
+    await tx.minecraftLinkRequest.updateMany({
+      where: {
+        userId,
+        validatedAt: null,
+        expiredAt: null,
+      },
+      data: { expiredAt: now },
+    });
+
+    return tx.minecraftLinkRequest.create({
+      data: { userId },
+    });
+  });
 }
 
-export function getPendingMineVerifyRequests() {
-  cleanupMineVerifyRequests();
+export async function getPendingMineVerifyRequests() {
+  await cleanupMineVerifyRequests();
 
-  return Array.from(store.requests.values()).filter(
-    (request) => getMineVerifyRequestStatus(request) === 'pending'
-  );
+  return prisma.minecraftLinkRequest.findMany({
+    where: {
+      code: null,
+      validatedAt: null,
+      expiredAt: null,
+      createdAt: {
+        gt: new Date(Date.now() - PENDING_REQUEST_TTL_MS),
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
 }
 
-export function getMineVerifyRequest(requestId: string) {
-  cleanupMineVerifyRequests();
-  return store.requests.get(requestId) ?? null;
+export async function getMineVerifyRequest(requestId: string) {
+  await cleanupMineVerifyRequests();
+  return prisma.minecraftLinkRequest.findUnique({ where: { requestId } });
 }
 
-export function getLatestMineVerifyRequestForUser(userId: string) {
-  cleanupMineVerifyRequests();
-
-  return Array.from(store.requests.values())
-    .filter((request) => request.userId === userId)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ?? null;
+export async function getLatestMineVerifyRequestForUser(userId: string) {
+  await cleanupMineVerifyRequests();
+  return prisma.minecraftLinkRequest.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
-export function clearMineVerifyRequestsForUser(userId: string) {
-  for (const [requestId, request] of Array.from(store.requests.entries())) {
-    if (request.userId === userId) {
-      store.requests.delete(requestId);
-    }
-  }
-}
-
-export function updateMineVerifyRequest(
+export async function assignMineVerifyCode(
   requestId: string,
-  updater: (request: MineVerifyRequestRecord) => MineVerifyRequestRecord
+  code: string,
+  expiresAt: Date,
 ) {
-  const current = store.requests.get(requestId);
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.minecraftLinkRequest.updateMany({
+      where: {
+        requestId,
+        code: null,
+        validatedAt: null,
+        expiredAt: null,
+      },
+      data: { code, expiresAt },
+    });
 
-  if (!current) {
-    return null;
-  }
+    const request = await tx.minecraftLinkRequest.findUnique({ where: { requestId } });
+    return { updated: result.count === 1, request };
+  });
+}
 
-  const updated = updater(current);
-  store.requests.set(requestId, updated);
-  return updated;
+export async function expireMineVerifyRequest(
+  requestId: string,
+  code: string,
+  expiredAt: Date,
+) {
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.minecraftLinkRequest.updateMany({
+      where: {
+        requestId,
+        validatedAt: null,
+        expiredAt: null,
+        OR: [{ code: null }, { code }],
+      },
+      data: { code, expiredAt },
+    });
+
+    const request = await tx.minecraftLinkRequest.findUnique({ where: { requestId } });
+    return { updated: result.count === 1, request };
+  });
 }
 
 export function getMineVerifyRequestStatus(request: MineVerifyRequestRecord): MineVerifyRequestStatus {
@@ -108,30 +121,43 @@ export function getMineVerifyRequestStatus(request: MineVerifyRequestRecord): Mi
   return 'pending';
 }
 
-function expireOpenRequestsForUser(userId: string) {
+async function cleanupMineVerifyRequests(force = false) {
   const now = new Date();
 
-  for (const request of Array.from(store.requests.values())) {
-    const status = getMineVerifyRequestStatus(request);
-
-    if (request.userId === userId && (status === 'pending' || status === 'code_created')) {
-      request.expiredAt = now;
-      request.updatedAt = now;
-    }
+  if (!force && now.getTime() - lastCleanupAt < CLEANUP_INTERVAL_MS) {
+    return;
   }
-}
 
-function cleanupMineVerifyRequests() {
-  const now = Date.now();
+  lastCleanupAt = now.getTime();
+  const pendingCutoff = new Date(now.getTime() - PENDING_REQUEST_TTL_MS);
+  const terminalCutoff = new Date(now.getTime() - TERMINAL_RETENTION_MS);
 
-  for (const [requestId, request] of Array.from(store.requests.entries())) {
-    const status = getMineVerifyRequestStatus(request);
-    const terminalAt = request.validatedAt ?? request.expiredAt;
-    const isStalePending = status === 'expired' && !terminalAt && request.createdAt.getTime() + PENDING_REQUEST_TTL_MS <= now;
-    const isStaleTerminal = terminalAt && terminalAt.getTime() + TERMINAL_RETENTION_MS <= now;
+  await prisma.$transaction(async (tx) => {
+    await tx.minecraftLinkRequest.updateMany({
+      where: {
+        validatedAt: null,
+        expiredAt: null,
+        OR: [
+          {
+            code: null,
+            createdAt: { lte: pendingCutoff },
+          },
+          {
+            code: { not: null },
+            expiresAt: { lte: now },
+          },
+        ],
+      },
+      data: { expiredAt: now },
+    });
 
-    if (isStalePending || isStaleTerminal) {
-      store.requests.delete(requestId);
-    }
-  }
+    await tx.minecraftLinkRequest.deleteMany({
+      where: {
+        OR: [
+          { validatedAt: { lte: terminalCutoff } },
+          { expiredAt: { lte: terminalCutoff } },
+        ],
+      },
+    });
+  });
 }

@@ -3,6 +3,7 @@ import {
   resolveNetherAddressForWorld,
   type Portal,
 } from '../../utils/shared';
+import { calculateNetherRoute } from '@/lib/nether/routing';
 import { callLinkedPortal } from '../route-utils';
 import type { RoutePoint } from '../route-types';
 
@@ -78,3 +79,25 @@ export const toNetherEndpointLocation = (
   ...(world ? { world } : {}),
   address: endpoint.address,
 });
+
+interface NetherTransportLocation {
+  coordinates: Portal['coordinates'];
+}
+
+export const buildNetherTransport = <
+  TFrom extends NetherTransportLocation,
+  TTo extends NetherTransportLocation,
+>(from: TFrom, to: TTo) => {
+  const route = calculateNetherRoute(from.coordinates, to.coordinates);
+
+  return {
+    distance: route.distance,
+    steps: route.distance > 0 ? [{
+      type: 'nether_transport' as const,
+      distance: route.distance,
+      from,
+      to,
+      path: route.path,
+    }] : [],
+  };
+};

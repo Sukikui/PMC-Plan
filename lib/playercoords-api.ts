@@ -20,7 +20,6 @@ export interface PlayerCoordsApiOptions {
 
 export enum PlayerCoordsApiErrorType {
   CONNECTION_FAILED = 'CONNECTION_FAILED',
-  ACCESS_DENIED = 'ACCESS_DENIED',
   NOT_IN_WORLD = 'NOT_IN_WORLD',
   TIMEOUT = 'TIMEOUT',
   UNKNOWN = 'UNKNOWN'
@@ -66,14 +65,6 @@ export class PlayerCoordsApi {
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        if (response.status === 403) {
-          throw new PlayerCoordsApiError(
-            PlayerCoordsApiErrorType.ACCESS_DENIED,
-            `HTTP ${response.status}: ${response.statusText}`,
-            'Accès refusé par l\'API'
-          );
-        }
-        
         if (response.status === 404) {
           throw new PlayerCoordsApiError(
             PlayerCoordsApiErrorType.NOT_IN_WORLD,
@@ -81,7 +72,7 @@ export class PlayerCoordsApi {
             'Joueur pas dans un monde'
           );
         }
-        
+
         throw new PlayerCoordsApiError(
           PlayerCoordsApiErrorType.UNKNOWN,
           `HTTP ${response.status}: ${response.statusText}`
@@ -155,8 +146,6 @@ export class PlayerCoordsApi {
    */
   static getErrorMessage(error: PlayerCoordsApiError): string {
     switch (error.type) {
-      case PlayerCoordsApiErrorType.ACCESS_DENIED:
-        return 'API désactivée dans le mod';
       case PlayerCoordsApiErrorType.NOT_IN_WORLD:
         return 'Vous n\'êtes pas dans un monde';
       case PlayerCoordsApiErrorType.CONNECTION_FAILED:

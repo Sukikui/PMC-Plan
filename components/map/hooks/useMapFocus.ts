@@ -13,6 +13,7 @@ import {
 import type { PositionedMapPoint, ScreenMapPoint } from '../core/map-types';
 
 interface UseMapFocusParams {
+  enabled?: boolean;
   focusedPointId?: string;
   focusedPoint?: PositionedMapPoint;
   screenPointById: Map<string, ScreenMapPoint>;
@@ -29,6 +30,7 @@ interface UseMapFocusParams {
 }
 
 export const useMapFocus = ({
+  enabled = true,
   focusedPointId,
   focusedPoint,
   screenPointById,
@@ -65,6 +67,10 @@ export const useMapFocus = ({
   }, [onFocusComplete]);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     if (!focusedPointId) {
       cancelAnimation();
       clearPointTooltipRef.current();
@@ -110,6 +116,7 @@ export const useMapFocus = ({
     baseSize,
     cancelAnimation,
     clampPan,
+    enabled,
     focusedPoint,
     focusedPointId,
     isBlocked,

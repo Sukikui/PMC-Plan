@@ -1,35 +1,53 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import DestinationPanel from '@/components/DestinationPanel';
 import PositionPanel from '@/components/PositionPanel';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
 import SettingsPanel from '@/components/SettingsPanel';
 import Overlay from '@/components/ui/Overlay';
-import GlobalTradeOverlay from '@/components/GlobalTradeOverlay';
+import { useOverlayDisclosure } from '@/components/ui/useOverlayDisclosure';
 import BetaLockScreen from '@/components/BetaLockScreen';
 import StartupScreen from '@/components/StartupScreen';
 import MainMapBackground from '@/components/map/MainMapBackground';
+import RouteMapControls from '@/components/map/route/RouteMapControls';
 import { themeColors } from '@/lib/theme-colors';
 import { preloadMainScreenResources } from '@/lib/preload/main-screen';
 import { NETHER_MAP_WORLD, OVERWORLD_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
+import { buildMapRoutePath, type MapRouteSegment } from '@/lib/map/route-path';
+import type { PlayerData } from '@/lib/playercoords-api';
 import type { DestinationType } from '@/lib/destination/selection';
+import type { RouteData } from '@/lib/route-planning';
 
-import { Place, Portal } from './api/utils/shared';
+import type { Place, Portal } from '@/lib/api/types';
+
+const GlobalTradeOverlay = dynamic(() => import('@/components/GlobalTradeOverlay'));
+const SpaceExplorerOverlay = dynamic(() => import('@/components/spaces/SpaceExplorerOverlay'));
 
 export default function Home() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>('');
   const [selectedPlaceType, setSelectedPlaceType] = useState<DestinationType>('place');
-  const [playerPosition, setPlayerPosition] = useState<{x: number; y: number; z: number; world: string} | null>(null);
+  const [playerPosition, setPlayerPosition] = useState<PlayerData | null>(null);
+  const [linkedMinecraftUuid, setLinkedMinecraftUuid] = useState<string | null>(null);
   const [manualCoords, setManualCoords] = useState<{x: string; y: string; z: string; world: 'overworld' | 'nether'}>({
     x: '', y: '', z: '', world: OVERWORLD_MAP_WORLD
   });
-  const { openPlaceInfo } = useOverlay();
-  const [isMarketOpen, setIsMarketOpen] = useState(false);
-  const [isMarketClosing, setIsMarketClosing] = useState(false);
+  const { openPlaceInfo, openSpaceInfo } = useOverlay();
+  const marketOverlay = useOverlayDisclosure();
+  const spaceExplorerOverlay = useOverlayDisclosure();
   const [startupPreloadComplete, setStartupPreloadComplete] = useState(false);
   const [activeMapWorld, setActiveMapWorld] = useState<MapWorld>(OVERWORLD_MAP_WORLD);
+  const [route, setRoute] = useState<RouteData | null>(null);
+  const [routeSelection, setRouteSelection] = useState<{
+    routeKey: string;
+    segmentId: string;
+  } | null>(null);
+  const routePath = useMemo(() => route ? buildMapRoutePath(route) : null, [route]);
+  const activeRouteSegmentId = routeSelection && routeSelection.routeKey === routePath?.key
+    ? routeSelection.segmentId
+    : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -46,19 +64,12 @@ export default function Home() {
     };
   }, []);
 
-  const openMarket = () => {
-    setIsMarketClosing(false);
-    setIsMarketOpen(true);
-  };
-  const closeMarket = () => {
-    setIsMarketClosing(true);
-    setTimeout(() => {
-      setIsMarketOpen(false);
-      setIsMarketClosing(false);
-    }, 300);
-  };
-
   const handlePlaceSelect = (id: string, type: DestinationType, world?: MapWorld) => {
+    if (id !== selectedPlaceId) {
+      setRoute(null);
+      setRouteSelection(null);
+    }
+
     if (id && world) {
       setActiveMapWorld(world);
     }
@@ -75,6 +86,19 @@ export default function Home() {
     setActiveMapWorld((world) => (
       world === NETHER_MAP_WORLD ? OVERWORLD_MAP_WORLD : NETHER_MAP_WORLD
     ));
+  };
+
+  const handleRouteSegmentSelect = (segment: MapRouteSegment | null) => {
+    if (!segment || !routePath) {
+      setRouteSelection(null);
+      return;
+    }
+
+    setRouteSelection({
+      routeKey: routePath.key,
+      segmentId: segment.id,
+    });
+    setActiveMapWorld(segment.world);
   };
 
   // Show lock screen if not unlocked and beta lock is not disabled
@@ -96,6 +120,17 @@ export default function Home() {
         onSelectItem={handlePlaceSelect}
         selectedId={selectedPlaceId}
         selectedType={selectedPlaceType}
+        routePath={routePath}
+        activeRouteSegmentId={activeRouteSegmentId}
+        syncedPlayerUuid={playerPosition?.uuid}
+        linkedMinecraftUuid={linkedMinecraftUuid}
+      />
+
+      <RouteMapControls
+        routePath={routePath}
+        activeSegmentId={activeRouteSegmentId}
+        destinationType={selectedPlaceType}
+        onSegmentSelect={handleRouteSegmentSelect}
       />
 
       {/* Left sliding panel */}
@@ -106,11 +141,12 @@ export default function Home() {
         selectedType={selectedPlaceType}
         playerPosition={playerPosition}
         manualCoords={manualCoords}
+        onRouteChange={setRoute}
         onInfoClick={handleInfoClick}
       />
       
       {/* Player overlay */}
-      <PositionPanel 
+      <PositionPanel
         onPlayerPositionChange={setPlayerPosition}
         onManualCoordsChange={setManualCoords}
       />
@@ -118,14 +154,40 @@ export default function Home() {
       {/* InfoOverlay is rendered globally by OverlayProvider */}
 
       {/* settings Panel */}
-      <SettingsPanel onOpenMarket={openMarket} onOpenNetherMap={toggleNetherMap} />
+      <SettingsPanel
+        onLinkedMinecraftUuidChange={setLinkedMinecraftUuid}
+        onOpenMarket={marketOverlay.open}
+        onOpenNetherMap={toggleNetherMap}
+        onOpenSpaces={spaceExplorerOverlay.open}
+        onSelectItem={handlePlaceSelect}
+      />
 
       {/* Global Market button is rendered by SettingsPanel (absolute above trigger/panel) */}
 
       {/* Global Market Overlay */}
-      {isMarketOpen && (
-        <Overlay isOpen={isMarketOpen} onClose={closeMarket} closing={isMarketClosing}>
-          <GlobalTradeOverlay offers={null} onClose={closeMarket} closing={isMarketClosing} onSelectItem={handlePlaceSelect} />
+      {marketOverlay.isOpen && (
+        <Overlay
+          isOpen={marketOverlay.isOpen}
+          onClose={marketOverlay.close}
+          closing={marketOverlay.isClosing}
+        >
+          <GlobalTradeOverlay
+            onClose={marketOverlay.close}
+            onSelectItem={handlePlaceSelect}
+          />
+        </Overlay>
+      )}
+
+      {spaceExplorerOverlay.isOpen && (
+        <Overlay
+          isOpen={spaceExplorerOverlay.isOpen}
+          onClose={spaceExplorerOverlay.close}
+          closing={spaceExplorerOverlay.isClosing}
+        >
+          <SpaceExplorerOverlay
+            onClose={spaceExplorerOverlay.close}
+            onOpenSpace={openSpaceInfo}
+          />
         </Overlay>
       )}
 

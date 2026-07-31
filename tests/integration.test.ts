@@ -53,7 +53,17 @@ describe('Route API Integration Tests - Real Behavior Validation', () => {
       expect(route.steps[2].from.address).toBe('Spawn');
       expect(route.steps[2].to.id).toBe('portail_village_suki');
       expect(route.steps[2].to.address).toBe('Est 7 droite');
-      expect(route.steps[2].distance).toBeCloseTo(583.11, 2);
+      expect(route.steps[2].path.length).toBeGreaterThan(2);
+      expect(route.steps[2].path[0]).toEqual(route.steps[2].from.coordinates);
+      expect(route.steps[2].path.at(-1)).toEqual(route.steps[2].to.coordinates);
+      expect(route.steps[2].path.slice(1).reduce((distance: number, point: any, index: number) => {
+        const previous = route.steps[2].path[index];
+        return distance + Math.hypot(
+          point.x - previous.x,
+          point.y - previous.y,
+          point.z - previous.z
+        );
+      }, 0)).toBeCloseTo(route.steps[2].distance, 8);
       
       // Step 4: Portal crossing nether → overworld
       expect(route.steps[3].type).toBe('portal');
@@ -98,7 +108,10 @@ describe('Route API Integration Tests - Real Behavior Validation', () => {
       
       // Step 1: Overworld transport to nearest portal
       expect(route.steps[0].type).toBe('overworld_transport');
-      expect(route.steps[0].from).toEqual({x: 0, y: 70, z: 0});
+      expect(route.steps[0].from).toEqual({
+        name: 'Spawn Overworld',
+        coordinates: {x: 0, y: 70, z: 0},
+      });
       expect(route.steps[0].to.id).toBe('portail_spawn');
       
       // Step 2: Portal crossing

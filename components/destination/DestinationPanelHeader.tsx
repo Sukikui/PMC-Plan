@@ -80,8 +80,7 @@ export default function DestinationPanelHeader({
 
   return (
     <>
-      <div>
-        <div className={`text-xs font-semibold ${themeColors.text.secondary} mb-2 ${themeColors.util.uppercase} ${themeColors.transition}`}>Filtrer par tags</div>
+      <div role="group" aria-label="Filtrer par tags">
         <div className="flex flex-wrap gap-1">
           <button
             onClick={onToggleTagFilterLogic}
@@ -113,10 +112,10 @@ export default function DestinationPanelHeader({
         </div>
       </div>
 
-      <div className="mt-6">
-        <div className={`text-xs font-semibold ${themeColors.text.secondary} mb-2 ${themeColors.util.uppercase} ${themeColors.transition}`}>Rechercher</div>
+      <div>
         <div className="relative">
           <input
+            aria-label="Rechercher une destination"
             type="text"
             value={searchQuery}
             onChange={(event) => {
@@ -126,8 +125,8 @@ export default function DestinationPanelHeader({
             onFocus={onSearchFocus}
             onBlur={onSearchBlur}
             onKeyDown={handleSearchKeyDown}
-            placeholder="Nom, description, tags, monde..."
-            className={`w-full px-3 py-2 text-sm ${themeColors.input.search} border ${themeColors.util.roundedLg} focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`}
+            placeholder="Rechercher par nom, description, monde..."
+            className={`w-full px-3 py-2 text-sm ${themeColors.input.panel} border ${themeColors.util.roundedLg} focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`}
           />
           {searchQuery && (
             <button
@@ -169,4 +168,3 @@ function TagFilterLogicIcon({ mode }: { mode: TagFilterLogic }) {
     </svg>
   );
 }
-

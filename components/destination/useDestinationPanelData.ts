@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { Place, Portal } from '@/app/api/utils/shared';
+import type { Place, Portal } from '@/lib/api/types';
 import {
   loadPlacesData,
   loadPortalsData,
@@ -99,4 +99,3 @@ export function useDestinationPanelData(
     portals,
   };
 }
-

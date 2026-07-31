@@ -1,9 +1,25 @@
-import type { Place, Portal } from '../app/api/utils/shared';
+import type { Place, Portal } from '../lib/api/types';
 
 const fixtureDate = new Date('2024-01-01T00:00:00.000Z');
 
 const baseEntity = {
-  createdById: 'test-user',
+  mapEntryId: 'test-entry',
+  primaryManagerId: 'test-user',
+  primaryManager: {
+    id: 'test-user',
+    name: 'Test User',
+    username: 'test-user',
+    image: null,
+  },
+  managerIds: [],
+  space: null,
+  lastEditor: {
+    id: 'test-user',
+    name: 'Test User',
+    username: 'test-user',
+    image: null,
+    editedAt: fixtureDate,
+  },
   createdAt: fixtureDate,
   updatedAt: fixtureDate,
 };
@@ -11,6 +27,7 @@ const baseEntity = {
 export const mockPortals: Portal[] = [
   {
     ...baseEntity,
+    mapEntryId: 'portal-entry-spawn',
     id: 'portail_spawn',
     slug: 'portail_spawn',
     name: 'Portail du Spawn',
@@ -23,6 +40,7 @@ export const mockPortals: Portal[] = [
   },
   {
     ...baseEntity,
+    mapEntryId: 'portal-entry-spawn',
     id: 'portail_spawn',
     slug: 'portail_spawn',
     name: 'Portail du Spawn',
@@ -35,6 +53,7 @@ export const mockPortals: Portal[] = [
   },
   {
     ...baseEntity,
+    mapEntryId: 'portal-entry-village-suki',
     id: 'portail_village_suki',
     slug: 'portail_village_suki',
     name: 'Portail du village de Suki',
@@ -47,6 +66,7 @@ export const mockPortals: Portal[] = [
   },
   {
     ...baseEntity,
+    mapEntryId: 'portal-entry-village-suki',
     id: 'portail_village_suki',
     slug: 'portail_village_suki',
     name: 'Portail du village de Suki',
@@ -73,6 +93,7 @@ export const mockPlaces: Place[] = [
     images: [],
     owners: [],
     discord: null,
+    discordOverride: null,
     trade: null,
   },
   {
@@ -86,8 +107,9 @@ export const mockPlaces: Place[] = [
     description: 'Ancien village caché au sein duquel de nombreux secrets et trésors sont gardés à tout jamais...',
     address: null,
     images: [],
-    owners: ['Suki'],
+    owners: [{ uuid: '00000000-0000-0000-0000-000000000001', name: 'Suki' }],
     discord: 'https://discord.gg/exemple123',
+    discordOverride: 'https://discord.gg/exemple123',
     trade: [
       {
         gives: {
@@ -117,8 +139,9 @@ export const mockPlaces: Place[] = [
     tags: ['base', 'nether'],
     description: 'Base établie dans le Nether pour les tests',
     images: [],
-    owners: ['TestUser'],
+    owners: [{ uuid: '00000000-0000-0000-0000-000000000002', name: 'TestUser' }],
     discord: null,
+    discordOverride: null,
     trade: null,
   },
 ];
@@ -128,9 +151,6 @@ export const getPortalsByWorld = (world: 'overworld' | 'nether'): Portal[] =>
 
 export const getPortalById = (id: string, world?: 'overworld' | 'nether'): Portal | undefined =>
   mockPortals.find((portal) => portal.id === id && (!world || portal.world === world));
-
-export const getPlaceById = (id: string): Place | undefined =>
-  mockPlaces.find((place) => place.id === id);
 
 export const getPortalPairs = (): Array<{ overworld: Portal; nether: Portal | undefined }> =>
   getPortalsByWorld('overworld').map((overworld) => ({

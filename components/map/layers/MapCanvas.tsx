@@ -1,16 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type React from 'react';
 import { themeColors } from '@/lib/theme-colors';
 import { worldToMapPercent, type MapMetadata } from '@/lib/map/metadata';
 import type { MapLineOverlay } from '@/lib/map/overlays';
 import { BLOCK_GRID_MIN_PIXEL_SIZE } from '../core/map-constants';
+import { getMapDrawRect } from '../core/map-geometry';
 import { mapPercentToScreenPoint, type MapPan, type MapSize, type MapViewport } from '../core/map-view';
+import type { LoadedMapTile } from '../hooks/useMapTiles';
+import { drawMapRaster } from './map-raster';
 
 interface MapCanvasProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   mapImage: HTMLImageElement | null;
+  mapTiles: LoadedMapTile[];
   viewport: MapViewport;
   baseSize: MapSize;
   zoom: number;
@@ -22,6 +26,7 @@ interface MapCanvasProps {
 export default function MapCanvas({
   canvasRef,
   mapImage,
+  mapTiles,
   viewport,
   baseSize,
   zoom,
@@ -29,6 +34,8 @@ export default function MapCanvas({
   metadata,
   lineOverlays = [],
 }: MapCanvasProps) {
+  const lineOverlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !viewport.width || !viewport.height || !baseSize.width || !baseSize.height) {
@@ -54,24 +61,20 @@ export default function MapCanvas({
 
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.clearRect(0, 0, viewport.width, viewport.height);
-    ctx.imageSmoothingEnabled = false;
+    const drawRect = getMapDrawRect(viewport, baseSize, zoom, pan);
+    const { left: drawX, top: drawY, width: drawWidth, height: drawHeight } = drawRect;
+    const blockPixelSize = (
+      drawWidth / metadata.overview.width / metadata.overview.cellSize
+    );
 
-    const drawWidth = Math.round(baseSize.width * zoom);
-    const drawHeight = Math.round(baseSize.height * zoom);
-    const drawX = Math.round((viewport.width - drawWidth) / 2 + pan.x);
-    const drawY = Math.round((viewport.height - drawHeight) / 2 + pan.y);
-    const blockPixelSize = (drawWidth / metadata.width) / metadata.cellSize;
-
-    if (mapImage) {
-      ctx.drawImage(mapImage, drawX, drawY, drawWidth, drawHeight);
-    } else if (metadata.fallbackBackground) {
-      ctx.fillStyle = metadata.fallbackBackground;
-      ctx.fillRect(drawX, drawY, drawWidth, drawHeight);
-    } else {
+    if (!drawMapRaster(ctx, { mapImage, mapTiles, metadata, drawRect })) {
       return;
     }
 
-    drawLineOverlays(ctx, lineOverlays, {
+    if (!lineOverlayCanvasRef.current) {
+      lineOverlayCanvasRef.current = document.createElement('canvas');
+    }
+    drawLineOverlays(ctx, lineOverlayCanvasRef.current, lineOverlays, {
       pixelRatio,
       metadata,
       viewport,
@@ -85,8 +88,8 @@ export default function MapCanvas({
       return;
     }
 
-    const mapBlockWidth = metadata.width * metadata.cellSize;
-    const mapBlockHeight = metadata.height * metadata.cellSize;
+    const mapBlockWidth = metadata.overview.width * metadata.overview.cellSize;
+    const mapBlockHeight = metadata.overview.height * metadata.overview.cellSize;
     const minVisibleX = Math.max(0, Math.floor((0 - drawX) / blockPixelSize));
     const maxVisibleX = Math.min(mapBlockWidth, Math.ceil((viewport.width - drawX) / blockPixelSize));
     const minVisibleY = Math.max(0, Math.floor((0 - drawY) / blockPixelSize));
@@ -115,7 +118,7 @@ export default function MapCanvas({
 
     ctx.stroke();
     ctx.restore();
-  }, [baseSize, canvasRef, lineOverlays, mapImage, metadata, pan, viewport, zoom]);
+  }, [baseSize, canvasRef, lineOverlays, mapImage, mapTiles, metadata, pan, viewport, zoom]);
 
   return (
     <canvas
@@ -128,6 +131,7 @@ export default function MapCanvas({
 
 function drawLineOverlays(
   ctx: CanvasRenderingContext2D,
+  overlayCanvas: HTMLCanvasElement,
   overlays: MapLineOverlay[],
   view: {
     pixelRatio: number;
@@ -143,10 +147,14 @@ function drawLineOverlays(
     return;
   }
 
+  const overlayWidth = Math.max(1, Math.floor(view.viewport.width * view.pixelRatio));
+  const overlayHeight = Math.max(1, Math.floor(view.viewport.height * view.pixelRatio));
+  if (overlayCanvas.width !== overlayWidth || overlayCanvas.height !== overlayHeight) {
+    overlayCanvas.width = overlayWidth;
+    overlayCanvas.height = overlayHeight;
+  }
+
   getOverlayGroups(overlays).forEach(({ overlays: groupedOverlays, strokeStyle, strokeOpacity }) => {
-    const overlayCanvas = document.createElement('canvas');
-    overlayCanvas.width = Math.max(1, Math.floor(view.viewport.width * view.pixelRatio));
-    overlayCanvas.height = Math.max(1, Math.floor(view.viewport.height * view.pixelRatio));
 
     const overlayCtx = overlayCanvas.getContext('2d');
     if (!overlayCtx) {
@@ -154,6 +162,7 @@ function drawLineOverlays(
     }
 
     overlayCtx.setTransform(view.pixelRatio, 0, 0, view.pixelRatio, 0, 0);
+    overlayCtx.clearRect(0, 0, view.viewport.width, view.viewport.height);
     overlayCtx.lineCap = 'butt';
     overlayCtx.lineJoin = 'miter';
     overlayCtx.strokeStyle = strokeStyle;

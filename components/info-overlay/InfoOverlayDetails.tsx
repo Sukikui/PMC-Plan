@@ -1,5 +1,7 @@
-import type { Place, Portal } from '@/app/api/utils/shared';
+import type { Place, Portal } from '@/lib/api/types';
 import { themeColors } from '@/lib/theme-colors';
+import InfoDescriptionSection from './InfoDescriptionSection';
+import MapEntryOwners from './MapEntryOwners';
 
 interface InfoOverlayDetailsProps {
   item: Place | Portal;
@@ -7,22 +9,19 @@ interface InfoOverlayDetailsProps {
 }
 
 export default function InfoOverlayDetails({ item, type }: InfoOverlayDetailsProps) {
+  const place = type === 'place' ? item as Place : null;
+
   return (
     <>
-      {item.description && item.description.length > 0 && (
-        <div>
-          <h3 className={`text-lg font-semibold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>Description</h3>
-          <p className={`${themeColors.text.quaternary} leading-relaxed ${themeColors.infoOverlay.descriptionBg} p-4 ${themeColors.util.roundedLg} ${themeColors.transition}`}>
-            {item.description}
-          </p>
-        </div>
-      )}
+      <MapEntryOwners owners={item.owners} />
 
-      {type === 'place' && Array.isArray((item as Place).tags) && (item as Place).tags.length > 0 && (
+      <InfoDescriptionSection description={item.description} />
+
+      {place && Array.isArray(place.tags) && place.tags.length > 0 && (
         <div>
           <h3 className={`text-lg font-semibold ${themeColors.text.primary} mb-3 ${themeColors.transition}`}>Tags</h3>
           <div className="flex flex-wrap gap-2">
-            {(item as Place).tags.map((tag) => (
+            {place.tags.map((tag) => (
               <span
                 key={tag}
                 className={`${themeColors.infoOverlay.placeTags} text-sm px-3 py-1 ${themeColors.util.roundedFull} font-medium ${themeColors.transition}`}
@@ -36,4 +35,3 @@ export default function InfoOverlayDetails({ item, type }: InfoOverlayDetailsPro
     </>
   );
 }
-

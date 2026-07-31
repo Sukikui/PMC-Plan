@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { Place, Portal } from '@/app/api/utils/shared';
+import type { Place, Portal } from '@/lib/api/types';
 import type { DestinationType } from '@/lib/destination/selection';
 
 export type TagFilterLogic = 'SINGLE' | 'OR' | 'AND';
@@ -28,4 +28,3 @@ export type DestinationCardActions = {
     type: DestinationType
   ) => void;
 };
-

@@ -1,4 +1,4 @@
-import type { Portal, PortalWithDistance } from './types';
+import type { Portal, PortalWithDistance } from '@/lib/api/types';
 
 export function calculateEuclideanDistance(
   x1: number, y1: number, z1: number,

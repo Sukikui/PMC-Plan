@@ -1,0 +1,93 @@
+@keyframes mc-glint-sweep {
+  0% { background-position: -150% 0; }
+  100% { background-position: 150% 0; }
+}
+
+@keyframes mc-glint-sweep-rev {
+  0% { background-position: 150% 0; }
+  100% { background-position: -150% 0; }
+}
+
+.mc-glint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 0.125rem;
+  will-change: background-position;
+}
+
+.mc-glint::before,
+.mc-glint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  mix-blend-mode: screen;
+  filter: saturate(120%) brightness(110%);
+  image-rendering: pixelated;
+}
+
+.mc-glint::before {
+  background: linear-gradient(
+    120deg,
+    rgba(147, 197, 253, 0) 0%,
+    rgba(147, 197, 253, 0.25) 25%,
+    rgba(167, 139, 250, 0.65) 50%,
+    rgba(147, 197, 253, 0.25) 75%,
+    rgba(147, 197, 253, 0) 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-glint-sweep 2s linear infinite alternate;
+}
+
+.mc-glint::after {
+  background: linear-gradient(
+    300deg,
+    rgba(147, 197, 253, 0) 0%,
+    rgba(147, 197, 253, 0.18) 40%,
+    rgba(167, 139, 250, 0.45) 50%,
+    rgba(147, 197, 253, 0.18) 60%,
+    rgba(147, 197, 253, 0) 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-glint-sweep-rev 2.6s linear infinite alternate;
+  animation-delay: 0.8s;
+}
+
+.dark .mc-glint::before,
+.dark .mc-glint::after {
+  mix-blend-mode: normal;
+  filter: none;
+  image-rendering: pixelated;
+}
+
+.dark .mc-glint::before {
+  background: linear-gradient(
+    120deg,
+    rgba(147, 197, 253, 0) 0%,
+    rgba(147, 197, 253, 0.25) 30%,
+    rgba(167, 139, 250, 0.55) 50%,
+    rgba(147, 197, 253, 0.25) 70%,
+    rgba(147, 197, 253, 0) 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-glint-sweep 2s linear infinite;
+}
+
+.dark .mc-glint::after {
+  background: linear-gradient(
+    300deg,
+    rgba(147, 197, 253, 0) 0%,
+    rgba(147, 197, 253, 0.20) 42%,
+    rgba(167, 139, 250, 0.45) 50%,
+    rgba(147, 197, 253, 0.20) 58%,
+    rgba(147, 197, 253, 0) 100%
+  );
+  background-size: 300% 100%;
+  animation: mc-glint-sweep-rev 2.6s linear infinite;
+  animation-delay: 0.8s;
+}
+
+.dark .mc-glint {
+  inset: 0.5px;
+}

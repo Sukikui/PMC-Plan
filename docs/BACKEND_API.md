@@ -8,6 +8,23 @@ http://localhost:3000/api
 
 ## Endpoints
 
+Domain-specific endpoint documentation:
+
+- [Spaces API](api/spaces.md)
+- [Services API](api/services.md)
+
+Space responses include dynamically derived place and portal summaries and an
+aggregate trade-offer count for their associated map entries. These summaries
+expose ordered Minecraft owners without duplicating ownership, association, or
+offer-count data in the database.
+
+Services are autonomous managed content. They reuse map-entry management and
+Minecraft ownership without being associated with a place, world, coordinate,
+or space. Each service exposes a title and subtitle. Its contact is either
+disabled, derived from the primary Discord manager, or stored as a custom
+Discord URL. Optional payment metadata combines a Minecraft item identifier
+with a short description and reuses the standard item-resolution pipeline.
+
 ### GET `/nether-address`
 
 Calculates the nether address for a portal location based on X, Y, and Z coordinates.
@@ -208,10 +225,13 @@ Calculates the optimal route between two locations using the full routing algori
     - `loadPortals()` in `app/api/utils/shared.ts`
     - `RouteService` class in `app/api/route/service/route-service.ts`
 - **`route-service.ts` (Service):**
-    - `RouteService` constructor is initialized with `places` and `portals`.
+    - `RouteService` constructor is initialized with `portals`.
     - `callNearestPortals()` in `app/api/route/route-utils.ts`
     - `callLinkedPortal()` in `app/api/route/route-utils.ts`
     - `calculateEuclideanDistance()` in `app/api/utils/shared.ts`
+- **Nether network:**
+    - Validated axis data and shared polylines in `lib/nether/network-data.ts`
+    - Projection, graph construction, and shortest-path calculation in `lib/nether/routing.ts`
 
 **Note:** You must provide either coordinates (`x`, `y`, `z`) or `place_id` for both source and destination.
 
@@ -221,16 +241,28 @@ Calculates the optimal route between two locations using the full routing algori
   1. Calculates direct euclidean distance.
   2. Searches for portals within `directDistance` radius from start and end points.
   3. For each route option, finds linked nether portals (or calculates theoretical coordinates).
-  4. Calculates total nether route distance: `distanceToPortal1 + netherDistance + distanceFromPortal2`. The `netherDistance` is the direct euclidean distance between the nether portals.
+  4. Calculates total nether route distance: `distanceToPortal1 + netherDistance + distanceFromPortal2`. The Nether portion follows the axis-routing logic described below.
   5. **Decision rule**: `if (totalNetherDistance < directDistance)` → nether route, else direct route.
   6. Falls back to direct route if: no portals found, or no linked nether portal at destination.
 
-- **`Nether to Nether`**: Calculates the direct euclidean distance between the two points in the Nether.
-- **`Overworld to Nether`**: Finds the nearest overworld portal, links to the nether, and then calculates the euclidean distance to the destination in the Nether.
-- **`Nether to Overworld`**: Finds the nearest overworld portal to the destination, links to the nether, and then calculates the euclidean distance from the start point in the Nether to the linked portal.
+- **`Nether to Nether`**: Calculates a route between both points using the Nether axis network when beneficial.
+- **`Overworld to Nether`**: Finds the nearest overworld portal, links to the Nether, then routes from the Nether portal to the destination using the axis network when beneficial.
+- **`Nether to Overworld`**: Routes from the start point to the destination's linked Nether portal using the axis network when beneficial, then crosses to the Overworld.
+- **Nether axis routing**:
+  1. The axis JSON is validated with Zod and converted into the same radial and ring polylines used by the map renderer.
+  2. Each route endpoint is projected onto the nearest axis segment, including projections inside a segment rather than only at known stops.
+  3. The two selected segments are temporarily split at their projections and connected to the actual route endpoints.
+  4. Dijkstra's algorithm finds the shortest route through radial axes and level rings.
+  5. Connector distances between actual endpoints and their projections are included in the route distance.
+  6. The direct route is retained only when `directDistance * 2 <= axisRouteDistance`; otherwise, the route follows the axes.
+  7. Invalid or disconnected network data falls back to the direct route.
 - Nether route points expose an `address` whenever their Nether address is known or can be computed. This includes Nether portals, Nether places, theoretical portal coordinates, and raw Nether coordinate inputs.
 - Stored Nether addresses are read from the database first. If a Nether point has no stored address, the route resolver computes one from its coordinates.
 - Handles theoretical portal coordinates when linked portals don't exist (8:1 conversion)
+- Every step endpoint uses the same location structure. Coordinates are always
+  nested under `from.coordinates` and `to.coordinates`; bare coordinate objects
+  are not returned as step endpoints.
+- Every `nether_transport` step includes a `path` array containing the complete route geometry from `from.coordinates` to `to.coordinates`. Clients that do not use this optional field remain compatible with the existing step structure.
 
 **Response:**
 
@@ -246,7 +278,10 @@ Calculates the optimal route between two locations using the full routing algori
     {
       "type": "overworld_transport",
       "distance": 361.2,
-      "from": {"x": 1000, "y": 65, "z": -500},
+      "from": {
+        "name": "Position de départ",
+        "coordinates": {"x": 1000, "y": 65, "z": -500}
+      },
       "to": {
         "id": "village_commerce",
         "name": "Village Commerce",
@@ -269,7 +304,10 @@ Calculates the optimal route between two locations using the full routing algori
     {
       "type": "overworld_transport",
       "distance": 243.310501211929,
-      "from": {"x": -200, "y": 70, "z": 0},
+      "from": {
+        "name": "Position de départ",
+        "coordinates": {"x": -200, "y": 70, "z": 0}
+      },
       "to": {
         "id": "portail_spawn",
         "name": "Portail du Spawn",
@@ -294,7 +332,7 @@ Calculates the optimal route between two locations using the full routing algori
     },
     {
       "type": "nether_transport",
-      "distance": 600,
+      "distance": 594.1803398875,
       "from": {
         "id": "portail_spawn",
         "name": "Portail du Spawn",
@@ -306,7 +344,18 @@ Calculates the optimal route between two locations using the full routing algori
         "name": "Portail du village de Suki",
         "coordinates": {"x": 563, "y": 60, "z": 34},
         "address": "Est 7 gauche"
-      }
+      },
+      "path": [
+        {"x": -20, "y": 70, "z": 29},
+        {"x": 15, "y": 70, "z": 29},
+        {"x": 39, "y": 70, "z": 29},
+        {"x": 81, "y": 70, "z": 29},
+        {"x": 183, "y": 70, "z": 29},
+        {"x": 279, "y": 70, "z": 29},
+        {"x": 429, "y": 70, "z": 29},
+        {"x": 563, "y": 70, "z": 29},
+        {"x": 563, "y": 60, "z": 34}
+      ]
     },
     {
       "type": "portal",
@@ -359,9 +408,322 @@ curl "http://localhost:3000/api/route?from_x=1000&from_y=65&from_z=-500&from_wor
 
 ---
 
+## Account Approval and Content Authorization
+
+New Discord accounts are stored with the `pending` role. Account approval is
+represented by the single role transition `pending -> user`; there is no
+separate certification field and places or portals no longer have individual
+approval statuses.
+
+Content mutation permissions are:
+
+- `pending`: read-only access.
+- `user`: create content and update entries where they are the primary manager
+  or a secondary manager.
+- A secondary manager can edit content and public Minecraft owners, but cannot
+  change the Discord team, transfer the primary role, or delete the entry.
+- The primary manager can edit, manage the Discord team, transfer the primary
+  role, and delete the entry.
+- `admin` and `super_admin`: manage any content and team.
+
+Each place has one `MapEntry`. Both endpoints of a linked portal share one
+`MapEntry`. The `MapEntry.primaryManagerId` relation is the only primary
+management source; creator history is not stored. `MapEntry.lastEditorId`
+records the Discord account responsible for the latest content or management
+mutation. Existing entries without an audit value fall back to their primary
+manager when serialized.
+
+Public owners are independent `MinecraftProfile` records referenced through
+`MapEntryOwner`. They are display metadata and never grant write access.
+Adding a Discord manager automatically suggests their linked Minecraft profile
+as a public owner. That owner can then be removed without removing the manager.
+
+The role stored in Prisma defines the maximum available permission level.
+Administrators can explicitly enable debug mode, persisted in the
+`pmc-plan-admin-debug` cookie. While it is enabled, the lower role selected
+from the floating mode control is persisted in the `pmc-plan-admin-mode`
+cookie. Every protected route uses the real role unless debug mode is active,
+then derives an effective role from both cookies. The selected mode can only
+reduce permissions and can never elevate a session, even if either cookie is
+forged.
+
+The Administration settings tab is the only client-side exception: it remains
+available from the real administration role so the user can leave a lower
+preview mode or disable debug mode. Its protected content and actions still
+use the effective role. Disabling debug mode immediately restores the real
+role and hides the floating mode control.
+
+---
+
+### GET `/admin/users`
+
+Returns a paginated, read-only list of registered users for the settings
+administration view. The authenticated session must have the `admin` or
+`super_admin` role.
+
+**Parameters:**
+- `page` (integer, optional) - One-based page number. Defaults to `1`.
+- `query` (string, optional) - Case-insensitive search across Discord display
+  name, Discord username, Minecraft name, and Minecraft UUID.
+- `role` (`all`, `pending`, or `administrators`, optional) - Account role filter.
+  `pending` returns accounts waiting for approval.
+  `administrators` includes both `admin` and `super_admin`. Defaults to `all`.
+
+**Internal logic:**
+- Resolves the effective request role and rejects non-administration modes with
+  `403`.
+- Validates and normalizes query parameters with Zod.
+- Reads users in reverse registration order with 20 records per page.
+- Runs the page query and total count in one Prisma transaction.
+- Returns only account summary fields; OAuth tokens and session records are
+  never exposed.
+
+**Response:**
+```json
+{
+  "users": [
+    {
+      "id": "user-id",
+      "name": "Display name",
+      "username": "discord_username",
+      "image": "https://cdn.discordapp.com/avatar.png",
+      "role": "user",
+      "minecraftUuid": "7d2159e8-1051-4c3e-b504-c279cadd4273",
+      "minecraftName": "_Suki_",
+      "minecraftLinkedAt": "2026-07-25T12:00:00.000Z",
+      "createdAt": "2026-06-01T12:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### PATCH `/admin/users/{id}/role`
+
+Approves a pending account or changes administrator rights.
+
+The endpoint accepts only `user` and `admin` as target roles:
+
+- An `admin` or `super_admin` can approve `pending -> user`.
+- Only a `super_admin` can promote `user -> admin` or demote `admin -> user`.
+- Super-admin accounts cannot be created, modified, or demoted through the
+  application; their role is managed directly in the database.
+
+**Request:**
+```json
+{
+  "role": "admin"
+}
+```
+
+**Internal logic:**
+- Resolves the effective request role and rejects non-administration modes with
+  `403`.
+- Validates the body with Zod and rejects unsupported roles with `400`.
+- Returns `404` when the target user does not exist.
+- Applies the role transition matrix and rejects unauthorized transitions with
+  `403`.
+- Updates the role through Prisma and returns the resulting user ID and role.
+- Authentication refreshes roles from Prisma for existing JWT sessions, so
+  promotions and demotions apply without requiring a new sign-in.
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "user-id",
+    "role": "admin"
+  }
+}
+```
+
+---
+
+### DELETE `/admin/users/{id}`
+
+Permanently deletes a registered account from the administration settings.
+
+**Optional request:**
+```json
+{
+  "transferToUserId": "next-primary-manager-user-id"
+}
+```
+
+`transferToUserId` is required only when the account remains the primary
+manager of one or more map entries or spaces.
+
+**Internal logic:**
+- Resolves the effective request role and rejects non-administration modes with
+  `403`.
+- Allows an `admin` to delete `pending` and `user` accounts.
+- Allows a `super_admin` to also delete `admin` accounts.
+- Prevents administrators from deleting their own account.
+- Prevents deleting a `super_admin` account through the application.
+- Returns `404` when the target account does not exist.
+- Runs map-entry and space reassignment with account deletion in one serializable
+  transaction.
+- Returns a structured `409` response when primary managed content exists and no
+  transfer target was provided. The administration UI uses this response to
+  open the Discord account selector.
+- Validates that the transfer target is an approved account and is different
+  from the deleted account.
+- Removes the target from each secondary-manager relation before promoting it
+  to primary manager.
+- Adds the target's linked Minecraft profile as a public owner when it is not
+  already present.
+- Deletes against the previously read role to prevent a concurrent role change
+  from bypassing the hierarchy.
+- Deletes related OAuth accounts, sessions, and Minecraft linking requests
+  through Prisma cascading relations.
+- Returns the updated management records for every affected map entry so the
+  client can patch its caches without reloading the map.
+
+**Response:**
+```json
+{
+  "message": "Compte supprimé.",
+  "transferredEntryCount": 2,
+  "transferredSpaceCount": 1,
+  "managementUpdates": []
+}
+```
+
+**Transfer-required response:**
+```json
+{
+  "error": "Un nouveau gestionnaire principal doit être sélectionné.",
+  "code": "PRIMARY_MANAGEMENT_TRANSFER_REQUIRED",
+  "primaryManagedContent": {
+    "places": 2,
+    "portals": 1,
+    "spaces": 1
+  }
+}
+```
+
+---
+
+## Map Entry Management
+
+`MapEntry` centralizes permissions and public ownership for both places and
+portals. Browser routes use the map-entry ID returned by `GET /places` and
+`GET /portals`.
+
+### GET `/map-entries/{id}/management`
+
+Returns the complete management state to the primary manager, secondary
+managers, or an administrator.
+
+**Response:**
+```json
+{
+  "access": {
+    "mapEntryId": "map-entry-id",
+    "primaryManagerId": "primary-user-id",
+    "managerIds": ["secondary-user-id"]
+  },
+  "lastEditor": {
+    "id": "editor-user-id",
+    "name": "Display name",
+    "username": "discord_username",
+    "image": "https://cdn.discordapp.com/avatar.png",
+    "editedAt": "2026-07-28T12:00:00.000Z"
+  },
+  "primaryManager": {
+    "id": "primary-user-id",
+    "name": "Display name",
+    "username": "discord_username",
+    "image": "https://cdn.discordapp.com/avatar.png",
+    "role": "user",
+    "minecraftProfile": {
+      "uuid": "7d2159e8-1051-4c3e-b504-c279cadd4273",
+      "name": "_Suki_"
+    }
+  },
+  "managers": [],
+  "owners": []
+}
+```
+
+`lastEditor.editedAt` is the map entry audit timestamp. It is updated together
+with the last editor for content, manager, owner, and primary manager changes.
+
+Map-entry management has no independent mutation endpoint. The edit form keeps
+content, managers, owners, and an optional primary-manager transfer in one
+draft. `PUT /places/{slug}` and `PUT /portals/{slug}` persist that complete
+draft through the same database transaction as the public content fields.
+
+Managed content write payloads share the same text limits as the creation and
+modification interface: names and slugs accept 40 characters, long
+descriptions accept 2,000 characters, and short labels such as service
+subtitles and payment terms accept 100 characters. Custom trade item names
+accept 200 characters.
+
+The update management object contains the desired final state:
+
+```json
+{
+  "management": {
+    "primaryManagerId": "primary-user-id",
+    "managerIds": ["secondary-user-id"],
+    "owners": [
+      {
+        "uuid": "7d2159e8-1051-4c3e-b504-c279cadd4273",
+        "name": "_Suki_"
+      }
+    ],
+    "excludedOwnerUuids": [],
+    "transferConfirmation": "@next_primary_username"
+  }
+}
+```
+
+`transferConfirmation` is required only when `primaryManagerId` changes. It
+must exactly match the target Discord username with its leading `@`.
+
+**Internal logic:**
+- Primary and secondary managers can replace the public owner list.
+- Only the current primary manager or an administration role can change the
+  Discord team or transfer primary management.
+- Every desired manager must still be an approved account.
+- Existing Minecraft UUIDs are read from the local profile table. A newly
+  submitted profile is resolved through Mojang and its returned UUID must match
+  the submitted UUID before it can be stored.
+- Linked Minecraft profiles of desired managers are automatically included
+  unless their UUID is explicitly listed in `excludedOwnerUuids`.
+- Removing a Discord manager does not implicitly remove their Minecraft owner
+  entry when that owner remains in the submitted final list.
+- Manager and owner relations are replaced from the validated final state, and
+  the authenticated actor becomes the last editor.
+
+### GET `/users/search`
+
+Searches approved Discord accounts by display name or username for the manager
+picker. The query is case-insensitive and accepts usernames with or without
+their leading `@`. Requires an authenticated, approved account and returns at
+most eight results, including each user's optional linked Minecraft profile.
+
+### POST `/minecraft/profiles/resolve`
+
+Resolves a valid Minecraft player name to its canonical name and formatted
+UUID. Requires an authenticated, approved account. It is used by the creation
+and modification forms before the final place or portal transaction.
+
+---
+
 ### GET `/places`
 
-Returns a list of all approved places stored in the Prisma-backed database.
+Returns all places stored in the Prisma-backed database. Content is immediately
+visible because write access is granted at the user level instead of requiring
+approval for each place.
 
 **Parameters:**
 None
@@ -386,13 +748,46 @@ None
       "https://cdn.example.com/village_suki.png",
       "https://cdn.example.com/village_suki_2.png"
     ],
-    "owners": ["Suki"],
+    "owners": [
+      {
+        "uuid": "7d2159e8-1051-4c3e-b504-c279cadd4273",
+        "name": "_Suki_"
+      }
+    ],
+    "mapEntryId": "map-entry-id",
+    "primaryManagerId": "user-id",
+    "primaryManager": {
+      "id": "user-id",
+      "name": "Display name",
+      "username": "discord_username",
+      "image": "https://cdn.discordapp.com/avatar.png"
+    },
+    "managerIds": ["secondary-manager-id"],
+    "space": {
+      "id": "space-id",
+      "slug": "quartier-central",
+      "name": "Quartier central",
+      "color": "#3B82F6",
+      "logoUrl": "https://example.com/logo.png",
+      "logoBackground": "color",
+      "logoZoom": 1.5,
+      "discordUrl": "https://discord.gg/quartier-central"
+    },
+    "lastEditor": {
+      "id": "editor-user-id",
+      "name": "Display name",
+      "username": "discord_username",
+      "image": "https://cdn.discordapp.com/avatar.png",
+      "editedAt": "2026-07-28T12:00:00.000Z"
+    },
     "discord": "https://discord.gg/exemple123",
+    "discordOverride": null,
     "trade": [
       {
         "gives": {"item_id": "emerald", "quantity": 5, "enchanted": true},
         "wants": {"item_id": "diamond", "quantity": 1, "enchanted": false},
-        "negotiable": false
+        "negotiable": false,
+        "description": "Available while stocks last."
       }
     ]
   }
@@ -405,6 +800,18 @@ For places in the Nether, `address` contains the nearest Nether highway address 
 
 Places can store up to 10 image URLs directly on the `Place.images` database field. Create and update payloads accept an `images` array; an empty or omitted array means the place has no image.
 
+Trade offers accept an optional `description` of up to 2,000 characters. Empty or
+whitespace-only values are stored as `null` and returned as `null` by `GET /places`.
+
+Every place exposes its optional `space` summary. `discordOverride` is the
+place-specific stored URL, while `discord` is the effective public URL:
+`discordOverride`, then the associated space URL, then `null`.
+`primaryManager` exposes the compact Discord identity already loaded with the
+map entry; it does not require an additional user query. When the primary
+manager's linked Minecraft profile is present in `owners`, read serialization
+moves it to the first position while preserving the relative order of every
+other owner.
+
 **Examples:**
 ```bash
 # Get all places
@@ -413,30 +820,88 @@ curl "http://localhost:3000/api/places"
 
 ---
 
+### POST `/places`
+
+Creates a place and its management resource.
+
+**Internal logic:**
+- Returns `401` without an authenticated session.
+- Returns `403` when the authenticated account still has the `pending` role.
+- Accepts `user`, `admin`, and `super_admin` roles.
+- Creates one `MapEntry` with the session user as primary manager.
+- Initializes the last editor with the primary manager.
+- Accepts optional `management.managerIds`, `management.ownerNames`, and
+  `management.excludedOwnerUuids`.
+- Accepts an optional nullable `spaceId`. Attaching to a space requires the
+  authenticated effective role to manage that space.
+- Validates every selected Discord manager and resolves Minecraft owner names
+  through Mojang before opening the database transaction.
+- Automatically includes linked Minecraft profiles for selected managers unless
+  their UUID is explicitly excluded by the creation form.
+- Creates nested trade offers and items with the place.
+- Makes the place immediately available through `GET /places`.
+
+### PUT `/places/{slug}`
+
+Updates a place. The primary manager, secondary managers, and administration
+roles can edit it. The optional nullable `spaceId` changes or removes the
+association. A non-null association to a different space requires management
+access to the target space. The optional `management` object contains the
+complete desired manager and owner state described under Map Entry Management.
+Public fields, space association, management relations, and an optional primary
+transfer are committed atomically. The update records the authenticated actor
+as the last editor.
+
+### DELETE `/places/{slug}`
+
+Permanently deletes a place through its `MapEntry`. Only the primary manager
+or an administration role can delete it. Database cascades delete the place,
+trade offers, trade items, manager memberships, and public ownership links.
+
+---
+
 ### GET `/portals`
 
-Returns a list of all approved portals stored in the database.
+Returns all portals stored in the database. Portals are immediately visible
+because approval is handled at the account level.
 
 **Parameters:**
-- `merge-nether-portals` (boolean, optional) - If `true`, links Overworld portals with their corresponding Nether portals by matching their `id`. The matched Nether portal is added as a `nether-associate` object to the Overworld portal, and the original Nether portal is removed from the list to avoid redundancy.
+- `merge-nether-portals` (boolean, optional) - If `true`, groups both
+  endpoints of a linked portal through their shared `MapEntry`. The Nether
+  endpoint is exposed through `nether-associate` on the Overworld endpoint.
 
 #### Key Functions Used
 - `parseQueryParams()` in `app/api/utils/api-utils.ts`
 - `handleError()` in `app/api/utils/api-utils.ts`
-- `loadPortals()` in `app/api/utils/shared.ts`
-- `callLinkedPortal()` in `app/api/route/route-utils.ts` (only in merge mode)
+- `loadPortals()` in `app/api/utils/shared/loaders.ts`
+- `indexLinkedPortalPairs()` in `lib/portal/linked-portals.ts`
+- `normalizeLinkedPortalIdentities()` in `lib/portal/linked-portals.ts`
 
 #### Internal Logic
 
-- **Default Mode**: Returns a raw list of all approved portals fetched via Prisma.
+- **Shared identity normalization**:
+    - A linked pair uses its Overworld endpoint as the canonical source for
+      `id`, `slug`, and `name`.
+    - Both endpoints expose that same identity, including in default mode.
+      World-specific coordinates, descriptions, and addresses remain
+      independent.
+    - This read boundary also normalizes historical pairs whose duplicated
+      database identity fields predate atomic pair updates.
+- **Default Mode**: Returns one record per world after shared identity
+  normalization.
+- **Primary manager identity**: Every portal exposes the compact Discord
+  identity already loaded with its map entry under `primaryManager`.
+- **Owner ordering**: When the primary manager's linked Minecraft profile is
+  present in `owners`, read serialization places it first without changing the
+  relative order of the remaining owners.
 - **Merge Mode (`merge-nether-portals=true`)**:
-    - For each Overworld portal, it attempts to find a corresponding Nether portal.
-    - An Overworld portal is associated with a Nether portal only if **both** of these conditions are met:
-        1.  They share the **same `id`**.
-        2.  The Nether portal is the "official" linked portal according to Minecraft's mechanics (verified using the `/api/linked-portal` logic).
+    - Groups portals by their immutable `mapEntryId`.
+    - A group is linked when it contains one Overworld endpoint and one Nether
+      endpoint.
     - If an association is made, the Overworld portal is augmented with a `nether-associate` object. This object contains the associated Nether portal's `coordinates`, `address` (read directly from the portal data), and `description`.
     - The associated Nether portal is then excluded from the main list to avoid redundancy.
-    - Any Nether portals that do not have a matching and officially linked Overworld counterpart (i.e., unassociated Nether portals) are included in the final response as standalone entries.
+    - Standalone portals remain independent, even if another portal happens to
+      share their slug or be geographically close.
 
 **Response:**
 ```json
@@ -446,15 +911,38 @@ Returns a list of all approved portals stored in the database.
     "name": "Portail du Village",
     "world": "overworld",
     "coordinates": {"x": -120, "y": 65, "z": -220},
-    "description": "Portail près du village de départ"
-  },
-  {
-    "id": "portal_village_start",
-    "name": "Portail du Village",
-    "world": "nether",
-    "coordinates": {"x": -15, "y": 70, "z": -28},
-    "description": null,
-    "address": "Ouest 2"
+    "description": "Portail près du village de départ",
+    "nether-associate": {
+      "coordinates": {"x": -15, "y": 70, "z": -28},
+      "description": null,
+      "address": "Ouest 2"
+    },
+    "mapEntryId": "map-entry-id",
+    "primaryManagerId": "user-id",
+    "primaryManager": {
+      "id": "user-id",
+      "name": "Display name",
+      "username": "discord_username",
+      "image": "https://cdn.discordapp.com/avatar.png"
+    },
+    "managerIds": ["secondary-manager-id"],
+    "space": {
+      "id": "space-id",
+      "slug": "quartier-central",
+      "name": "Quartier central",
+      "color": "#3B82F6",
+      "logoUrl": null,
+      "logoBackground": "color",
+      "logoZoom": 1,
+      "discordUrl": "https://discord.gg/quartier-central"
+    },
+    "lastEditor": {
+      "id": "editor-user-id",
+      "name": "Display name",
+      "username": "discord_username",
+      "image": "https://cdn.discordapp.com/avatar.png",
+      "editedAt": "2026-07-28T12:00:00.000Z"
+    }
   },
   {
     "id": "portal_perdu_nether",
@@ -466,6 +954,43 @@ Returns a list of all approved portals stored in the database.
   }
 ]
 ```
+
+### POST `/portals`
+
+Creates either one portal or an Overworld/Nether linked pair.
+
+**Internal logic:**
+- Returns `401` without an authenticated session.
+- Returns `403` when the authenticated account still has the `pending` role.
+- Accepts `user`, `admin`, and `super_admin` roles.
+- Creates one `MapEntry` with the session user as primary manager.
+- Initializes the last editor with the primary manager.
+- Applies the same optional creation management payload as `POST /places`.
+- Accepts the same optional nullable `spaceId` and target-space permission
+  checks as `POST /places`.
+- Creates linked portal pairs in one Prisma transaction.
+- Both endpoints of a linked pair reference the same `MapEntry`.
+- Makes created portals immediately available through `GET /portals`.
+
+### PUT `/portals/{slug}`
+
+Updates a single portal or a linked pair. The primary manager, secondary
+managers, and administration roles can edit it. Both linked endpoints share the
+same space association and last-editor audit through their common `MapEntry`.
+For a linked payload, both endpoints are resolved through that `MapEntry` and
+updated atomically by their immutable database IDs. Shared `name` and `slug`
+values are updated once across the complete `MapEntry`; world-specific fields
+are then updated on their respective endpoints. Renaming the pair therefore
+cannot update only one world or break its logical identity. The optional
+nullable `spaceId` follows the same rules as place updates. The optional
+`management` object also follows the place update contract and is committed in
+the same transaction as both portal endpoints.
+
+### DELETE `/portals/{slug}`
+
+Permanently deletes a single portal when `world` is provided, or the complete
+linked pair when `world` is omitted. Every selected `MapEntry` must be owned
+primarily by the authenticated user; administration roles can delete any pair.
 
 **Examples:**
 ```bash

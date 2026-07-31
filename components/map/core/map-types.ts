@@ -1,7 +1,16 @@
 import type React from 'react';
 import type { worldToMapPercent } from '@/lib/map/metadata';
+import type { SpaceLogoBackground } from '@/lib/spaces/types';
 
-export type InteractiveMapPointKind = 'place' | 'portal-overworld' | 'portal-nether';
+export type InteractiveMapPointKind = 'place' | 'portal-overworld' | 'portal-nether' | 'route';
+
+export interface MapTooltipSpaceLogo {
+  color: string;
+  logoBackground: SpaceLogoBackground;
+  logoSrc: string | null;
+  logoZoom: number;
+  name: string;
+}
 
 export interface InteractiveMapPoint {
   id: string;
@@ -10,7 +19,9 @@ export interface InteractiveMapPoint {
   kind: InteractiveMapPointKind;
   label?: string;
   iconSrc?: string;
+  markerColor?: string;
   previewImageSrc?: string;
+  spaceLogo?: MapTooltipSpaceLogo;
 }
 
 export type MapTooltip = {
@@ -19,8 +30,10 @@ export type MapTooltip = {
   pointTop: number;
   offset: number;
   label: string;
+  markerColor?: string;
   previewImageSrc?: string;
   previewImageAspectRatio?: number;
+  spaceLogo?: MapTooltipSpaceLogo;
   expanded: boolean;
 };
 

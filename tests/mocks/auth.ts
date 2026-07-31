@@ -1,9 +1,9 @@
-export const auth = async () => ({
+export const auth = jest.fn(async () => ({
   user: {
     id: 'test-user',
     role: 'admin',
   },
-});
+}));
 
 export const handlers = {};
 export const signIn = async () => undefined;

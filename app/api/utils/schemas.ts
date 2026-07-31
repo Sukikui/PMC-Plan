@@ -1,6 +1,16 @@
 import { z } from 'zod';
+import {
+  CONTENT_FIELD_LIMITS,
+} from '@/lib/content/constraints';
+import {
+  mapEntryCreationSchema,
+  mapEntryUpdateSchema,
+} from '@/lib/map-entry/schemas';
 import { DEFAULT_PLACE_CATEGORY, PLACE_CATEGORIES } from '@/lib/place/categories';
 import { MAX_PLACE_IMAGE_URLS, PLACE_IMAGE_URL_MAX_LENGTH } from '@/lib/place/images';
+import { MAX_TRADE_OFFER_DESCRIPTION_LENGTH } from '@/lib/trade-offers';
+import { discordUrlSchema } from '@/lib/validation/discord-url';
+import { slugSchema } from '@/lib/validation/slug';
 
 export const coordinateSchema = z.object({
   x: z.number(),
@@ -8,27 +18,22 @@ export const coordinateSchema = z.object({
   z: z.number(),
 });
 
-export const slugSchema = z
-  .string()
-  .min(1)
-  .max(64)
-  .regex(/^[a-z0-9-]+$/, 'Le slug ne doit contenir que des lettres minuscules, des chiffres et des tirets.');
-
-export const ownerSchema = z.string().min(1).max(64);
 export const tagSchema = z.string().min(1).max(32);
 export const placeImageUrlSchema = z.string().trim().url().max(PLACE_IMAGE_URL_MAX_LENGTH);
+export const mapEntrySpaceIdSchema = z.string().min(1).nullable().optional();
 
 export const tradeItemSchema = z.object({
   kind: z.enum(['gives', 'wants']),
   itemId: z.string().min(1).max(80),
   quantity: z.number().int().positive(),
   enchanted: z.boolean(),
-  customName: z.string().max(120).nullable().optional(),
+  customName: z.string().max(CONTENT_FIELD_LIMITS.customName).nullable().optional(),
 });
 
 export const tradeOfferSchema = z
   .object({
     negotiable: z.boolean(),
+    description: z.string().trim().max(MAX_TRADE_OFFER_DESCRIPTION_LENGTH).nullable().optional(),
     items: z.array(tradeItemSchema).min(1),
   })
   .superRefine((offer, ctx) => {
@@ -52,52 +57,73 @@ export const tradeOfferSchema = z
     }
   });
 
-export const CreatePlaceSchema = z.object({
+const placeSchema = z.object({
   slug: slugSchema,
-  name: z.string().min(1).max(120),
+  name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
   world: z.enum(['overworld', 'nether']),
   category: z.enum(PLACE_CATEGORIES).default(DEFAULT_PLACE_CATEGORY),
   coordinates: coordinateSchema,
-  description: z.string().max(2000).nullable().optional(),
+  description: z.string()
+    .max(CONTENT_FIELD_LIMITS.description)
+    .nullable()
+    .optional(),
   address: z.string().max(120).nullable().optional(),
-  owners: z.array(ownerSchema).optional(),
   tags: z.array(tagSchema).optional(),
-  discordUrl: z.string().url().max(256).nullable().optional(),
+  discordUrl: discordUrlSchema,
+  spaceId: mapEntrySpaceIdSchema,
   images: z.array(placeImageUrlSchema).max(MAX_PLACE_IMAGE_URLS).optional(),
   tradeOffers: z.array(tradeOfferSchema).optional(),
 });
 
-export const UpdatePlaceSchema = CreatePlaceSchema;
+export const CreatePlaceSchema = placeSchema.extend({
+  management: mapEntryCreationSchema.optional(),
+});
 
-export const singlePortalSchema = z.object({
+export const UpdatePlaceSchema = placeSchema.extend({
+  management: mapEntryUpdateSchema.optional(),
+});
+
+const singlePortalSchema = z.object({
   mode: z.literal('single'),
+  spaceId: mapEntrySpaceIdSchema,
   portal: z.object({
     slug: slugSchema,
-    name: z.string().min(1).max(120),
+    name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
     world: z.enum(['overworld', 'nether']),
     coordinates: coordinateSchema,
-    description: z.string().max(1000).optional(),
+    description: z.string()
+      .max(CONTENT_FIELD_LIMITS.description)
+      .optional(),
     address: z.string().max(120).optional(),
-    ownerNames: z.array(ownerSchema).optional(),
   }),
 });
 
-export const linkedPortalSchema = z.object({
+const linkedPortalSchema = z.object({
   mode: z.literal('linked'),
+  spaceId: mapEntrySpaceIdSchema,
   slug: slugSchema,
-  name: z.string().min(1).max(120),
-  owners: z.array(ownerSchema).optional(),
+  name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
   overworld: z.object({
     coordinates: coordinateSchema,
-    description: z.string().max(1000).optional(),
+    description: z.string()
+      .max(CONTENT_FIELD_LIMITS.description)
+      .optional(),
   }),
   nether: z.object({
     coordinates: coordinateSchema,
-    description: z.string().max(1000).optional(),
+    description: z.string()
+      .max(CONTENT_FIELD_LIMITS.description)
+      .optional(),
     address: z.string().max(120).optional(),
   }),
 });
 
-export const CreatePortalSchema = z.discriminatedUnion('mode', [singlePortalSchema, linkedPortalSchema]);
+export const CreatePortalSchema = z.discriminatedUnion('mode', [
+  singlePortalSchema.extend({ management: mapEntryCreationSchema.optional() }),
+  linkedPortalSchema.extend({ management: mapEntryCreationSchema.optional() }),
+]);
 
-export const UpdatePortalSchema = CreatePortalSchema;
+export const UpdatePortalSchema = z.discriminatedUnion('mode', [
+  singlePortalSchema.extend({ management: mapEntryUpdateSchema.optional() }),
+  linkedPortalSchema.extend({ management: mapEntryUpdateSchema.optional() }),
+]);

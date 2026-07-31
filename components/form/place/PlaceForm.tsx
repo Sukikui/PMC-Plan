@@ -1,17 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { themeColors } from '@/lib/theme-colors';
-import { generateFormId, slugify, parseCoordinateTriplet, type CoordinatesInput } from '../common/form-utils';
+import { createPlaceSnapshot } from '../common/form-change-detection';
+import { generateFormId, parseCoordinateTriplet, type CoordinatesInput } from '../common/form-utils';
 import { useEntityForm } from '../common/useEntityForm';
+import { useFormSubmission } from '../common/useFormSubmission';
 import FormActions from '../common/FormActions';
 import CommonFields from '../common/CommonFields';
+import FormSection from '../common/FormSection';
+import SpaceAssociationField from '../association/SpaceAssociationField';
 import TagInput from '../common/TagInput';
 import { useExistingTags } from '../common/useExistingTags';
 import { useNetherAddress } from '../nether/NetherAddressField';
+import MapEntryManagementFields from '../management/MapEntryManagementFields';
 import PlaceCategorySelector from './PlaceCategorySelector';
 import PlaceImagesSection from './PlaceImagesSection';
 import PlaceTradeOffersSection from './PlaceTradeOffersSection';
+import PlaceDiscordField from './PlaceDiscordField';
 import PlaceWorldFields from './PlaceWorldFields';
 import {
   DEFAULT_PLACE_CATEGORY,
@@ -19,6 +24,16 @@ import {
   type PlaceCategory,
 } from '@/lib/place/categories';
 import { MAX_PLACE_IMAGE_URLS, normalizePlaceImages } from '@/lib/place/images';
+import {
+  emptyMapEntryDraft,
+  getMapEntryDraftSnapshot,
+  toMapEntryCreationPayload,
+  toMapEntryUpdatePayload,
+} from '@/lib/map-entry/types';
+import {
+  buildTradeOffersPayload,
+  getTradeOffersValidationError,
+} from './place-offer-payload';
 import {
   blankCoords,
   createImageInput,
@@ -28,7 +43,9 @@ import {
   type FormTradeOffer,
   type InitialPlaceData,
   type PlaceFormPayload,
+  type UpdateTradeOffer,
 } from './place-form-types';
+import type { SpaceReference } from '@/lib/spaces/types';
 
 export type { InitialPlaceData, PlaceFormPayload } from './place-form-types';
 
@@ -37,10 +54,21 @@ interface PlaceFormProps {
   initialData?: InitialPlaceData;
   onSubmit: (payload: PlaceFormPayload) => Promise<void>;
   onCancel: () => void;
+  onDelete?: () => Promise<void>;
 }
 
-export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCancel }: PlaceFormProps) {
-  const { name, setName, slug, setSlug, slugManuallyEdited, setSlugManuallyEdited, ownersInput, setOwnersInput, ownersList, description, setDescription } = useEntityForm(initialData?.name, initialData?.id, initialData?.owners, initialData?.description);
+export default function PlaceForm({
+  mode = 'add',
+  initialData,
+  onSubmit,
+  onCancel,
+  onDelete,
+}: PlaceFormProps) {
+  const fields = useEntityForm(
+    initialData?.name,
+    initialData?.id,
+    initialData?.description,
+  );
   const [placeWorld, setPlaceWorld] = useState<'overworld' | 'nether'>(initialData?.world === 'nether' ? 'nether' : 'overworld');
   const [placeCategory, setPlaceCategory] = useState<PlaceCategory>(
     initialData?.category && isPlaceCategory(initialData.category)
@@ -61,10 +89,19 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
     initialData?.tags?.map((tag) => tag.trim()).filter((tag) => tag.length > 0) || []
   );
   const { suggestions: existingTags } = useExistingTags();
-  const [placeDiscordUrl, setPlaceDiscordUrl] = useState(initialData?.discord || '');
+  const [selectedSpace, setSelectedSpace] = useState<SpaceReference | null>(
+    initialData?.space ?? null,
+  );
+  const [placeDiscordUrl, setPlaceDiscordUrl] = useState(
+    initialData?.discordOverride
+      ?? (initialData?.space ? '' : initialData?.discord ?? ''),
+  );
+  const [discordOverrideEnabled, setDiscordOverrideEnabled] = useState(
+    Boolean(initialData?.discordOverride) || !initialData?.space?.discordUrl,
+  );
   const [placeImageInputs, setPlaceImageInputs] = useState<FormPlaceImage[]>(() => {
     const images = normalizePlaceImages(initialData?.images);
-    return images.length > 0 ? images.map((url) => createImageInput(url)) : [createImageInput()];
+    return images.map((url) => createImageInput(url));
   });
   const [placeImagePreviewErrors, setPlaceImagePreviewErrors] = useState<Record<string, boolean>>({});
   const [placeTradeOffers, setPlaceTradeOffers] = useState<FormTradeOffer[]>(
@@ -75,8 +112,42 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
       wants: { ...offer.wants, quantity: String(offer.wants.quantity), custom_name: offer.wants.custom_name ?? null },
     })) || []
   );
-  const [placeSubmitting, setPlaceSubmitting] = useState(false);
-  const [placeSubmitError, setPlaceSubmitError] = useState<string | null>(null);
+  const [managementDraft, setManagementDraft] = useState(emptyMapEntryDraft);
+  const [managementReady, setManagementReady] = useState(mode === 'add');
+  const discordOverrideUrl = selectedSpace?.discordUrl && !discordOverrideEnabled
+    ? null
+    : placeDiscordUrl.trim() || null;
+  const snapshot = {
+    ...createPlaceSnapshot({
+      address: placeAddress.value,
+      category: placeCategory,
+      coordinates: placeCoords,
+      description: fields.description,
+      discordUrl: discordOverrideUrl ?? '',
+      images: placeImageInputs,
+      name: fields.name,
+      offers: placeTradeOffers,
+      slugSource: fields.input.slug,
+      spaceId: selectedSpace?.id ?? null,
+      tags: placeTags,
+      world: placeWorld,
+    }),
+    management: getMapEntryDraftSnapshot(managementDraft),
+  };
+  const parsedCoords = parseCoordinateTriplet(placeCoords);
+  const hasInvalidImage = placeImageInputs.some((image) => (
+    image.url.trim() && placeImagePreviewErrors[image.id]
+  ));
+  const tradeOffersError = getTradeOffersValidationError(placeTradeOffers);
+  const submission = useFormSubmission({
+    isReady: managementReady,
+    isValid: fields.isValid
+      && parsedCoords !== null
+      && !hasInvalidImage
+      && tradeOffersError === null,
+    mode,
+    snapshot,
+  });
 
   const updatePlaceImageUrl = (imageId: string, url: string) => {
     setPlaceImageInputs((prev) => prev.map((image) => image.id === imageId ? { ...image, url } : image));
@@ -84,15 +155,15 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
   };
 
   const addPlaceImage = () => {
+    const image = createImageInput();
     setPlaceImageInputs((prev) => (
-      prev.length >= MAX_PLACE_IMAGE_URLS ? prev : [...prev, createImageInput()]
+      prev.length >= MAX_PLACE_IMAGE_URLS ? prev : [...prev, image]
     ));
+    return image.id;
   };
 
   const removePlaceImage = (imageId: string) => {
-    setPlaceImageInputs((prev) => (
-      prev.length === 1 ? [createImageInput()] : prev.filter((image) => image.id !== imageId)
-    ));
+    setPlaceImageInputs((prev) => prev.filter((image) => image.id !== imageId));
     setPlaceImagePreviewErrors((prev) => {
       const next = { ...prev };
       delete next[imageId];
@@ -113,101 +184,102 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
     )));
   };
 
-  const handlePlaceSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (placeSubmitting) return;
-    setPlaceSubmitError(null);
-
-    const formPayload = buildPlacePayload();
-    if (!formPayload) return;
-
-    setPlaceSubmitting(true);
-    await onSubmit(formPayload);
-    setPlaceSubmitting(false);
+  const updateTradeOffer: UpdateTradeOffer = (offerId, field, value) => {
+    setPlaceTradeOffers((prev) => prev.map((offer) => (
+      offer.id === offerId ? { ...offer, [field]: value } : offer
+    )));
   };
 
-  const buildPlacePayload = (): PlaceFormPayload | null => {
-    if (!name.trim()) {
-      setPlaceSubmitError('Le nom du lieu est requis.');
-      return null;
-    }
+  const handlePlaceSubmit = async (event: React.FormEvent) => {
+    await submission.submit(event, () => onSubmit(buildPlacePayload()));
+  };
 
-    const targetSlug = slugify(slugManuallyEdited ? slug : name);
-    if (!targetSlug) {
-      setPlaceSubmitError('Veuillez renseigner un identifiant valide.');
-      return null;
+  const changeSpace = (space: SpaceReference | null) => {
+    setSelectedSpace(space);
+    if (!space?.discordUrl) {
+      setDiscordOverrideEnabled(true);
+    } else if (!placeDiscordUrl.trim()) {
+      setDiscordOverrideEnabled(false);
     }
+  };
 
-    const coords = parseCoordinateTriplet(placeCoords);
-    if (!coords) {
-      setPlaceSubmitError('Les coordonnées du lieu sont invalides.');
-      return null;
+  const buildPlacePayload = (): PlaceFormPayload => {
+    if (!parsedCoords) {
+      throw new Error('Les coordonnées du lieu sont invalides.');
     }
-
-    const tradeOffersPayload = buildTradeOffersPayload(placeTradeOffers, setPlaceSubmitError);
-    if (!tradeOffersPayload) return null;
 
     const images = normalizePlaceImages(placeImageInputs.map((image) => image.url));
-    const hasInvalidImagePreview = placeImageInputs.some((image) =>
-      image.url.trim() && placeImagePreviewErrors[image.id]
-    );
-    if (hasInvalidImagePreview) {
-      setPlaceSubmitError('L\'aperçu d\'une image est invalide. Vérifiez l\'URL ou retirez l\'image concernée.');
-      return null;
+    if (hasInvalidImage) {
+      throw new Error(
+        'L’aperçu d’une image est invalide. Vérifiez l’URL ou retirez l’image concernée.',
+      );
     }
 
     return {
-      slug: targetSlug,
-      name: name.trim(),
+      slug: fields.input.slug,
+      name: fields.input.name,
       world: placeWorld,
       category: placeCategory,
-      coordinates: coords,
-      description: description.trim() || null,
+      coordinates: parsedCoords,
+      description: fields.input.description || null,
       address: placeWorld === 'nether' ? (placeAddress.value.trim() || null) : null,
-      owners: ownersList,
       tags: placeTags,
-      discordUrl: placeDiscordUrl.trim() || null,
+      discordUrl: discordOverrideUrl,
+      spaceId: selectedSpace?.id ?? null,
       images,
-      tradeOffers: tradeOffersPayload,
+      management: mode === 'add'
+        ? toMapEntryCreationPayload(managementDraft)
+        : toMapEntryUpdatePayload(managementDraft),
+      tradeOffers: buildTradeOffersPayload(placeTradeOffers),
     };
   };
 
   const handlePlaceDelete = async () => {
-    if (!initialData?.id) return;
-
-    setPlaceSubmitting(true);
-    try {
-      const response = await fetch(`/api/places/${initialData.id}`, { method: 'DELETE' });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la suppression du lieu.');
-      }
-      onCancel();
-    } catch (error: unknown) {
-      setPlaceSubmitError(error instanceof Error ? error.message : 'An unknown error occurred');
-    } finally {
-      setPlaceSubmitting(false);
-    }
+    if (!onDelete) return;
+    await submission.execute(onDelete);
   };
 
   return (
     <form className="space-y-5" onSubmit={handlePlaceSubmit}>
-      <CommonFields
-        name={name}
-        setName={setName}
-        slug={slug}
-        setSlug={setSlug}
-        slugManuallyEdited={slugManuallyEdited}
-        setSlugManuallyEdited={setSlugManuallyEdited}
-        ownersInput={ownersInput}
-        setOwnersInput={setOwnersInput}
-        description={description}
-        setDescription={setDescription}
-        namePlaceholder="Marché impérial de Valnyfrost"
-        slugPlaceholder="valny-marche-imperial"
-      />
+      <FormSection title="Informations générales">
+        <CommonFields
+          afterSlug={(
+            <>
+              <SpaceAssociationField
+                disabled={submission.isSubmitting}
+                onChange={changeSpace}
+                value={selectedSpace}
+              />
+              <PlaceDiscordField
+                disabled={submission.isSubmitting}
+                onModeChange={setDiscordOverrideEnabled}
+                onValueChange={setPlaceDiscordUrl}
+                overrideEnabled={discordOverrideEnabled}
+                space={selectedSpace}
+                value={placeDiscordUrl}
+              />
+            </>
+          )}
+          descriptionPlaceholder="Présentez rapidement votre lieu, ses services et comment y accéder."
+          disabled={submission.isSubmitting}
+          form={fields}
+          namePlaceholder="Marché impérial de Valnyfrost"
+          slugPlaceholder="valny-marche-imperial"
+        />
+      </FormSection>
 
-      <div className="space-y-4">
+      <FormSection title="Gestion">
+        <MapEntryManagementFields
+          disabled={submission.isSubmitting}
+          mapEntryId={initialData?.mapEntryId}
+          mode={mode}
+          draft={managementDraft}
+          onDraftChange={setManagementDraft}
+          onReadyChange={setManagementReady}
+        />
+      </FormSection>
+
+      <FormSection title="Présentation">
         <PlaceCategorySelector value={placeCategory} onChange={setPlaceCategory} />
         <TagInput
           label="Tags"
@@ -224,101 +296,39 @@ export default function PlaceForm({ mode = 'add', initialData, onSubmit, onCance
           onRemove={removePlaceImage}
           onUpdate={updatePlaceImageUrl}
         />
-        <div className="space-y-1">
-          <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Lien Discord (optionnel)</label>
-          <input
-            className={`${themeColors.input.search} border ${themeColors.util.roundedLg} px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`}
-            value={placeDiscordUrl}
-            onChange={(event) => setPlaceDiscordUrl(event.target.value)}
-            placeholder="https://discord.gg/votre-serveur"
-            inputMode="url"
-          />
-        </div>
-      </div>
+      </FormSection>
 
-      <PlaceWorldFields
-        address={placeAddress}
-        coords={placeCoords}
-        setCoords={setPlaceCoords}
-        world={placeWorld}
-        setWorld={setPlaceWorld}
-      />
+      <FormSection title="Localisation">
+        <PlaceWorldFields
+          address={placeAddress}
+          coords={placeCoords}
+          setCoords={setPlaceCoords}
+          world={placeWorld}
+          setWorld={setPlaceWorld}
+        />
+      </FormSection>
       <PlaceTradeOffersSection
         offers={placeTradeOffers}
-        onAdd={() => setPlaceTradeOffers((prev) => [...prev, createTradeOffer()])}
-        onRemove={(offerId) => setPlaceTradeOffers((prev) => prev.filter((offer) => offer.id !== offerId))}
-        onSetNegotiable={(offerId, negotiable) => {
-          setPlaceTradeOffers((prev) => prev.map((offer) => offer.id === offerId ? { ...offer, negotiable } : offer));
+        onAdd={() => {
+          const offer = createTradeOffer();
+          setPlaceTradeOffers((prev) => [...prev, offer]);
+          return offer.id;
         }}
+        onRemove={(offerId) => setPlaceTradeOffers((prev) => prev.filter((offer) => offer.id !== offerId))}
+        onUpdateOffer={updateTradeOffer}
         onUpdateItem={updateTradeItem}
       />
 
-      {placeSubmitError && (
-        <div className={`text-sm ${themeColors.feedback.errorText}`}>{placeSubmitError}</div>
-      )}
-
       <FormActions
+        canSubmit={submission.canSubmit}
+        error={submission.error}
         onCancel={onCancel}
-        isSubmitting={placeSubmitting}
-        submitText={mode === 'add' ? 'Créer le lieu' : 'Modifier le lieu'}
-        submittingText={mode === 'add' ? 'Création…' : 'Modification…'}
-        onDelete={mode === 'edit' ? handlePlaceDelete : undefined}
+        isSubmitting={submission.isSubmitting}
+        mode={mode}
+        onDelete={mode === 'edit' && onDelete ? handlePlaceDelete : undefined}
         entityType="place"
         entitySlug={initialData?.id || ''}
       />
     </form>
   );
-}
-
-function buildTradeOffersPayload(
-  offers: FormTradeOffer[],
-  setError: (message: string) => void
-): PlaceFormPayload['tradeOffers'] | null {
-  for (const offer of offers) {
-    const givesId = offer.gives.item_id.trim();
-    const givesQty = Number.parseInt(String(offer.gives.quantity), 10);
-    if (!givesId) {
-      setError('Chaque offre doit préciser au moins un objet proposé.');
-      return null;
-    }
-    if (!Number.isFinite(givesQty) || givesQty <= 0) {
-      setError('La quantité proposée doit être un entier positif.');
-      return null;
-    }
-
-    if (!offer.negotiable) {
-      const wantsId = offer.wants.item_id.trim();
-      const wantsQty = Number.parseInt(String(offer.wants.quantity), 10);
-      if (!wantsId) {
-        setError('Précisez l\'objet demandé ou marquez l\'offre comme négociable.');
-        return null;
-      }
-      if (!Number.isFinite(wantsQty) || wantsQty <= 0) {
-        setError('La quantité demandée doit être un entier positif.');
-        return null;
-      }
-    }
-  }
-
-  return offers.map((offer) => ({
-    negotiable: offer.negotiable ?? false,
-    items: [
-      {
-        kind: 'gives',
-        itemId: offer.gives.item_id.trim(),
-        quantity: Math.max(1, Number.parseInt(String(offer.gives.quantity), 10) || 1),
-        enchanted: offer.gives.enchanted,
-        customName: offer.gives.custom_name?.trim() || null,
-      },
-      ...(!offer.negotiable && offer.wants.item_id.trim()
-        ? [{
-            kind: 'wants' as const,
-            itemId: offer.wants.item_id.trim(),
-            quantity: Math.max(1, Number.parseInt(String(offer.wants.quantity), 10) || 1),
-            enchanted: offer.wants.enchanted,
-            customName: offer.wants.custom_name?.trim() || null,
-          }]
-        : []),
-    ],
-  }));
 }

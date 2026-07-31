@@ -8,7 +8,7 @@ export type {
   PortalWithDistance,
   TradeItem,
   TradeOffer,
-} from './shared/types';
+} from '@/lib/api/types';
 
 export {
   calculateEuclideanDistance,

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const payload = MineVerifyExpiredSchema.parse(await request.json());
-    markMineVerifyExpired(payload);
+    await markMineVerifyExpired(payload);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleMineVerifyRouteError(error, 'Impossible d’expirer la demande MineVerify.');

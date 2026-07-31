@@ -1,5 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { Place } from '@/app/api/utils/shared';
+import { useMemo } from 'react';
+import type { Place } from '@/lib/api/types';
+import { useInvalidatedCollection } from '@/components/ui/useInvalidatedCollection';
+import {
+  loadPlacesData,
+  subscribeToMainScreenDataInvalidation,
+} from '@/lib/preload/main-screen';
 
 const normalizeTag = (tag: string) => tag.trim();
 
@@ -19,39 +24,11 @@ const extractUniqueTags = (places: Place[]) => {
 };
 
 export function useExistingTags() {
-  const [tags, setTags] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/places');
-        if (!response.ok) {
-          throw new Error('Erreur de chargement des tags');
-        }
-        const data: Place[] = await response.json();
-        if (!cancelled) {
-          setTags(extractUniqueTags(data));
-        }
-      } catch {
-        if (!cancelled) {
-          setTags([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const suggestions = useMemo(() => tags, [tags]);
-
+  const { items, loading } = useInvalidatedCollection({
+    errorMessage: 'Impossible de charger les tags.',
+    loadItems: loadPlacesData,
+    subscribe: subscribeToMainScreenDataInvalidation,
+  });
+  const suggestions = useMemo(() => extractUniqueTags(items), [items]);
   return { suggestions, loading };
 }

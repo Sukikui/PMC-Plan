@@ -1,12 +1,18 @@
+'use client';
+
+import { useState } from 'react';
+import CrossIcon from '@/components/icons/CrossIcon';
+import PlusIcon from '@/components/icons/PlusIcon';
+import { imageUrlPlaceholder } from '@/components/form/common/form-placeholders';
+import { formInputClassName } from '@/components/form/common/form-styles';
 import { themeColors } from '@/lib/theme-colors';
 import { MAX_PLACE_IMAGE_URLS } from '@/lib/place/images';
 import type { FormPlaceImage } from './place-form-types';
-import { placeFormInputClass } from './place-form-types';
 
 interface PlaceImagesSectionProps {
   images: FormPlaceImage[];
   previewErrors: Record<string, boolean>;
-  onAdd: () => void;
+  onAdd: () => string;
   onPreviewError: (imageId: string) => void;
   onRemove: (imageId: string) => void;
   onUpdate: (imageId: string, url: string) => void;
@@ -20,94 +26,148 @@ export default function PlaceImagesSection({
   onRemove,
   onUpdate,
 }: PlaceImagesSectionProps) {
+  const [selectedImageId, setSelectedImageId] = useState<string | null>(
+    images[0]?.id ?? null,
+  );
+  const selectedImage = images.find((image) => image.id === selectedImageId) ?? null;
+  const selectedIndex = selectedImage
+    ? images.findIndex((image) => image.id === selectedImage.id)
+    : -1;
+
+  const addImage = () => {
+    setSelectedImageId(onAdd());
+  };
+
+  const removeImage = (imageId: string) => {
+    onRemove(imageId);
+    if (selectedImageId === imageId) {
+      setSelectedImageId(images.find((image) => image.id !== imageId)?.id ?? null);
+    }
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="space-y-1">
-        <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Images (optionnel)</label>
-        <p className={`text-xs ${themeColors.text.tertiary}`}>
-          Jusqu&apos;à {MAX_PLACE_IMAGE_URLS} images. La première image renseignée sera utilisée comme aperçu principal.
-        </p>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <span className={`text-xs font-medium ${themeColors.text.secondary}`}>Images (optionnel)</span>
+        <span className={`text-xs tabular-nums ${themeColors.text.tertiary}`}>
+          {images.length}/{MAX_PLACE_IMAGE_URLS}
+        </span>
       </div>
-      <div className="space-y-3">
+
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {images.map((image, index) => (
-          <PlaceImageInput
+          <PlaceImageThumbnail
             key={image.id}
             image={image}
             index={index}
             hasPreviewError={Boolean(previewErrors[image.id])}
+            selected={image.id === selectedImageId}
             onPreviewError={onPreviewError}
-            onRemove={onRemove}
-            onUpdate={onUpdate}
+            onRemove={removeImage}
+            onSelect={setSelectedImageId}
           />
         ))}
+
+        {images.length < MAX_PLACE_IMAGE_URLS && (
+          <button
+            type="button"
+            onClick={addImage}
+            className={`flex aspect-[4/3] flex-col items-center justify-center gap-1 border border-dashed text-xs ${themeColors.util.roundedLg} ${themeColors.transitionAll} ${themeColors.form.dashedAction}`}
+          >
+            <PlusIcon className="h-5 w-5" />
+            Ajouter
+          </button>
+        )}
       </div>
-      <button
-        type="button"
-        onClick={onAdd}
-        disabled={images.length >= MAX_PLACE_IMAGE_URLS}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-dashed ${themeColors.util.roundedLg} ${themeColors.transitionAll} ${
-          images.length >= MAX_PLACE_IMAGE_URLS
-            ? themeColors.form.dashedActionDisabled
-            : themeColors.form.dashedAction
-        }`}
-      >
-        Ajouter une image
-      </button>
+
+      {selectedImage && (
+        <div>
+          <label htmlFor={`place-image-${selectedImage.id}`} className="sr-only">
+            URL de l&apos;image {selectedIndex + 1}
+          </label>
+          <input
+            id={`place-image-${selectedImage.id}`}
+            className={formInputClassName}
+            value={selectedImage.url}
+            onChange={(event) => onUpdate(selectedImage.id, event.target.value)}
+            placeholder={selectedIndex === 0
+              ? imageUrlPlaceholder('image-principale')
+              : imageUrlPlaceholder('image-supplementaire')}
+            inputMode="url"
+          />
+          {previewErrors[selectedImage.id] && (
+            <p className={`mt-1 text-xs ${themeColors.feedback.errorText}`}>
+              Impossible de charger cette image. Vérifiez son URL ou retirez-la.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-function PlaceImageInput({
+function PlaceImageThumbnail({
   image,
   index,
   hasPreviewError,
+  selected,
   onPreviewError,
   onRemove,
-  onUpdate,
+  onSelect,
 }: {
   image: FormPlaceImage;
   index: number;
   hasPreviewError: boolean;
+  selected: boolean;
   onPreviewError: (imageId: string) => void;
   onRemove: (imageId: string) => void;
-  onUpdate: (imageId: string, url: string) => void;
+  onSelect: (imageId: string) => void;
 }) {
   const previewUrl = image.url.trim();
+  const label = index === 0 ? 'Image principale' : `Image ${index + 1}`;
 
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <input
-          className={placeFormInputClass}
-          value={image.url}
-          onChange={(event) => onUpdate(image.id, event.target.value)}
-          placeholder={index === 0 ? 'https://exemple.com/votre-image.png' : 'https://exemple.com/image-supplementaire.png'}
-          inputMode="url"
-        />
-        <button
-          type="button"
-          onClick={() => onRemove(image.id)}
-          className={`shrink-0 px-3 py-2 text-sm ${themeColors.button.ghost} ${themeColors.util.roundedLg} ${themeColors.transitionAll}`}
-        >
-          Retirer
-        </button>
-      </div>
-      {previewUrl && (
-        <div className={`relative overflow-hidden border ${themeColors.border.primary} ${themeColors.util.roundedLg} ${themeColors.panel.secondary} flex items-center justify-center max-w-xs`}>
-          {!hasPreviewError ? (
+    <div className="group relative">
+      <button
+        type="button"
+        aria-label={`Modifier ${label.toLowerCase()}`}
+        aria-pressed={selected}
+        onClick={() => onSelect(image.id)}
+        className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden border-2 ${themeColors.util.roundedLg} ${themeColors.transitionAll} ${themeColors.interactive.focusRing} ${
+          selected
+            ? themeColors.selection.place.active
+            : themeColors.form.imageThumbnailInactive
+        }`}
+      >
+        {previewUrl && !hasPreviewError ? (
+          <>
             <img
               src={previewUrl}
-              alt={`Aperçu ${index + 1} du lieu`}
-              className="max-h-64 w-auto object-contain"
+              alt=""
+              className="h-full w-full object-cover"
               onError={() => onPreviewError(image.id)}
             />
-          ) : (
-            <div className={`p-4 text-center text-xs ${themeColors.feedback.errorText}`}>
-              Impossible de charger cette image. Vérifiez l&apos;URL ou essayez une autre source.
-            </div>
-          )}
-        </div>
-      )}
+            {index === 0 && (
+              <span className={`absolute bottom-1.5 left-1.5 px-2 py-1 text-xs font-medium ${themeColors.util.roundedFull} ${themeColors.panel.tertiary} ${themeColors.blurSm} ${themeColors.text.secondary}`}>
+                Principale
+              </span>
+            )}
+          </>
+        ) : (
+          <span className={`px-2 text-center text-xs ${hasPreviewError ? themeColors.feedback.errorText : themeColors.text.tertiary}`}>
+            {hasPreviewError ? 'URL invalide' : label}
+          </span>
+        )}
+      </button>
+
+      <button
+        type="button"
+        aria-label={`Supprimer ${label.toLowerCase()}`}
+        onClick={() => onRemove(image.id)}
+        className={`absolute right-1 top-1 flex h-6 w-6 items-center justify-center opacity-80 hover:opacity-100 ${themeColors.util.roundedFull} ${themeColors.panel.tertiary} ${themeColors.blurSm} ${themeColors.text.secondary} ${themeColors.interactive.hoverText} ${themeColors.transitionAll}`}
+      >
+        <CrossIcon className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

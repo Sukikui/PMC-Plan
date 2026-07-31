@@ -43,24 +43,3 @@ export const getMapIconSrc = (category: MapIconCategory) => mapIconByCategory[ca
 
 export const isPlaceCategory = (value: string): value is PlaceCategory =>
   placeCategoryOptions.some((option) => option.value === value);
-
-export const getPlaceCategoryLabel = (category: PlaceCategory) =>
-  placeCategoryOptions.find((option) => option.value === category)?.label ?? category;
-
-export const getPlaceCategoryFromTags = (tags: string[] = []): PlaceCategory => {
-  const normalizedTags = tags.map((tag) => tag.trim().toLowerCase());
-
-  if (normalizedTags.includes('magasin')) {
-    return 'commerce';
-  }
-
-  if (normalizedTags.includes('ferme')) {
-    return 'ferme';
-  }
-
-  if (normalizedTags.includes('public')) {
-    return 'zone_communautaire';
-  }
-
-  return DEFAULT_PLACE_CATEGORY;
-};

@@ -1,8 +1,9 @@
 'use client';
 
-import AddPlaceButton from '@/components/AddPlaceButton';
+import AddContentButton from '@/components/AddContentButton';
 import RouteStepsPreview from '@/components/route/RouteStepsPreview';
-import type { Place, Portal } from '@/app/api/utils/shared';
+import EmptySearchResult from '@/components/ui/EmptySearchResult';
+import type { Place, Portal } from '@/lib/api/types';
 import type { RouteData } from '@/lib/route-planning';
 import { themeColors } from '@/lib/theme-colors';
 import { PlaceDestinationCard, PortalDestinationCard } from './DestinationCards';
@@ -63,15 +64,14 @@ export default function DestinationPanelContent({
 
   if (filteredPlaces.length === 0 && filteredPortals.length === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center py-12 ${themeColors.destinationPanel.emptyStateText} text-center space-y-4`}>
-        <p>Aucun résultat. (｡•́︿•̀｡)</p>
-        <AddPlaceButton className={`${themeColors.link} pl-3 pr-4 py-2 ${themeColors.util.roundedFull} ${themeColors.transitionAll} flex items-center gap-2`}>
+      <EmptySearchResult>
+        <AddContentButton>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-6-6h12" />
           </svg>
-          Ajouter un lieu ou un portail
-        </AddPlaceButton>
-      </div>
+          Ajouter du contenu
+        </AddContentButton>
+      </EmptySearchResult>
     );
   }
 

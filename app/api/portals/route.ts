@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   loadPortals, 
-  Portal,
   resolveNetherAddressForWorld
 } from '../utils/shared';
-import { callLinkedPortal } from '../route/route-utils';
-import { handleError, parseQueryParams, sanitizeOwners } from '../utils/api-utils';
+import { handleError, parseQueryParams } from '../utils/api-utils';
 import { z } from 'zod';
 import { auth } from '@/auth';
+import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { canContribute } from '@/lib/content-permissions';
+import { createMapEntry, MapEntryError } from '@/lib/map-entry/service';
+import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
+import { validateSpaceAssociation } from '@/lib/map-entry/space-association';
+import { MinecraftProfileError } from '@/lib/minecraft/profiles';
+import {
+  indexLinkedPortalPairs,
+  mergeLinkedPortalPair,
+} from '@/lib/portal/linked-portals';
 
 const QuerySchema = z.object({
   'merge-nether-portals': z.coerce.boolean().optional().default(false),
@@ -22,53 +30,15 @@ export async function GET(request: NextRequest) {
     const portals = await loadPortals();
 
     if (mergeNetherPortals) {
-      const overworldPortals = portals.filter(p => p.world === 'overworld');
-      const netherPortals = portals.filter(p => p.world === 'nether');
-      const netherPortalsMap = new Map(netherPortals.map(p => [p.id, p]));
-
-      const processedPortals: Portal[] = await Promise.all(overworldPortals.map(async owPortal => {
-        // Condition 1: Find candidate portal by shared ID
-        const candidatePortal = netherPortalsMap.get(owPortal.id);
-
-        if (candidatePortal) {
-            // Condition 2: Check if it's the "official" linked portal
-            const officialLinkedPortal = await callLinkedPortal(
-                owPortal.coordinates.x,
-                owPortal.coordinates.y,
-                owPortal.coordinates.z,
-                'overworld',
-                portals
-            );
-
-            // Check if both conditions are met (same ID and recognized as linked)
-            if (officialLinkedPortal && officialLinkedPortal.id === candidatePortal.id) {
-                // If yes, associate them
-                netherPortalsMap.delete(owPortal.id);
-                const netherAddress = await resolveNetherAddressForWorld(
-                  'nether',
-                  candidatePortal.coordinates,
-                  candidatePortal.address
-                );
-
-                return {
-                    ...owPortal,
-                    'nether-associate': {
-                        coordinates: candidatePortal.coordinates,
-                        address: netherAddress ?? '',
-                        description: candidatePortal.description
-                    }
-                };
-            }
-        }
-        
-        // If conditions are not met, return the overworld portal as is
-        return owPortal;
-      }));
-
-      // The remaining portals in the map are the un-associated nether portals
-      const unassociatedNetherPortals = Array.from(netherPortalsMap.values());
-
-      return NextResponse.json([...processedPortals, ...unassociatedNetherPortals]);
+      const pairs = indexLinkedPortalPairs(portals);
+      const mergedPortals = portals.flatMap((portal) => {
+        const pair = pairs.get(portal.mapEntryId);
+        if (!pair) return [portal];
+        return portal.world === 'overworld'
+          ? [mergeLinkedPortalPair(pair)]
+          : [];
+      });
+      return NextResponse.json(mergedPortals);
     }
 
     return NextResponse.json(portals);
@@ -88,13 +58,23 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
+    const actorRole = getEffectiveRequestRole(request, session.user.role);
+    if (!canContribute(actorRole)) {
+      return NextResponse.json(
+        { error: 'Ton compte doit être approuvé avant de pouvoir créer un portail.' },
+        { status: 403 },
+      );
+    }
 
     const json = await request.json();
     const payload = CreatePortalSchema.parse(json);
     const userId = session.user.id;
+    const management = await prepareMapEntryCreation(
+      payload.management,
+      payload.spaceId,
+    );
 
     if (payload.mode === 'single') {
-      const owners = sanitizeOwners(payload.portal.ownerNames);
       const slugValue = payload.portal.slug.toLowerCase();
       const address = await resolveNetherAddressForWorld(
         payload.portal.world,
@@ -102,20 +82,25 @@ export async function POST(request: NextRequest) {
         payload.portal.address
       );
 
-      const created = await prisma.portal.create({
-        data: {
-          slug: slugValue,
-          name: payload.portal.name,
-          world: payload.portal.world,
-          coordX: payload.portal.coordinates.x,
-          coordY: payload.portal.coordinates.y,
-          coordZ: payload.portal.coordinates.z,
-          description: payload.portal.description ?? null,
-          address,
-          ownerNames: owners,
-          status: 'pending',
-          createdById: userId,
-        },
+      const created = await prisma.$transaction(async (tx) => {
+        await validateSpaceAssociation(tx, {
+          userId,
+          role: actorRole,
+        }, management.spaceId);
+        const mapEntry = await createMapEntry(tx, userId, management);
+        return tx.portal.create({
+          data: {
+            slug: slugValue,
+            name: payload.portal.name,
+            world: payload.portal.world,
+            coordX: payload.portal.coordinates.x,
+            coordY: payload.portal.coordinates.y,
+            coordZ: payload.portal.coordinates.z,
+            description: payload.portal.description ?? null,
+            address,
+            mapEntryId: mapEntry.id,
+          },
+        });
       });
 
       return NextResponse.json(
@@ -133,7 +118,6 @@ export async function POST(request: NextRequest) {
     }
 
     // linked portals
-    const owners = sanitizeOwners(payload.owners);
     const slugValue = payload.slug.toLowerCase();
     const netherAddress = await resolveNetherAddressForWorld(
       'nether',
@@ -142,6 +126,11 @@ export async function POST(request: NextRequest) {
     );
 
     const result = await prisma.$transaction(async (tx) => {
+      await validateSpaceAssociation(tx, {
+        userId,
+        role: actorRole,
+      }, management.spaceId);
+      const mapEntry = await createMapEntry(tx, userId, management);
       const overworldPortal = await tx.portal.create({
         data: {
           slug: slugValue,
@@ -152,9 +141,7 @@ export async function POST(request: NextRequest) {
           coordZ: payload.overworld.coordinates.z,
           description: payload.overworld.description ?? null,
           address: null,
-          ownerNames: owners,
-          status: 'pending',
-          createdById: userId,
+          mapEntryId: mapEntry.id,
         },
       });
 
@@ -168,9 +155,7 @@ export async function POST(request: NextRequest) {
           coordZ: payload.nether.coordinates.z,
           description: payload.nether.description ?? null,
           address: netherAddress,
-          ownerNames: owners,
-          status: 'pending',
-          createdById: userId,
+          mapEntryId: mapEntry.id,
         },
       });
 
@@ -200,6 +185,9 @@ export async function POST(request: NextRequest) {
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'Un portail avec ce slug existe déjà pour ce monde.' }, { status: 409 });
+    }
+    if (error instanceof MinecraftProfileError || error instanceof MapEntryError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
     return handleError(error, 'Impossible de créer le portail');
   }

@@ -61,11 +61,11 @@ export const getFittedMapSize = (
 };
 
 export const getMaxZoom = (baseWidth: number, metadata: MapMetadata) => {
-  if (!baseWidth || metadata.width <= 0) {
+  if (!baseWidth || metadata.overview.width <= 0) {
     return MIN_ZOOM;
   }
 
-  const cellPixelSizeAtFit = baseWidth / metadata.width;
+  const cellPixelSizeAtFit = baseWidth / metadata.overview.width;
   return Math.max(MIN_ZOOM, MAX_MAP_CELL_PIXEL_SIZE / cellPixelSizeAtFit);
 };
 
@@ -74,11 +74,11 @@ export const getZoomForMapCellPixelSize = (
   metadata: MapMetadata,
   cellPixelSize: number
 ) => {
-  if (!baseWidth || metadata.width <= 0) {
+  if (!baseWidth || metadata.overview.width <= 0) {
     return MIN_ZOOM;
   }
 
-  return cellPixelSize / (baseWidth / metadata.width);
+  return cellPixelSize / (baseWidth / metadata.overview.width);
 };
 
 export const getPanForMapPosition = (
