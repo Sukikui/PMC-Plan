@@ -7,6 +7,7 @@ import { useOverlay } from '@/components/overlay/OverlayProvider';
 import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import { mapMetadataByWorld, NETHER_MAP_WORLD, OVERWORLD_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
 import { netherAxisLineOverlays } from '@/lib/map/nether-overlays';
+import type { MapRoutePath } from '@/lib/map/route-path';
 import { themeColors } from '@/lib/theme-colors';
 
 interface MainMapBackgroundProps {
@@ -14,6 +15,10 @@ interface MainMapBackgroundProps {
   onSelectItem?: SelectDestinationHandler;
   selectedId?: string;
   selectedType?: 'place' | 'portal';
+  routePath?: MapRoutePath | null;
+  activeRouteSegmentId?: string | null;
+  syncedPlayerUuid?: string | null;
+  linkedMinecraftUuid?: string | null;
 }
 
 export default function MainMapBackground({
@@ -21,6 +26,10 @@ export default function MainMapBackground({
   onSelectItem,
   selectedId,
   selectedType,
+  routePath,
+  activeRouteSegmentId,
+  syncedPlayerUuid,
+  linkedMinecraftUuid,
 }: MainMapBackgroundProps) {
   const { openPlaceInfo } = useOverlay();
   const { points, pointById, loading, error } = useWorldMapPoints(world);
@@ -56,6 +65,10 @@ export default function MainMapBackground({
         world={world}
         lineOverlays={lineOverlays}
         focusedPointId={focusedPointId}
+        routePath={routePath}
+        activeRouteSegmentId={activeRouteSegmentId}
+        syncedPlayerUuid={syncedPlayerUuid}
+        linkedMinecraftUuid={linkedMinecraftUuid}
         onPointSelect={(point) => {
           const selectedPoint = pointById.get(point.id);
           if (selectedPoint) {

@@ -25,7 +25,7 @@ export default function StartupScreen({ onUnlock, ready = true }: StartupScreenP
       <div className="absolute top-10">
         <div className="w-64 h-64">
           <img
-            src="/pmc_logo.png"
+            src="/branding/pmc/logo.png"
             alt="PMC Logo"
             className="w-full h-full object-contain"
             onError={(e) => {

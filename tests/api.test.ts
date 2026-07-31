@@ -167,6 +167,10 @@ describe('API Endpoints', () => {
         expect(place).toHaveProperty('tags');
         expect(place).toHaveProperty('description');
         expect(place).toHaveProperty('owners');
+        expect(place).toHaveProperty('primaryManager');
+        expect(place.primaryManager).toHaveProperty('id');
+        expect(place.primaryManager).toHaveProperty('name');
+        expect(place.primaryManager).toHaveProperty('image');
         expect(place).toHaveProperty('discord');
         expect(Array.isArray(place.tags)).toBe(true);
         expect(Array.isArray(place.owners)).toBe(true);
@@ -216,6 +220,10 @@ describe('API Endpoints', () => {
         expect(portal).toHaveProperty('world');
         expect(portal).toHaveProperty('coordinates');
         expect(portal).toHaveProperty('description');
+        expect(portal).toHaveProperty('primaryManager');
+        expect(portal.primaryManager).toHaveProperty('id');
+        expect(portal.primaryManager).toHaveProperty('name');
+        expect(portal.primaryManager).toHaveProperty('image');
         expect(portal.description === null || typeof portal.description === 'string').toBe(true);
       });
     });

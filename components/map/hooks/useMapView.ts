@@ -24,7 +24,9 @@ export const useMapView = (metadata: MapMetadata) => {
 
   const baseSize = useMemo(() => getFittedMapSize(viewport, metadata), [viewport, metadata]);
   const maxZoom = useMemo(() => getMaxZoom(baseSize.width, metadata), [baseSize.width, metadata]);
-  const mapCellPixelSize = baseSize.width > 0 ? (baseSize.width * zoom) / metadata.width : 0;
+  const mapCellPixelSize = baseSize.width > 0
+    ? (baseSize.width * zoom) / metadata.overview.width
+    : 0;
 
   const clampPan = useCallback((nextPan: MapPan, nextZoom: number) => {
     if (!viewport.width || !viewport.height || !baseSize.width || !baseSize.height) {

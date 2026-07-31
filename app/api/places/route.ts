@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadPlaces, resolveNetherAddressForWorld } from '../utils/shared';
-import { handleError, sanitizeOwners, sanitizeTags } from '../utils/api-utils';
+import { handleError, sanitizeTags } from '../utils/api-utils';
 import { z } from 'zod';
 import { auth } from '@/auth';
+import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { normalizePlaceImages } from '@/lib/place/images';
+import { canContribute } from '@/lib/content-permissions';
+import { buildTradeOffersCreateData } from '../utils/trade-offers';
+import { createMapEntry, MapEntryError } from '@/lib/map-entry/service';
+import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
+import { validateSpaceAssociation } from '@/lib/map-entry/space-association';
+import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 
 export async function GET() {
   try {
@@ -26,56 +33,57 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
+    const actorRole = getEffectiveRequestRole(request, session.user.role);
+    if (!canContribute(actorRole)) {
+      return NextResponse.json(
+        { error: 'Ton compte doit être approuvé avant de pouvoir créer un lieu.' },
+        { status: 403 },
+      );
+    }
 
     const json = await request.json();
     const payload = CreatePlaceSchema.parse(json);
 
-    const owners = sanitizeOwners(payload.owners);
     const tags = sanitizeTags(payload.tags);
     const description = payload.description?.trim() || null;
     const address = await resolveNetherAddressForWorld(payload.world, payload.coordinates, payload.address);
     const discordUrl = payload.discordUrl?.trim() || null;
     const images = normalizePlaceImages(payload.images);
 
-    const tradeOffersData = 
-      payload.tradeOffers?.map((offer) => ({
-        negotiable: offer.negotiable,
-        items: {
-          create: offer.items.map((item) => ({
-            kind: item.kind,
-            itemId: item.itemId,
-            quantity: item.quantity,
-            enchanted: item.enchanted,
-            customName: item.customName?.trim() || null,
-          })),
+    const tradeOffersData = buildTradeOffersCreateData(payload.tradeOffers);
+    const management = await prepareMapEntryCreation(
+      payload.management,
+      payload.spaceId,
+    );
+
+    const created = await prisma.$transaction(async (tx) => {
+      await validateSpaceAssociation(tx, {
+        userId: session.user.id,
+        role: actorRole,
+      }, management.spaceId);
+      const mapEntry = await createMapEntry(tx, session.user.id, management);
+      return tx.place.create({
+        data: {
+          slug: payload.slug.toLowerCase(),
+          name: payload.name,
+          world: payload.world,
+          category: payload.category,
+          coordX: payload.coordinates.x,
+          coordY: payload.coordinates.y,
+          coordZ: payload.coordinates.z,
+          description,
+          address,
+          images,
+          tags,
+          discordUrl,
+          mapEntryId: mapEntry.id,
+          tradeOffers: tradeOffersData.length
+            ? {
+                create: tradeOffersData,
+              }
+            : undefined,
         },
-      })) ?? [];
-
-    const placeData: Prisma.PlaceCreateInput = {
-      slug: payload.slug.toLowerCase(),
-      name: payload.name,
-      world: payload.world,
-      category: payload.category,
-      coordX: payload.coordinates.x,
-      coordY: payload.coordinates.y,
-      coordZ: payload.coordinates.z,
-      description,
-      address,
-      images,
-      tags,
-      ownerNames: owners,
-      discordUrl,
-      status: 'pending',
-      creator: { connect: { id: session.user.id } },
-      tradeOffers: tradeOffersData.length
-        ? {
-            create: tradeOffersData,
-          }
-        : undefined,
-    };
-
-    const created = await prisma.place.create({
-      data: placeData,
+      });
     });
 
     return NextResponse.json(
@@ -94,6 +102,9 @@ export async function POST(request: NextRequest) {
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'Un lieu avec cet identifiant existe déjà.' }, { status: 409 });
+    }
+    if (error instanceof MinecraftProfileError || error instanceof MapEntryError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
     return handleError(error, 'Impossible de créer le lieu');
   }

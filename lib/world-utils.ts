@@ -32,25 +32,3 @@ export function normalizeWorldName(world: string | MinecraftWorldName): WorldNam
       return null;
   }
 }
-
-/**
- * Vérifie si un nom de monde est valide
- * @param world - Le nom de monde à vérifier
- * @returns true si le monde est valide
- */
-export function isValidWorldName(world: string): world is WorldName {
-  return normalizeWorldName(world) !== null;
-}
-
-/**
- * Convertit un nom de monde avec gestion d'erreur
- * @param world - Le nom de monde à convertir
- * @param defaultWorld - Le monde par défaut si la conversion échoue
- * @returns Le nom de monde normalisé ou le monde par défaut
- */
-export function normalizeWorldNameWithFallback(
-  world: string | MinecraftWorldName, 
-  defaultWorld: WorldName = 'overworld'
-): WorldName {
-  return normalizeWorldName(world) ?? defaultWorld;
-}

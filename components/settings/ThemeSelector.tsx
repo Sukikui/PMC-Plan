@@ -16,7 +16,7 @@ interface ThemeSelectorProps {
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ value, onChange, showLabel = true }) => {
   return (
-    <div className="flex items-center gap-3 mb-4">
+    <div className="flex flex-wrap items-center gap-3">
       {showLabel && (
         <label className={`text-xs font-medium ${themeColors.text.quaternary} ${themeColors.transition}`}>Thème</label>
       )}

@@ -1,9 +1,12 @@
-import type { TradeOffer as SharedTradeOffer, TradeItem as SharedTradeItem } from '@/app/api/utils/shared';
-import { themeColors } from '@/lib/theme-colors';
+import type { TradeOffer as SharedTradeOffer, TradeItem as SharedTradeItem } from '@/lib/api/types';
 import type { PlaceCategory } from '@/lib/place/categories';
-import { generateFormId } from '../common/form-utils';
-
-export const placeFormInputClass = `${themeColors.input.search} border ${themeColors.util.roundedLg} px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`;
+import type {
+  MapEntryCreationPayload,
+  MapEntryEditor,
+  MapEntryUpdatePayload,
+} from '@/lib/map-entry/types';
+import type { SpaceReference } from '@/lib/spaces/types';
+import { generateFormId } from '../common/form-values';
 
 export interface FormTradeItem extends Omit<SharedTradeItem, 'quantity'> {
   quantity: string | number;
@@ -27,11 +30,17 @@ export interface InitialPlaceData {
   world: string;
   category?: PlaceCategory;
   coordinates: { x: number; y: number; z: number };
-  owners?: string[];
+  canDelete?: boolean;
+  lastEditor?: MapEntryEditor;
+  managerIds: string[];
+  mapEntryId?: string;
+  primaryManagerId: string;
   tags?: string[];
   description?: string;
   address?: string | null;
   discord?: string | null;
+  discordOverride?: string | null;
+  space?: SpaceReference | null;
   images?: string[];
   trade?: FormTradeOffer[] | null;
 }
@@ -44,12 +53,14 @@ export interface PlaceFormPayload {
   coordinates: { x: number; y: number; z: number };
   description: string | null;
   address: string | null;
-  owners: string[];
   tags: string[];
   discordUrl: string | null;
+  spaceId: string | null;
   images: string[];
+  management?: MapEntryCreationPayload | MapEntryUpdatePayload;
   tradeOffers: Array<{
     negotiable: boolean;
+    description: string | null;
     items: Array<{
       kind: 'gives' | 'wants';
       itemId: string;
@@ -72,6 +83,7 @@ export const createTradeOffer = (): FormTradeOffer => ({
   gives: createTradeItem(),
   wants: createTradeItem(),
   negotiable: false,
+  description: null,
 });
 
 export const createImageInput = (url = ''): FormPlaceImage => ({
@@ -88,3 +100,8 @@ export type UpdateTradeItem = <K extends keyof FormTradeItem>(
   value: FormTradeItem[K]
 ) => void;
 
+export type UpdateTradeOffer = <K extends 'description' | 'negotiable'>(
+  offerId: string,
+  field: K,
+  value: FormTradeOffer[K],
+) => void;

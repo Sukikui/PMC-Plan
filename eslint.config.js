@@ -9,8 +9,14 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    // Global ignores
-    ignores: [".next/**", "*.config.js", "*.config.cjs", "tests/**", ".github/**", "jest.config.js", "postcss.config.js", "tailwind.config.js", "next.config.js"],
+    ignores: [
+      ".next/**",
+      "coverage/**",
+      "*.config.js",
+      "*.config.cjs",
+      "tests/**",
+      ".github/**",
+    ],
   },
 
   js.configs.recommended,

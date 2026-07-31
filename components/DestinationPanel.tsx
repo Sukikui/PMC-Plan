@@ -7,10 +7,16 @@ import DestinationPanelHeader from '@/components/destination/DestinationPanelHea
 import type { DestinationCardActions } from '@/components/destination/destination-panel-types';
 import { useDestinationPanelData } from '@/components/destination/useDestinationPanelData';
 import { useRoutePlan } from '@/components/route/useRoutePlan';
-import type { Place, Portal } from '@/app/api/utils/shared';
+import Panel from '@/components/ui/Panel';
+import type { Place, Portal } from '@/lib/api/types';
 import { OVERWORLD_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
 import { themeColors } from '@/lib/theme-colors';
-import type { ManualRouteCoordinates, PlayerRoutePosition } from '@/lib/route-planning';
+import {
+  MAP_CONTROL_PANEL_COLLAPSED_HEIGHT_PX,
+  MAP_CONTROL_PANEL_EXPANSION_TRANSITION_MS,
+  panelScrollFadeStyle,
+} from '@/lib/ui/panel';
+import type { ManualRouteCoordinates, PlayerRoutePosition, RouteData } from '@/lib/route-planning';
 import { toMapWorld, type DestinationType, type SelectDestinationHandler } from '@/lib/destination/selection';
 
 interface DestinationPanelProps {
@@ -20,6 +26,7 @@ interface DestinationPanelProps {
   selectedType?: DestinationType;
   playerPosition?: PlayerRoutePosition | null;
   manualCoords?: ManualRouteCoordinates;
+  onRouteChange?: (route: RouteData | null) => void;
   onInfoClick: (item: Place | Portal, type: DestinationType) => void;
 }
 
@@ -36,6 +43,7 @@ export default function DestinationPanel({
   selectedType = 'place',
   playerPosition,
   manualCoords,
+  onRouteChange,
   onInfoClick,
 }: DestinationPanelProps) {
   const [enabledTags, setEnabledTags] = useState<Set<string>>(new Set());
@@ -46,8 +54,6 @@ export default function DestinationPanel({
   const [hasSearchFocus, setHasSearchFocus] = useState(false);
   const [isSearchHighlightActive, setIsSearchHighlightActive] = useState(false);
   const [highlightedDestinationIndex, setHighlightedDestinationIndex] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const headerRef = useRef<HTMLDivElement | null>(null);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const destinationCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const {
@@ -67,25 +73,8 @@ export default function DestinationPanel({
   } = useRoutePlan({ selectedId, playerPosition, manualCoords });
 
   useEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
-
-    const updateHeaderHeight = () => setHeaderHeight(header.getBoundingClientRect().height);
-    updateHeaderHeight();
-    window.addEventListener('resize', updateHeaderHeight);
-
-    if (typeof ResizeObserver === 'undefined') {
-      return () => window.removeEventListener('resize', updateHeaderHeight);
-    }
-
-    const resizeObserver = new ResizeObserver(updateHeaderHeight);
-    resizeObserver.observe(header);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', updateHeaderHeight);
-    };
-  }, []);
+    onRouteChange?.(route);
+  }, [onRouteChange, route]);
 
   const toggleTagFilterLogic = useCallback(() => {
     setTagFilterLogic((prev) => {
@@ -168,7 +157,7 @@ export default function DestinationPanel({
   );
   const shouldHighlightDestination = isSearchHighlightActive && hasSearchFocus && !hasSelectedDestination && !loading;
   const isPanelExpanded = isPanelHovered || hasPanelFocus || hasSelectedDestination;
-  const contentHeight = headerHeight > 0 ? `calc(100vh - 2rem - ${headerHeight}px)` : '0px';
+  const contentHeight = `calc(100vh - 2rem - ${MAP_CONTROL_PANEL_COLLAPSED_HEIGHT_PX}px)`;
 
   useEffect(() => {
     setHighlightedDestinationIndex(0);
@@ -207,16 +196,17 @@ export default function DestinationPanel({
   }), [handleDestinationClick, handleInfoClick, highlightedDestination, resetSearchHighlight, selectedId, shouldHighlightDestination]);
 
   return (
-    <div
-      className={`fixed top-4 left-4 max-h-[calc(100vh-2rem)] w-96 ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.shadow.panel} ${themeColors.util.roundedXl} border ${themeColors.border.primary} z-50 flex flex-col overflow-hidden ${themeColors.transition}`}
+    <Panel
+      data-map-panel
+      className="fixed left-4 top-4 z-50 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-96 flex-col overflow-hidden"
       onMouseEnter={() => setIsPanelHovered(true)}
       onMouseLeave={() => setIsPanelHovered(false)}
       onFocus={() => setHasPanelFocus(true)}
       onBlur={handlePanelBlur}
     >
       <div
-        ref={headerRef}
-        className={`flex-shrink-0 p-6 border-b ${themeColors.border.primary} ${themeColors.panel.primary} ${themeColors.blurSm} rounded-t-xl ${themeColors.transition}`}
+        className={`flex flex-shrink-0 flex-col justify-between border-b px-6 py-6 ${themeColors.border.primary} ${themeColors.transition}`}
+        style={{ height: `${MAP_CONTROL_PANEL_COLLAPSED_HEIGHT_PX - 2}px` }}
       >
         <DestinationPanelHeader
           allTags={allTags}
@@ -246,15 +236,20 @@ export default function DestinationPanel({
       </div>
 
       <div
-        className={`relative shrink-0 rounded-b-xl overflow-hidden transition-[height,opacity] duration-300 ease-out ${isPanelExpanded ? 'opacity-100' : 'opacity-0'}`}
-        style={{ height: isPanelExpanded ? contentHeight : '0px' }}
+        className={`relative shrink-0 rounded-b-xl overflow-hidden transition-[height,opacity] ease-out ${isPanelExpanded ? 'opacity-100' : 'opacity-0'}`}
+        style={{
+          height: isPanelExpanded ? contentHeight : '0px',
+          transitionDuration: `${MAP_CONTROL_PANEL_EXPANSION_TRANSITION_MS}ms`,
+        }}
       >
-        <div className={`absolute top-0 left-0 right-0 h-3 ${themeColors.gradient.topSolid} z-10 pointer-events-none ${themeColors.transition}`} />
-        <div className={`absolute top-3 left-0 right-0 h-8 ${themeColors.gradient.topBlur} z-10 pointer-events-none ${themeColors.transition}`} />
         <div
           ref={contentScrollRef}
-          className={`h-full overflow-y-auto pt-9 pb-16 px-6 [&::-webkit-scrollbar]:hidden ${themeColors.panel.primary} ${themeColors.transition}`}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className={`h-full overflow-y-auto px-6 pb-16 pt-9 [&::-webkit-scrollbar]:hidden ${themeColors.transition}`}
+          style={{
+            ...panelScrollFadeStyle,
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
         >
           <DestinationPanelContent
             actions={cardActions}
@@ -269,10 +264,8 @@ export default function DestinationPanel({
             selectedPortal={selectedPortal}
           />
         </div>
-        <div className={`absolute bottom-0 left-0 right-0 h-2 ${themeColors.gradient.bottomSolid} z-10 pointer-events-none ${themeColors.transition}`} />
-        <div className={`absolute bottom-2 left-0 right-0 h-8 ${themeColors.gradient.bottomBlur} z-10 pointer-events-none ${themeColors.transition}`} />
       </div>
-    </div>
+    </Panel>
   );
 }
 

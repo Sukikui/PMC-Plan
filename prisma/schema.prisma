@@ -6,30 +6,32 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 // User model - minimal for Discord OAuth
 model User {
-  id        String   @id @default(cuid())
-  email     String?  @unique
-  name      String?
-  username  String?  @unique
-  image     String?
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  name          String?
+  username      String?   @unique
+  image         String?
   emailVerified DateTime?
-  role      Role     @default(user)
-  minecraftUuid String?   @unique @map("minecraft_uuid")
-  minecraftName String?   @map("minecraft_name")
-  minecraftLinkedAt DateTime? @map("minecraft_linked_at")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role          Role      @default(pending)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  places   Place[]
-  portals  Portal[]
+  accounts              Account[]
+  minecraftLinkRequests MinecraftLinkRequest[]
+  minecraftProfile      MinecraftProfile?      @relation("LinkedMinecraftProfile")
+  primaryManagedEntries MapEntry[]             @relation("PrimaryMapEntryManager")
+  lastEditedEntries     MapEntry[]             @relation("LastMapEntryEditor")
+  managedEntries        MapEntryManager[]
+  primaryManagedSpaces  Space[]                @relation("PrimarySpaceManager")
+  lastEditedSpaces      Space[]                @relation("LastSpaceEditor")
+  managedSpaces         SpaceManager[]
 
   @@map("users")
 }
@@ -55,86 +57,199 @@ model Account {
   @@map("accounts")
 }
 
-// Session model - manages NextAuth sessions
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model MinecraftLinkRequest {
+  requestId     String    @id @default(uuid()) @map("request_id")
+  userId        String    @map("user_id")
+  code          String?
+  expiresAt     DateTime? @map("expires_at")
+  minecraftUuid String?   @map("minecraft_uuid")
+  minecraftName String?   @map("minecraft_name")
+  validatedAt   DateTime? @map("validated_at")
+  expiredAt     DateTime? @map("expired_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("sessions")
+  @@index([userId, createdAt])
+  @@index([code, validatedAt, expiredAt, createdAt])
+  @@map("minecraft_link_requests")
+}
+
+model MinecraftProfile {
+  uuid         String          @id
+  name         String
+  linkedUserId String?         @unique @map("linked_user_id")
+  linkedAt     DateTime?       @map("linked_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  linkedUser   User?           @relation("LinkedMinecraftProfile", fields: [linkedUserId], references: [id], onDelete: SetNull)
+  ownedEntries MapEntryOwner[]
+
+  @@map("minecraft_profiles")
+}
+
+model MapEntry {
+  id               String            @id @default(cuid())
+  spaceId          String?           @map("space_id")
+  primaryManagerId String            @map("primary_manager_id")
+  lastEditorId     String?           @map("last_editor_id")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  primaryManager   User              @relation("PrimaryMapEntryManager", fields: [primaryManagerId], references: [id])
+  lastEditor       User?             @relation("LastMapEntryEditor", fields: [lastEditorId], references: [id], onDelete: SetNull)
+  managers         MapEntryManager[]
+  owners           MapEntryOwner[]
+  space            Space?            @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  place            Place?
+  portals          Portal[]
+  service          Service?
+
+  @@index([primaryManagerId])
+  @@index([lastEditorId])
+  @@index([spaceId])
+  @@map("map_entries")
+}
+
+model MapEntryManager {
+  mapEntryId String   @map("map_entry_id")
+  userId     String   @map("user_id")
+  addedAt    DateTime @default(now()) @map("added_at")
+  mapEntry   MapEntry @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([mapEntryId, userId])
+  @@index([userId])
+  @@map("map_entry_managers")
+}
+
+model MapEntryOwner {
+  mapEntryId  String           @map("map_entry_id")
+  profileUuid String           @map("profile_uuid")
+  position    Int
+  addedAt     DateTime         @default(now()) @map("added_at")
+  mapEntry    MapEntry         @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
+  profile     MinecraftProfile @relation(fields: [profileUuid], references: [uuid])
+
+  @@id([mapEntryId, profileUuid])
+  @@unique([mapEntryId, position])
+  @@map("map_entry_owners")
+}
+
+model Space {
+  id               String              @id @default(cuid())
+  slug             String              @unique
+  name             String
+  description      String?
+  color            String
+  logoUrl          String?             @map("logo_url")
+  logoZoom         Float               @default(1) @map("logo_zoom")
+  logoBackground   SpaceLogoBackground @default(color) @map("logo_background")
+  discordUrl       String?             @map("discord_url")
+  primaryManagerId String              @map("primary_manager_id")
+  lastEditorId     String?             @map("last_editor_id")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  primaryManager   User                @relation("PrimarySpaceManager", fields: [primaryManagerId], references: [id])
+  lastEditor       User?               @relation("LastSpaceEditor", fields: [lastEditorId], references: [id], onDelete: SetNull)
+  managers         SpaceManager[]
+  entries          MapEntry[]
+
+  @@index([primaryManagerId])
+  @@index([lastEditorId])
+  @@map("spaces")
+}
+
+model SpaceManager {
+  spaceId String   @map("space_id")
+  userId  String   @map("user_id")
+  addedAt DateTime @default(now()) @map("added_at")
+  space   Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, userId])
+  @@index([userId])
+  @@map("space_managers")
 }
 
 model Place {
-  uid           String    @id @default(cuid())
-  slug          String    @unique @map("slug")
-  name          String
-  world         World
-  coordX        Int       @map("coord_x")
-  coordY        Int       @map("coord_y")
-  coordZ        Int       @map("coord_z")
-  description   String?
-  address       String?
-  category      PlaceCategory @default(construction)
-  images        String[]  @default([])
-  tags          String[]  @default([])
-  ownerNames    String[]  @default([]) @map("owner_names")
-  discordUrl    String?   @map("discord_url")
-  status        ApprovalStatus @default(pending)
-  createdById   String    @map("created_by")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  creator       User      @relation(fields: [createdById], references: [id])
-  tradeOffers   TradeOffer[]
+  uid         String        @id @default(cuid())
+  slug        String        @unique @map("slug")
+  name        String
+  world       World
+  coordX      Int           @map("coord_x")
+  coordY      Int           @map("coord_y")
+  coordZ      Int           @map("coord_z")
+  description String?
+  address     String?
+  category    PlaceCategory @default(construction)
+  images      String[]      @default([])
+  tags        String[]      @default([])
+  discordUrl  String?       @map("discord_url")
+  mapEntryId  String        @unique @map("map_entry_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  mapEntry    MapEntry      @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
+  tradeOffers TradeOffer[]
 
   @@map("places")
 }
 
 model TradeOffer {
-  uid         String   @id @default(cuid())
-  placeUid    String   @map("place_uid")
-  negotiable  Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  place       Place    @relation(fields: [placeUid], references: [uid])
+  uid         String      @id @default(cuid())
+  placeUid    String      @map("place_uid")
+  negotiable  Boolean     @default(false)
+  description String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  place       Place       @relation(fields: [placeUid], references: [uid], onDelete: Cascade)
   items       TradeItem[]
 
   @@map("trade_offers")
 }
 
 model Portal {
-  uid                  String   @id @default(cuid())
-  slug                 String   @map("slug")
-  name                 String
-  world                World
-  coordX               Int      @map("coord_x")
-  coordY               Int      @map("coord_y")
-  coordZ               Int      @map("coord_z")
-  description          String?
-  address              String?
-  ownerNames           String[] @default([]) @map("owner_names")
-  status               ApprovalStatus @default(pending)
-  createdById          String   @map("created_by")
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  uid         String   @id @default(cuid())
+  slug        String   @map("slug")
+  name        String
+  world       World
+  coordX      Int      @map("coord_x")
+  coordY      Int      @map("coord_y")
+  coordZ      Int      @map("coord_z")
+  description String?
+  address     String?
+  mapEntryId  String   @map("map_entry_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  creator      User    @relation(fields: [createdById], references: [id])
+  mapEntry MapEntry @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
 
-  @@map("portals")
   @@unique([slug, world])
+  @@index([mapEntryId])
+  @@map("portals")
+}
+
+model Service {
+  uid                String             @id @default(cuid())
+  slug               String             @unique
+  name               String
+  subtitle           String
+  description        String
+  contactType        ServiceContactType @default(none) @map("contact_type")
+  contactDiscordUrl  String?            @map("discord_url")
+  illustrationItemId String?            @map("illustration_item_id")
+  paymentItemId      String?            @map("payment_item_id")
+  paymentDescription String?            @map("payment_description")
+  mapEntryId         String             @unique @map("map_entry_id")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  mapEntry           MapEntry           @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
+
+  @@map("services")
 }
 
 enum World {
   overworld
   nether
-}
-
-enum ApprovalStatus {
-  pending
-  approved
-  rejected
-  removed
 }
 
 enum PlaceCategory {
@@ -144,22 +259,35 @@ enum PlaceCategory {
   ferme
 }
 
+enum SpaceLogoBackground {
+  color
+  transparent
+}
+
+enum ServiceContactType {
+  none
+  primary_manager
+  custom
+}
+
 enum Role {
+  pending
   user
   admin
+  super_admin
 }
 
 model TradeItem {
-  uid         String         @id @default(cuid())
-  offerUid    String         @map("offer_uid")
-  kind        TradeItemType
-  itemId      String         @map("item_id")
-  quantity    Int
-  enchanted   Boolean        @default(false)
-  customName  String?        @map("custom_name")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-  offer       TradeOffer     @relation(fields: [offerUid], references: [uid])
+  uid        String        @id @default(cuid())
+  offerUid   String        @map("offer_uid")
+  kind       TradeItemType
+  itemId     String        @map("item_id")
+  quantity   Int
+  enchanted  Boolean       @default(false)
+  customName String?       @map("custom_name")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  offer      TradeOffer    @relation(fields: [offerUid], references: [uid], onDelete: Cascade)
 
   @@map("trade_items")
 }

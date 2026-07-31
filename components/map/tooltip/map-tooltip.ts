@@ -2,8 +2,6 @@ export const MAP_TOOLTIP_LABEL_MAX_WIDTH_REM = 16.9;
 export const MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM = 25;
 export const MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM = MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM * 1.5;
 export const MAP_TOOLTIP_VIEWPORT_MARGIN_PX = 12;
-export const MAP_TOOLTIP_PREVIEW_PANEL_MIN_Z_INDEX = 50;
-export const MAP_TOOLTIP_PREVIEW_PANEL_MAX_Z_INDEX = 9999;
 
 const TOOLTIP_LABEL_FONT = '500 12px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const TOOLTIP_LABEL_HORIZONTAL_PADDING_PX = 20;

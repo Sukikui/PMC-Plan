@@ -2,8 +2,8 @@
 
 import PlusIcon from '@/components/icons/PlusIcon';
 import IconActionButton from '@/components/ui/IconActionButton';
-import type { Place, Portal } from '@/app/api/utils/shared';
-import { getWorldBadge } from '@/lib/ui-utils';
+import WorldBadge from '@/components/ui/WorldBadge';
+import type { Place, Portal } from '@/lib/api/types';
 import { themeColors } from '@/lib/theme-colors';
 import {
   DEFAULT_PLACE_CATEGORY,
@@ -40,7 +40,7 @@ const getDestinationCardSurfaceClasses = (isHighlighted: boolean) => (
 );
 
 const DestinationIcon = ({ category }: { category: MapIconCategory }) => (
-  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center">
+  <span className="flex h-9 w-9 shrink-0 self-center items-center justify-center">
     <img
       src={getMapIconSrc(category)}
       alt=""
@@ -49,6 +49,30 @@ const DestinationIcon = ({ category }: { category: MapIconCategory }) => (
     />
   </span>
 );
+
+function DestinationName({
+  name,
+  space,
+}: {
+  name: string;
+  space: Place['space'];
+}) {
+  return (
+    <div className="min-w-0 flex-1">
+      <div className={`font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} ${themeColors.transition}`}>
+        {name}
+      </div>
+      {space && (
+        <div className="mt-0.5 pb-1 text-xs leading-tight">
+          <span className={themeColors.text.tertiary}>à </span>
+          <span className={`font-semibold ${themeColors.text.tertiary}`}>
+            {space.name}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function DestinationDescription({ description }: { description?: string | null }) {
   if (!description?.trim()) {
@@ -68,16 +92,16 @@ function DestinationCoordinates({
   world,
   coordinates,
   address,
+  className = 'mt-2',
 }: {
   world: string;
   coordinates: { x: number; y: number; z: number };
   address?: string | null;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 mt-1">
-      <span className={getWorldBadge(world)}>
-        {world}
-      </span>
+    <div className={`${className} flex items-center gap-2`}>
+      <WorldBadge world={world} />
       <span className={`text-xs ${themeColors.text.tertiary} ${themeColors.transition}`}>
         {coordinates.x}, {coordinates.y}, {coordinates.z}
       </span>
@@ -110,9 +134,7 @@ export function PlaceDestinationCard({ place, actions }: { place: Place; actions
       <div className="flex items-start justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <DestinationIcon category={category} />
-          <div className={`min-w-0 flex-1 font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} ${themeColors.transition}`}>
-            {place.name}
-          </div>
+          <DestinationName name={place.name} space={place.space} />
         </div>
         <IconActionButton
           onClick={(event) => actions.onInfoClick(event, place, 'place')}
@@ -163,9 +185,7 @@ export function PortalDestinationCard({ portal, actions }: { portal: Portal; act
       <div className="flex items-start justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <DestinationIcon category="portail" />
-          <div className={`min-w-0 flex-1 font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} ${themeColors.transition}`}>
-            {portal.name}
-          </div>
+          <DestinationName name={portal.name} space={portal.space} />
         </div>
         <IconActionButton
           onClick={(event) => actions.onInfoClick(event, portal, 'portal')}
@@ -184,10 +204,10 @@ export function PortalDestinationCard({ portal, actions }: { portal: Portal; act
             world="nether"
             coordinates={portal['nether-associate'].coordinates}
             address={portal['nether-associate'].address}
+            className="mt-0"
           />
         </div>
       )}
     </div>
   );
 }
-

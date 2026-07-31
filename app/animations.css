@@ -1,0 +1,180 @@
+@keyframes panel-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes route-step-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-step-reveal {
+  opacity: 0;
+  animation: route-step-reveal 260ms ease-out forwards;
+  animation-delay: var(--route-step-delay, 0ms);
+}
+
+@keyframes transfer-target-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-0.45rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.transfer-target-enter {
+  animation: transfer-target-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes transfer-arrow-active {
+  0% {
+    opacity: 0.55;
+    transform: translateX(-0.2rem);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(0.15rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.transfer-arrow-active {
+  animation: transfer-arrow-active 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes map-route-control-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.65rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.map-route-control-enter {
+  animation: map-route-control-enter 360ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transform-origin: bottom center;
+}
+
+@keyframes map-route-step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.map-route-step-enter {
+  animation: map-route-step-enter 320ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--route-map-step-delay, 0ms);
+}
+
+.map-route-step-label-fade {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 10.5rem, transparent 12rem);
+  mask-image: linear-gradient(to right, #000 0, #000 10.5rem, transparent 12rem);
+}
+
+@keyframes map-icon-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.35) translateY(3px);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1.14) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.map-icon-reveal {
+  opacity: 0;
+  transform-origin: center;
+  animation: map-icon-reveal var(--map-icon-reveal-duration, 260ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--map-reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+@keyframes map-icon-to-point {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  42% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.14);
+  }
+}
+
+.map-icon-to-point {
+  opacity: 1;
+  transform-origin: center;
+  animation: map-icon-to-point var(--map-icon-to-point-duration, 300ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--map-reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+@keyframes map-tooltip-preview-card-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.012);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.map-tooltip-preview-card-enter {
+  animation: map-tooltip-preview-card-enter var(--map-tooltip-preview-duration, 240ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: bottom center;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-step-reveal,
+  .transfer-arrow-active,
+  .transfer-target-enter,
+  .map-route-control-enter,
+  .map-route-step-enter,
+  .map-icon-reveal,
+  .map-tooltip-preview-card-enter {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  .map-icon-to-point {
+    opacity: 0;
+    animation: none;
+    transform: none;
+  }
+}

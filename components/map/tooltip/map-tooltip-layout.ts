@@ -1,8 +1,7 @@
 import {
-  MAP_TOOLTIP_PREVIEW_PANEL_MAX_Z_INDEX,
-  MAP_TOOLTIP_PREVIEW_PANEL_MIN_Z_INDEX,
   MAP_TOOLTIP_VIEWPORT_MARGIN_PX,
 } from './map-tooltip';
+import { getVisibleMapPanelRects } from '../core/map-panels';
 
 const IMAGE_GAP_PX = 8;
 
@@ -80,26 +79,7 @@ const overlapScore = (image: ImageBox | undefined, rects: MapTooltipRect[]) => (
 );
 
 export const getVisiblePanelRects = () => {
-  if (typeof document === 'undefined') return [];
-
-  return Array.from(document.body.querySelectorAll<HTMLElement>('*')).flatMap((element) => {
-    if (element.closest('[data-map-tooltip-preview-root]')) return [];
-
-    const styles = window.getComputedStyle(element);
-    const zIndex = Number.parseInt(styles.zIndex, 10);
-    if (
-      styles.position !== 'fixed' ||
-      !Number.isFinite(zIndex) ||
-      zIndex < MAP_TOOLTIP_PREVIEW_PANEL_MIN_Z_INDEX ||
-      zIndex >= MAP_TOOLTIP_PREVIEW_PANEL_MAX_Z_INDEX ||
-      styles.visibility === 'hidden' ||
-      styles.display === 'none' ||
-      Number.parseFloat(styles.opacity) === 0
-    ) return [];
-
-    const rect = element.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0 ? [rect] : [];
-  });
+  return getVisibleMapPanelRects();
 };
 
 export const getVisibleTooltipLabelRects = (excludedPointId: string) => {

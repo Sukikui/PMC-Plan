@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import {
   calculateEuclideanDistance,
-  type Place,
   type Portal,
 } from '../../utils/shared';
 import { callNearestPortals } from '../route-utils';
 import type { RoutePoint } from '../route-types';
 import {
+  buildNetherTransport,
   resolveNetherEndpoint,
   toDestinationLocation,
   toNetherEndpointLocation,
@@ -15,10 +15,10 @@ import {
 } from './helpers';
 
 export class RouteService {
-    private portals: Portal[];
+  private portals: Portal[];
 
-    constructor(places: Place[], portals: Portal[]) {
-        this.portals = portals;
+  constructor(portals: Portal[]) {
+    this.portals = portals;
   }
 
   async handleOverworldToOverworld(fromPoint: RoutePoint, toPoint: RoutePoint) {
@@ -38,7 +38,7 @@ export class RouteService {
         {
           type: "overworld_transport",
           distance: directDistance,
-          from: fromPoint.coordinates,
+          from: toRoutePointStart(fromPoint),
           to: {
             id: toPoint.id || "destination",
             name: toPoint.name || "Destination",
@@ -83,11 +83,11 @@ export class RouteService {
     // Use pre-calculated distances from the portal searches
     const distanceToPortal1 = portal1.distance;
     
-    const netherDistance = calculateEuclideanDistance(
-      portal1NetherEndpoint.coordinates.x, portal1NetherEndpoint.coordinates.y, portal1NetherEndpoint.coordinates.z,
-      linkedPortal2.coordinates.x, linkedPortal2.coordinates.y, linkedPortal2.coordinates.z
+    const netherTransport = buildNetherTransport(
+      toNetherEndpointLocation(portal1NetherEndpoint),
+      toNetherEndpointLocation(portal2NetherEndpoint)
     );
-    
+    const netherDistance = netherTransport.distance;
     const distanceFromPortal2 = portal2.distance;
     
     const totalNetherDistance = distanceToPortal1 + netherDistance + distanceFromPortal2;
@@ -104,7 +104,7 @@ export class RouteService {
           {
             type: "overworld_transport",
             distance: distanceToPortal1,
-            from: fromPoint.coordinates,
+            from: toRoutePointStart(fromPoint),
             to: toPortalLocation(portal1)
           },
           {
@@ -112,12 +112,7 @@ export class RouteService {
             from: toPortalLocation(portal1, { world: "overworld" }),
             to: toNetherEndpointLocation(portal1NetherEndpoint, "nether")
           },
-          ...(netherDistance > 0 ? [{
-            type: "nether_transport",
-            distance: netherDistance,
-            from: toNetherEndpointLocation(portal1NetherEndpoint),
-            to: toNetherEndpointLocation(portal2NetherEndpoint)
-          }] : []),
+          ...netherTransport.steps,
           {
             type: "portal",
             from: toNetherEndpointLocation(portal2NetherEndpoint, "nether"),
@@ -137,27 +132,18 @@ export class RouteService {
   }
 
   async handleNetherToNether(fromPoint: RoutePoint, toPoint: RoutePoint) {
-    const distance = calculateEuclideanDistance(
-      fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
-      toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z
+    const netherTransport = buildNetherTransport(
+      toRoutePointStart(fromPoint),
+      toDestinationLocation(toPoint)
     );
-    
-    const steps = distance > 0 ? [
-      {
-          type: "nether_transport",
-          distance: distance,
-          from: toRoutePointStart(fromPoint),
-          to: toDestinationLocation(toPoint)
-        }
-      ] : [];
 
     return NextResponse.json({
       player_from: {
         coordinates: fromPoint.coordinates,
         world: fromPoint.world
       },
-      total_distance: distance,
-      steps: steps
+      total_distance: netherTransport.distance,
+      steps: netherTransport.steps
     });
   }
 
@@ -179,10 +165,11 @@ export class RouteService {
     
     const distanceToPortal = portal.distance;
     
-    const netherDistance = calculateEuclideanDistance(
-      netherEndpoint.coordinates.x, netherEndpoint.coordinates.y, netherEndpoint.coordinates.z,
-      toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z
+    const netherTransport = buildNetherTransport(
+      toNetherEndpointLocation(netherEndpoint),
+      toDestinationLocation(toPoint)
     );
+    const netherDistance = netherTransport.distance;
     const totalDistance = distanceToPortal + netherDistance;
     
     return NextResponse.json({
@@ -195,7 +182,7 @@ export class RouteService {
         {
           type: "overworld_transport",
           distance: distanceToPortal,
-          from: fromPoint.coordinates,
+          from: toRoutePointStart(fromPoint),
           to: toPortalLocation(portal)
         },
         {
@@ -203,12 +190,7 @@ export class RouteService {
           from: toPortalLocation(portal),
           to: toNetherEndpointLocation(netherEndpoint)
         },
-        ...(netherDistance > 0 ? [{
-          type: "nether_transport",
-          distance: netherDistance,
-          from: toNetherEndpointLocation(netherEndpoint),
-          to: toDestinationLocation(toPoint)
-        }] : [])
+        ...netherTransport.steps
       ]
     });
   }
@@ -229,11 +211,11 @@ export class RouteService {
     const portal = nearbyPortals[0];
     const netherEndpoint = await resolveNetherEndpoint(portal, this.portals);
     
-    const netherDistance = calculateEuclideanDistance(
-      fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
-      netherEndpoint.coordinates.x, netherEndpoint.coordinates.y, netherEndpoint.coordinates.z
+    const netherTransport = buildNetherTransport(
+      toRoutePointStart(fromPoint),
+      toNetherEndpointLocation(netherEndpoint)
     );
-    
+    const netherDistance = netherTransport.distance;
     const distanceFromPortal = portal.distance;
     
     const totalDistance = netherDistance + distanceFromPortal;
@@ -245,12 +227,7 @@ export class RouteService {
       },
       total_distance: totalDistance,
       steps: [
-        ...(netherDistance > 0 ? [{
-          type: "nether_transport",
-          distance: netherDistance,
-          from: toRoutePointStart(fromPoint),
-          to: toNetherEndpointLocation(netherEndpoint)
-        }] : []),
+        ...netherTransport.steps,
         {
           type: "portal",
           from: toNetherEndpointLocation(netherEndpoint),

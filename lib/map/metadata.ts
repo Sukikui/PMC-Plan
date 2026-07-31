@@ -6,15 +6,37 @@ export interface MapCoordinate {
   z: number;
 }
 
-export interface MapMetadata {
+export interface MapOverviewMetadata {
+  image: string;
+  width: number;
+  height: number;
   cellSize: number;
+}
+
+export interface MapTilesMetadata {
+  directory: string;
+  filePattern: string;
+  width: number;
+  height: number;
+  cellSize: number;
+  tileSize: number;
+  columns: number;
+  rows: number;
+}
+
+export interface MapMetadata {
   selectionMin: MapCoordinate;
   selectionMax: MapCoordinate;
   gridOrigin: MapCoordinate;
-  width: number;
-  height: number;
-  image: string;
+  overview: MapOverviewMetadata;
+  tiles?: MapTilesMetadata;
   fallbackBackground?: string;
+}
+
+interface StoredMapMetadata extends Omit<MapMetadata, 'overview' | 'tiles'> {
+  formatVersion: number;
+  overview: MapOverviewMetadata;
+  tiles?: MapTilesMetadata;
 }
 
 export const OVERWORLD_MAP_WORLD = 'overworld';
@@ -23,15 +45,17 @@ export const NETHER_MAP_WORLD = 'nether';
 export type MapWorld = typeof OVERWORLD_MAP_WORLD | typeof NETHER_MAP_WORLD;
 
 export const mapMetadataByWorld: Record<MapWorld, MapMetadata> = {
-  overworld: overworldMapMetadata,
-  nether: netherMapMetadata,
+  overworld: normalizeMapMetadata(OVERWORLD_MAP_WORLD, overworldMapMetadata),
+  nether: normalizeMapMetadata(NETHER_MAP_WORLD, netherMapMetadata),
 };
 
-export const getMapAspectRatio = (metadata: MapMetadata) => metadata.width / metadata.height;
+export const getMapAspectRatio = (metadata: MapMetadata) => (
+  metadata.overview.width / metadata.overview.height
+);
 
 export const getMapWorldSize = (metadata: MapMetadata) => ({
-  width: metadata.width * metadata.cellSize,
-  height: metadata.height * metadata.cellSize,
+  width: metadata.overview.width * metadata.overview.cellSize,
+  height: metadata.overview.height * metadata.overview.cellSize,
 });
 
 export const getMapWorldBounds = (metadata: MapMetadata) => {
@@ -61,3 +85,29 @@ export const worldToMapPercent = (
     inBounds: left >= 0 && left <= 100 && top >= 0 && top <= 100,
   };
 };
+
+function normalizeMapMetadata(
+  world: MapWorld,
+  rawMetadata: StoredMapMetadata
+): MapMetadata {
+  return {
+    selectionMin: rawMetadata.selectionMin,
+    selectionMax: rawMetadata.selectionMax,
+    gridOrigin: rawMetadata.gridOrigin,
+    fallbackBackground: rawMetadata.fallbackBackground,
+    overview: {
+      ...rawMetadata.overview,
+      image: resolveMapAssetPath(world, rawMetadata.overview.image),
+    },
+    tiles: rawMetadata.tiles
+      ? {
+          ...rawMetadata.tiles,
+          directory: resolveMapAssetPath(world, rawMetadata.tiles.directory),
+        }
+      : undefined,
+  };
+}
+
+function resolveMapAssetPath(world: MapWorld, path: string) {
+  return path.startsWith('/') ? path : `/map/${world}/${path}`;
+}

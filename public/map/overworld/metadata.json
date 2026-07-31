@@ -1,5 +1,5 @@
 {
-  "cellSize": 16,
+  "formatVersion": 1,
   "selectionMin": {
     "x": -7167,
     "z": -7167
@@ -12,7 +12,10 @@
     "x": -7168,
     "z": -7168
   },
-  "width": 1792,
-  "height": 896,
-  "image": "/map/overworld/biomes-16-light.png"
+  "overview": {
+    "image": "biomes-16-light.png",
+    "width": 1792,
+    "height": 896,
+    "cellSize": 16
+  }
 }

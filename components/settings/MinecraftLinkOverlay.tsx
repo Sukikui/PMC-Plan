@@ -1,17 +1,18 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
+import React, { useEffect, useRef, useState } from 'react';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
 import { themeColors } from '@/lib/theme-colors';
-import Overlay from '@/components/ui/Overlay';
-import Panel from '@/components/ui/Panel';
-import IconActionButton from '@/components/ui/IconActionButton';
+import CheckIcon from '@/components/icons/CheckIcon';
 import CopyIcon from '@/components/icons/CopyIcon';
-import CrossIcon from '@/components/icons/CrossIcon';
-import { useOverlayPanelAnimation } from '@/components/ui/useOverlayPanelAnimation';
+import MinecraftLinkTimeline from '@/components/settings/MinecraftLinkTimeline';
+import MinecraftHeadImage from '@/components/ui/MinecraftHeadImage';
+import OverlayPanel from '@/components/ui/OverlayPanel';
 
 interface MinecraftLinkOverlayProps {
   isOpen: boolean;
+  closing: boolean;
   status: MineVerifyPublicStatus;
   loading: boolean;
   error: string | null;
@@ -21,65 +22,79 @@ interface MinecraftLinkOverlayProps {
 
 export default function MinecraftLinkOverlay({
   isOpen,
+  closing,
   status,
   loading,
   error,
   onClose,
   onRetry,
 }: MinecraftLinkOverlayProps) {
-  const entered = useOverlayPanelAnimation(isOpen);
-
   return (
-    <Overlay isOpen={isOpen} onClose={onClose}>
-      <Panel
-        className={`relative w-full max-w-md overflow-hidden transition-all duration-300 ${
-          entered ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-3 opacity-0 scale-95'
-        }`}
-      >
-        <div className={`p-4 border-b ${themeColors.border.primary} flex items-center justify-between`}>
-          <div>
-            <h2 className={`text-sm font-semibold ${themeColors.text.primary}`}>Lier Minecraft</h2>
-            <p className={`text-xs ${themeColors.text.tertiary} mt-0.5`}>Associer ton compte PMC Plan à ton compte MC.</p>
+    <OverlayPanel
+      isOpen={isOpen}
+      closing={closing}
+      onClose={onClose}
+      size="compact"
+      title="Lier son compte Minecraft"
+    >
+      <div className="space-y-4">
+        <MinecraftLinkOverlayContent status={status} loading={loading} />
+
+        {error && (
+          <div className={`text-xs border ${themeColors.syncNotification.errorBorder} ${themeColors.syncNotification.errorBg} ${themeColors.syncNotification.errorText} ${themeColors.util.roundedLg} px-3 py-2`}>
+            {error}
           </div>
-          <IconActionButton onClick={onClose} aria-label="Fermer">
-            <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-          </IconActionButton>
-        </div>
+        )}
 
-        <div className="p-4 space-y-4">
-          <MinecraftLinkOverlayContent status={status} loading={loading} onRetry={onRetry} onClose={onClose} />
-
-          {error && (
-            <div className={`text-xs border ${themeColors.syncNotification.errorBorder} ${themeColors.syncNotification.errorBg} ${themeColors.syncNotification.errorText} ${themeColors.util.roundedLg} px-3 py-2`}>
-              {error}
-            </div>
-          )}
-        </div>
-      </Panel>
-    </Overlay>
+        <MinecraftLinkTimeline
+          status={status.status}
+          loading={loading}
+          onFinish={onClose}
+          onRetry={onRetry}
+        />
+      </div>
+    </OverlayPanel>
   );
 }
 
 function MinecraftLinkOverlayContent({
   status,
   loading,
-  onRetry,
-  onClose,
 }: {
   status: MineVerifyPublicStatus;
   loading: boolean;
-  onRetry: () => void;
-  onClose: () => void;
 }) {
   if (status.status === 'linked') {
     return (
-      <div className="space-y-4">
-        <StatusBlock title="Compte lié" tone="success">
-          Ton compte Minecraft est lié à {status.minecraftName ?? 'ce compte'}.
-        </StatusBlock>
-        <button onClick={onClose} className={`w-full text-sm px-4 py-2 ${themeColors.util.roundedFull} ${themeColors.button.primary} ${themeColors.transitionAll}`}>
-          Terminer
-        </button>
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="relative shrink-0">
+            <MinecraftHeadImage
+              playerIdentifier={status.minecraftName ?? status.minecraftUuid!}
+              alt={`Tête de ${status.minecraftName ?? 'ton compte Minecraft'}`}
+              className={`h-[92px] w-[92px] object-contain ${themeColors.util.roundedLg}`}
+              crossOrigin="anonymous"
+              loading="eager"
+            />
+            <span className={`absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center border-2 ${themeColors.util.roundedFull} ${themeColors.panel.primary} ${themeColors.border.primary}`}>
+              <CheckIcon className={`h-3.5 w-3.5 ${themeColors.text.accent}`} aria-hidden="true" />
+            </span>
+          </div>
+          <div className="min-w-0">
+            <span className={`inline-flex max-w-full truncate px-3 py-1 text-xs font-medium ${themeColors.util.roundedFull} ${themeColors.infoOverlay.placeTags}`}>
+              {status.minecraftName ?? 'Pseudo inconnu'}
+            </span>
+            <p
+              className={`mt-1.5 max-w-full truncate text-xs ${themeColors.text.tertiary}`}
+              title={status.minecraftUuid}
+            >
+              UUID : {status.minecraftUuid ?? 'Non renseigné'}
+            </p>
+          </div>
+        </div>
+        <p className={`mt-3 text-left text-sm ${themeColors.text.secondary} leading-relaxed`}>
+          Ton compte Minecraft est maintenant lié à ton compte Discord sur l&apos;app PMC Plan.
+        </p>
       </div>
     );
   }
@@ -87,9 +102,9 @@ function MinecraftLinkOverlayContent({
   if (status.status === 'code_created' && status.command) {
     return (
       <div className="space-y-4">
-        <StatusBlock title="Code généré">
-          Lance cette commande en jeu avec le compte Minecraft à lier.
-        </StatusBlock>
+        <LinkStepMessage>
+          Ton code a été récupéré. Exécute la commande suivante en jeu avec le compte Minecraft à lier.
+        </LinkStepMessage>
         <CommandBox command={status.command} />
         {status.expiresAt && (
           <CountdownText expiresAt={status.expiresAt} />
@@ -101,52 +116,38 @@ function MinecraftLinkOverlayContent({
   if (status.status === 'expired') {
     return (
       <div className="space-y-4">
-        <StatusBlock title="Code expiré" tone="warning">
-          La demande a expiré. Tu peux en créer une nouvelle.
-        </StatusBlock>
-        <button
-          onClick={onRetry}
-          disabled={loading}
-          className={`w-full text-sm px-4 py-2 ${themeColors.util.roundedFull} ${loading ? themeColors.button.primaryDisabled : themeColors.button.primary} ${themeColors.transitionAll}`}
-        >
-          Relancer la liaison
-        </button>
+        <LinkStepMessage>
+          Ton code a expiré. Tu peux en générer un nouveau.
+        </LinkStepMessage>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <StatusBlock title="En attente du serveur">
-        Connecte-toi au serveur Minecraft puis lance la commande pour récupérer ton code.
-      </StatusBlock>
+      <LinkStepMessage>
+        Connecte-toi sur Play-MC.fr et exécute la commande suivante pour récupérer ton code.
+      </LinkStepMessage>
       <CommandBox command="/mineverify" />
       {loading && <p className={`text-xs ${themeColors.text.tertiary}`}>Création de la demande...</p>}
     </div>
   );
 }
 
-function StatusBlock({
-  title,
-  tone = 'default',
-  children,
-}: {
-  title: string;
-  tone?: 'default' | 'success' | 'warning';
-  children: React.ReactNode;
-}) {
-  const dotClass = tone === 'success'
-    ? 'bg-green-500 dark:bg-green-400'
-    : tone === 'warning'
-      ? 'bg-amber-500 dark:bg-amber-400'
-      : themeColors.status.connected;
-
+function LinkStepMessage({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`flex gap-3 border ${themeColors.border.primary} ${themeColors.panel.secondary} ${themeColors.util.roundedLg} px-3 py-3`}>
-      <span className={`mt-1 w-2 h-2 ${themeColors.util.roundedFull} ${dotClass} flex-shrink-0`} />
-      <div>
-        <div className={`text-sm font-medium ${themeColors.text.primary}`}>{title}</div>
-        <div className={`text-xs ${themeColors.text.secondary} mt-1 leading-relaxed`}>{children}</div>
+    <div className="flex items-center gap-3">
+      <Image
+        src="/branding/pmc/mark.png"
+        alt="Logo Play-MC"
+        width={52}
+        height={52}
+        className="h-[52px] w-[52px] shrink-0 object-contain"
+      />
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm ${themeColors.text.secondary} leading-relaxed`}>
+          {children}
+        </p>
       </div>
     </div>
   );
@@ -154,6 +155,15 @@ function StatusBlock({
 
 function CommandBox({ command }: { command: string }) {
   const [copied, setCopied] = useState(false);
+  const resetTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const copyCommand = async () => {
     try {
@@ -164,7 +174,13 @@ function CommandBox({ command }: { command: string }) {
       }
 
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1400);
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
+      resetTimeoutRef.current = window.setTimeout(() => {
+        resetTimeoutRef.current = null;
+        setCopied(false);
+      }, 1400);
     } catch {
       setCopied(false);
     }
@@ -178,13 +194,23 @@ function CommandBox({ command }: { command: string }) {
         onClick={copyCommand}
         aria-label={copied ? 'Commande copiée' : 'Copier la commande'}
         title={copied ? 'Copié' : 'Copier'}
-        className={`px-2 py-1 rounded-md ${themeColors.transitionAll} ${
+        className={`relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${themeColors.transition} ${
           copied
-            ? 'scale-105'
-            : 'hover:scale-105'
-        } flex-shrink-0`}
+            ? themeColors.text.accent
+            : `${themeColors.text.tertiary} ${themeColors.interactive.hoverAccentText}`
+        }`}
       >
-        <CopyIcon className={`w-4 h-4 ${copied ? 'text-blue-500 dark:text-blue-400 scale-110' : themeColors.text.tertiary} ${themeColors.transitionAll}`} />
+        <CopyIcon
+          className={`absolute h-4 w-4 transition-all duration-200 ease-out ${
+            copied ? '-translate-y-1 opacity-0' : 'translate-y-0 opacity-100'
+          }`}
+        />
+        <CheckIcon
+          className={`absolute h-4 w-4 transition-all duration-200 ease-out ${
+            copied ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0'
+          }`}
+          aria-hidden="true"
+        />
       </button>
     </div>
   );

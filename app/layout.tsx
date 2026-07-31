@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { Providers } from '@/components/Providers';
+import { themeColors } from '@/lib/theme-colors';
 import './globals.css';
+import './minecraft-effects.css';
+import './animations.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,10 +21,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={`${inter.className} transition-colors duration-300`}>
         <Providers>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+          <div className={`min-h-screen ${themeColors.background.app}`}>
             {children}
           </div>
         </Providers>

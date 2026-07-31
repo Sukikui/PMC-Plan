@@ -1,19 +1,32 @@
 {
-  "cellSize": 16,
+  "formatVersion": 1,
   "selectionMin": {
-    "x": -1000,
-    "z": -1000
+    "x": -10000,
+    "z": -10000
   },
   "selectionMax": {
-    "x": 2700,
-    "z": 1000
+    "x": 10000,
+    "z": 10000
   },
   "gridOrigin": {
-    "x": -1000,
-    "z": -1000
+    "x": -10000,
+    "z": -10000
   },
-  "width": 232,
-  "height": 126,
-  "image": "",
-  "fallbackBackground": "#3a1612"
+  "fallbackBackground": "#3a1612",
+  "overview": {
+    "image": "overview.png",
+    "width": 1251,
+    "height": 1251,
+    "cellSize": 16
+  },
+  "tiles": {
+    "directory": "tiles",
+    "filePattern": "{column}-{row}.png",
+    "width": 5004,
+    "height": 5004,
+    "cellSize": 4,
+    "tileSize": 512,
+    "columns": 10,
+    "rows": 10
+  }
 }

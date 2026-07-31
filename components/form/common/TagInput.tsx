@@ -1,6 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ClearIcon from '@/components/icons/ClearIcon';
 import { themeColors } from '@/lib/theme-colors';
+import {
+  suggestionDropdownClass,
+  suggestionOptionClass,
+} from './form-utils';
+import { useSuggestionHighlight } from './useSuggestionHighlight';
 
 interface TagInputProps {
   label: string;
@@ -16,7 +21,6 @@ export default function TagInput({ label, placeholder, value, onChange, suggesti
   const [inputValue, setInputValue] = useState('');
   const [queryValue, setQueryValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
 
   const normalizedValue = useMemo(() => {
     const unique = new Map<string, string>();
@@ -46,22 +50,10 @@ export default function TagInput({ label, placeholder, value, onChange, suggesti
     });
   }, [queryValue, suggestions, normalizedValue]);
 
-  useEffect(() => {
-    if (!isFocused) {
-      setHighlightedIndex(null);
-      return;
-    }
-    if (filteredSuggestions.length === 0) {
-      setHighlightedIndex(null);
-      return;
-    }
-    setHighlightedIndex((prev) => {
-      if (prev === null || prev >= filteredSuggestions.length) {
-        return 0;
-      }
-      return prev;
-    });
-  }, [filteredSuggestions.length, isFocused]);
+  const suggestionNavigation = useSuggestionHighlight(
+    filteredSuggestions.length,
+    isFocused,
+  );
 
   const addTag = (rawTag: string) => {
     const nextTag = normalizeTag(rawTag);
@@ -117,37 +109,31 @@ export default function TagInput({ label, placeholder, value, onChange, suggesti
           onFocus={() => setIsFocused(true)}
           onBlur={() => {
             setIsFocused(false);
-            setHighlightedIndex(null);
+            suggestionNavigation.resetHighlight();
           }}
           onKeyDown={(event) => {
             if (event.key === 'ArrowDown' && filteredSuggestions.length > 0) {
               event.preventDefault();
-              const nextIndex =
-                highlightedIndex === null ? 0 : (highlightedIndex + 1) % filteredSuggestions.length;
-              setHighlightedIndex(nextIndex);
+              suggestionNavigation.moveHighlight(1);
               return;
             }
 
             if (event.key === 'ArrowUp' && filteredSuggestions.length > 0) {
               event.preventDefault();
-              const nextIndex =
-                highlightedIndex === null
-                  ? filteredSuggestions.length - 1
-                  : (highlightedIndex - 1 + filteredSuggestions.length) % filteredSuggestions.length;
-              setHighlightedIndex(nextIndex);
+              suggestionNavigation.moveHighlight(-1);
               return;
             }
 
             if (event.key === 'Tab') {
               if (filteredSuggestions.length > 0) {
                 event.preventDefault();
-                const selection = highlightedIndex !== null
-                  ? filteredSuggestions[highlightedIndex]
+                const selection = suggestionNavigation.highlightedIndex !== null
+                  ? filteredSuggestions[suggestionNavigation.highlightedIndex]
                   : filteredSuggestions[0];
                 setInputValue(selection);
                 setQueryValue(selection);
-                if (highlightedIndex === null) {
-                  setHighlightedIndex(0);
+                if (suggestionNavigation.highlightedIndex === null) {
+                  suggestionNavigation.setHighlightedIndex(0);
                 }
               }
               return;
@@ -163,7 +149,7 @@ export default function TagInput({ label, placeholder, value, onChange, suggesti
             if (event.key === 'Escape') {
               event.preventDefault();
               setInputValue(queryValue);
-              setHighlightedIndex(null);
+              suggestionNavigation.resetHighlight();
               return;
             }
           }}
@@ -172,9 +158,7 @@ export default function TagInput({ label, placeholder, value, onChange, suggesti
         />
 
         {isFocused && filteredSuggestions.length > 0 && (
-          <div
-            className={`absolute left-0 right-0 mt-2 ${themeColors.panel.primary} ${themeColors.blurSm} border ${themeColors.border.primary} ${themeColors.util.roundedLg} ${themeColors.shadow.panel} overflow-hidden z-20`}
-          >
+          <div className={suggestionDropdownClass}>
             <ul className="py-1">
               {filteredSuggestions.map((tag, index) => (
                 <li key={tag}>
@@ -184,11 +168,11 @@ export default function TagInput({ label, placeholder, value, onChange, suggesti
                       event.preventDefault();
                       addTag(tag);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-sm ${themeColors.transition} ${themeColors.interactive.hoverPanel} ${
-                      index === highlightedIndex ? themeColors.link : themeColors.text.primary
+                    className={`${suggestionOptionClass} px-3 py-1.5 text-sm ${
+                      index === suggestionNavigation.highlightedIndex ? themeColors.link : themeColors.text.primary
                     }`}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                    aria-selected={index === highlightedIndex}
+                    onMouseEnter={() => suggestionNavigation.setHighlightedIndex(index)}
+                    aria-selected={index === suggestionNavigation.highlightedIndex}
                   >
                     {tag}
                   </button>

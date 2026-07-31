@@ -1,20 +1,24 @@
 "use client";
 
-import React from 'react';
+import type {
+  HTMLAttributes,
+  PropsWithChildren,
+} from 'react';
 import { themeColors } from '@/lib/theme-colors';
 
-interface PanelProps {
-  className?: string;
-  children: React.ReactNode;
-}
+type PanelProps = PropsWithChildren<HTMLAttributes<HTMLDivElement>>;
 
-const Panel: React.FC<PanelProps> = ({ className = '', children }) => {
+export default function Panel({
+  className = '',
+  children,
+  ...divProps
+}: PanelProps) {
   return (
-    <div className={`${themeColors.panel.primary} ${themeColors.blur} ${themeColors.shadow.panel} ${themeColors.util.roundedXl} border ${themeColors.border.primary} ${themeColors.transition} ${className}`}>
+    <div
+      className={`${themeColors.panel.primary} ${themeColors.blur} ${themeColors.shadow.panel} ${themeColors.util.roundedXl} border ${themeColors.border.primary} ${themeColors.transition} ${className}`}
+      {...divProps}
+    >
       {children}
     </div>
   );
-};
-
-export default Panel;
-
+}

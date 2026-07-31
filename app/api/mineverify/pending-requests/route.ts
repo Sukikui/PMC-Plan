@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    return NextResponse.json({ requests: listPendingMineVerifyRequests() });
+    return NextResponse.json({ requests: await listPendingMineVerifyRequests() });
   } catch (error) {
     return handleMineVerifyRouteError(error, 'Impossible de lister les demandes MineVerify.');
   }

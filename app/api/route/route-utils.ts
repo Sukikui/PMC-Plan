@@ -2,23 +2,11 @@ import {
   Portal, 
   calculateEuclideanDistance,
   convertOverworldToNether, 
-  NetherAddress,
   resolveNetherAddressForWorld
 } from '../utils/shared';
 import { RoutePoint } from './route-types';
 import { NextResponse } from 'next/server';
 import { Place } from '../utils/shared';
-
-export interface NearestStop {
-  axisName: string;
-  stop: {
-    x: number;
-    y: number;
-    z: number;
-    level: number;
-  };
-  distance: number;
-}
 
 export async function callNearestPortals(x: number, y: number, z: number, world: string, allPortals: Portal[], maxDistance?: number): Promise<(Portal & {distance: number})[]> {
   const worldPortals = allPortals.filter(portal => portal.world === world);
@@ -63,22 +51,6 @@ export async function callLinkedPortal(x: number, y: number, z: number, fromWorl
     .sort((a, b) => a.distance - b.distance);
   
   return candidatePortals.length > 0 ? candidatePortals[0] : null;
-}
-
-export function calculateNetherNetworkDistance(address1: NetherAddress, address2: NetherAddress): number {
-  // Simplified implementation - in reality this would calculate the actual network distance
-  // based on the nether axes system described in DECISION.md
-  
-  // Check if both addresses have nearestStop data
-  if (!address1.nearestStop || !address2.nearestStop) {
-    throw new Error('Both addresses must have nearestStop data to calculate nether network distance');
-  }
-  
-  // For now, return euclidean distance as approximation
-  return calculateEuclideanDistance(
-    address1.nearestStop.coordinates.x, address1.nearestStop.coordinates.y, address1.nearestStop.coordinates.z,
-    address2.nearestStop.coordinates.x, address2.nearestStop.coordinates.y, address2.nearestStop.coordinates.z
-  );
 }
 
 export async function resolveRoutePoint(

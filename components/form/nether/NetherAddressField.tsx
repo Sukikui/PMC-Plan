@@ -3,8 +3,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { themeColors } from '@/lib/theme-colors';
 import { CoordinatesInput, parseCoordinateTriplet } from '../common/form-utils';
-
-const inputClass = `${themeColors.input.search} border ${themeColors.util.roundedLg} px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 ${themeColors.transition} ${themeColors.placeholder}`;
+import {
+  formFieldLabelClassName,
+  formInputClassName,
+} from '../common/form-styles';
 
 interface UseNetherAddressOptions {
   enabled: boolean;
@@ -122,9 +124,9 @@ interface NetherAddressFieldProps {
 export function NetherAddressField({ label, address }: NetherAddressFieldProps) {
   return (
     <div className="space-y-2">
-      <label className={`text-xs font-medium ${themeColors.text.secondary}`}>{label}</label>
+      <label className={formFieldLabelClassName}>{label}</label>
       <input
-        className={`${inputClass} ${address.manual ? '' : 'cursor-not-allowed opacity-70'}`}
+        className={`${formInputClassName} ${address.manual ? '' : 'cursor-not-allowed opacity-70'}`}
         placeholder="Adresse suggérée"
         value={address.value}
         onChange={(event) => address.setValue(event.target.value)}

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const payload = MineVerifyCodeCreatedSchema.parse(await request.json());
-    markMineVerifyCodeCreated(payload);
+    await markMineVerifyCodeCreated(payload);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleMineVerifyRouteError(error, 'Impossible d’enregistrer le code MineVerify.');

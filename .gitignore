@@ -56,10 +56,7 @@ ehthumbs.db
 tmp/
 temp/
 
-# AI Agents
-AGENTS.md
-GEMINI.md
-CLAUDE.md
+# Local AI agent state
 .claude/
 
 # Personal files
@@ -67,10 +64,3 @@ REMEMBER.md
 PLAN.md
 TODO.Md
 /generated/prisma
-
-# Old static files
-public/data/place_examples/
-public/data/place_images/
-public/data/places/
-public/data/portal_examples/
-public/data/portals/
