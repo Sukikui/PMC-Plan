@@ -15,6 +15,7 @@ import {
 } from '../lib/ui/panel';
 import {
   getPlayerCoordsErrorMessage,
+  isSafariPlayerCoordsSyncBlocked,
   playerCoordsApi,
   PlayerCoordsApiError,
   PlayerCoordsApiErrorType,
@@ -26,6 +27,7 @@ const POSITION_PANEL_TOP_PX = 16;
 const NOTIFICATION_GAP_PX = 8;
 const PLAYER_PLOP_TRANSITION_MS = 120;
 const PLAYER_REVEAL_DELAY_MS = 70;
+const SAFARI_SYNC_ERROR = 'Synchronisation indisponible sur Safari';
 
 interface PositionPanelProps {
   onPlayerPositionChange?: (position: PlayerData | null) => void;
@@ -52,6 +54,10 @@ export default function PositionPanel({
   useEffect(() => {
     if (playerUsername) setPreviewUsername(playerUsername);
   }, [playerUsername]);
+
+  useEffect(() => {
+    if (isSafariPlayerCoordsSyncBlocked()) setSyncError(SAFARI_SYNC_ERROR);
+  }, []);
 
   useEffect(() => {
     if (isConnected) {
@@ -87,6 +93,11 @@ export default function PositionPanel({
   }, [isConnected, previewUsername]);
 
   const syncPosition = useCallback(async (isAutoSync = false) => {
+    if (!isAutoSync && isSafariPlayerCoordsSyncBlocked()) {
+      triggerSyncError(SAFARI_SYNC_ERROR, setSyncError, setIsShaking);
+      return;
+    }
+
     if (!isAutoSync) {
       setIsLoading(true);
     }
