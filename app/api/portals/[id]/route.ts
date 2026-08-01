@@ -16,6 +16,7 @@ import { indexLinkedPortalPairs } from '@/lib/portal/linked-portals';
 import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
+import { invalidateRouteData } from '../../route/service/route-data';
 
 import { UpdatePortalSchema } from '../../utils/schemas';
 
@@ -103,6 +104,7 @@ export async function PUT(request: NextRequest, context: any) {
         }
         return updatedPortal;
       });
+      invalidateRouteData();
 
       return NextResponse.json(
         {
@@ -174,6 +176,7 @@ export async function PUT(request: NextRequest, context: any) {
       }
       return { overworldPortal, netherPortal };
     });
+    invalidateRouteData();
 
     return NextResponse.json(
       {
@@ -252,6 +255,7 @@ export async function DELETE(request: NextRequest, context: any) {
           },
         },
       });
+      invalidateRouteData();
 
       return NextResponse.json({ message: 'Portails liés supprimés avec succès.' }, { status: 200 });
 
@@ -291,6 +295,7 @@ export async function DELETE(request: NextRequest, context: any) {
       } else {
         await prisma.portal.delete({ where: { uid: portal.uid } });
       }
+      invalidateRouteData();
 
       return NextResponse.json({ message: 'Portail supprimé avec succès.' }, { status: 200 });
     }

@@ -13,6 +13,7 @@ import { createMapEntry, MapEntryError } from '@/lib/map-entry/service';
 import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
 import { validateSpaceAssociation } from '@/lib/map-entry/space-association';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
+import { invalidateRouteData } from '../route/service/route-data';
 
 export async function GET() {
   try {
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
         },
       });
     });
+    invalidateRouteData();
 
     return NextResponse.json(
       {

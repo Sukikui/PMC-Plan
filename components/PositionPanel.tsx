@@ -105,13 +105,20 @@ export default function PositionPanel({
     try {
       const data = await playerCoordsApi.getCoords();
       const nextWorld = normalizeWorldName(data.world);
-      setManualCoords({
+      const nextCoords = {
         x: String(Math.floor(data.x)),
         y: String(Math.floor(data.y)),
         z: String(Math.floor(data.z)),
-      });
+      };
+      setManualCoords((current) => (
+        current.x === nextCoords.x
+        && current.y === nextCoords.y
+        && current.z === nextCoords.z
+          ? current
+          : nextCoords
+      ));
       if (nextWorld) setManualWorld(nextWorld);
-      setPlayerData(data);
+      setPlayerData((current) => isSamePlayerData(current, data) ? current : data);
     } catch (err) {
       if (!isAutoSync && isMissingPlayerCoordsMod(err)) {
         setSyncError(null);
@@ -134,8 +141,18 @@ export default function PositionPanel({
   useEffect(() => {
     if (!isConnected) return;
 
-    const interval = setInterval(() => syncPosition(true), 2000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    let timeout: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      await syncPosition(true);
+      if (!cancelled) timeout = setTimeout(poll, 2000);
+    };
+
+    timeout = setTimeout(poll, 2000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [isConnected, syncPosition]);
 
   useEffect(() => {
@@ -143,13 +160,14 @@ export default function PositionPanel({
   }, [playerData, onPlayerPositionChange]);
 
   useEffect(() => {
+    if (playerData) return;
     onManualCoordsChange?.({
       x: manualCoords.x,
       y: manualCoords.y,
       z: manualCoords.z,
       world: manualWorld,
     });
-  }, [manualCoords, manualWorld, onManualCoordsChange]);
+  }, [manualCoords, manualWorld, onManualCoordsChange, playerData]);
 
   const syncAction = (
     <PositionSyncButton
@@ -261,6 +279,15 @@ function handleSyncError(
 function isMissingPlayerCoordsMod(error: unknown) {
   return error instanceof PlayerCoordsApiError
     && error.type === PlayerCoordsApiErrorType.CONNECTION_FAILED;
+}
+
+function isSamePlayerData(current: PlayerData | null, next: PlayerData) {
+  return current?.x === next.x
+    && current.y === next.y
+    && current.z === next.z
+    && current.world === next.world
+    && current.uuid === next.uuid
+    && current.username === next.username;
 }
 
 function triggerSyncError(

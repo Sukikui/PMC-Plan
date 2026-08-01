@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import {
   calculateEuclideanDistance,
-  type Portal,
 } from '../../utils/shared';
-import { callNearestPortals } from '../route-utils';
-import type { RoutePoint } from '../route-types';
+import { callNearestPortal } from '../route-utils';
+import type { RoutePoint, RoutePortal } from '../route-types';
 import {
   buildNetherTransport,
   resolveNetherEndpoint,
@@ -15,11 +14,7 @@ import {
 } from './helpers';
 
 export class RouteService {
-  private portals: Portal[];
-
-  constructor(portals: Portal[]) {
-    this.portals = portals;
-  }
+  constructor(private readonly portals: RoutePortal[]) {}
 
   async handleOverworldToOverworld(fromPoint: RoutePoint, toPoint: RoutePoint) {
     const directDistance = calculateEuclideanDistance(
@@ -50,29 +45,27 @@ export class RouteService {
     
     // Option B: Via nether
     const searchRadius = directDistance;
-    const nearbyPortalsFrom = await callNearestPortals(
+    const portal1 = callNearestPortal(
       fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
       'overworld', this.portals, searchRadius
     );
-    
-    if (nearbyPortalsFrom.length === 0) {
+
+    if (!portal1) {
       return NextResponse.json(directRoute);
     }
-    
-    const nearbyPortalsTo = await callNearestPortals(
+
+    const portal2 = callNearestPortal(
       toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z,
       'overworld', this.portals, searchRadius
     );
-    
-    if (nearbyPortalsTo.length === 0) {
+
+    if (!portal2) {
       return NextResponse.json(directRoute);
     }
-    
+
     // Try to find linked portals or calculate theoretical ones
-    const portal1 = nearbyPortalsFrom[0];
     const portal1NetherEndpoint = await resolveNetherEndpoint(portal1, this.portals);
 
-    const portal2 = nearbyPortalsTo[0];
     const portal2NetherEndpoint = await resolveNetherEndpoint(portal2, this.portals);
     const linkedPortal2 = portal2NetherEndpoint.linkedPortal;
 
@@ -148,19 +141,18 @@ export class RouteService {
   }
 
   async handleOverworldToNether(fromPoint: RoutePoint, toPoint: RoutePoint) {
-    const nearbyPortals = await callNearestPortals(
+    const portal = callNearestPortal(
       fromPoint.coordinates.x, fromPoint.coordinates.y, fromPoint.coordinates.z,
       'overworld', this.portals
     );
-    
-    if (nearbyPortals.length === 0) {
+
+    if (!portal) {
       return NextResponse.json(
         { error: 'No overworld portals found' },
         { status: 404 }
       );
     }
     
-    const portal = nearbyPortals[0];
     const netherEndpoint = await resolveNetherEndpoint(portal, this.portals);
     
     const distanceToPortal = portal.distance;
@@ -196,19 +188,18 @@ export class RouteService {
   }
 
   async handleNetherToOverworld(fromPoint: RoutePoint, toPoint: RoutePoint) {
-    const nearbyPortals = await callNearestPortals(
+    const portal = callNearestPortal(
       toPoint.coordinates.x, toPoint.coordinates.y, toPoint.coordinates.z,
       'overworld', this.portals
     );
-    
-    if (nearbyPortals.length === 0) {
+
+    if (!portal) {
       return NextResponse.json(
         { error: 'No overworld portals found near destination' },
         { status: 404 }
       );
     }
     
-    const portal = nearbyPortals[0];
     const netherEndpoint = await resolveNetherEndpoint(portal, this.portals);
     
     const netherTransport = buildNetherTransport(

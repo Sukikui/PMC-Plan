@@ -14,6 +14,13 @@ jest.mock('../app/api/utils/shared', () => ({
   loadPortals: jest.fn(() => Promise.resolve(mockPortals))
 }));
 
+jest.mock('../app/api/route/service/route-data', () => ({
+  loadRouteData: jest.fn(() => Promise.resolve({
+    places: mockPlaces,
+    portals: mockPortals,
+  })),
+}));
+
 describe('API Endpoints', () => {
   describe('/api/nether-address', () => {
     it('should calculate nether address for overworld coordinates', async () => {

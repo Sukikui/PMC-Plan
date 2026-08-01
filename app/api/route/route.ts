@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  loadPlaces,
-  loadPortals,
-} from '../utils/shared';
 import { QuerySchema } from './route-types';
 import { RouteService } from './service/route-service';
+import { loadRouteData } from './service/route-data';
 import { handleError, parseQueryParams } from '../utils/api-utils';
 import { resolveRoutePoint } from './route-utils';
 
@@ -32,9 +29,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Load places and portals if needed
-    const places = await loadPlaces();
-    const portals = await loadPortals();
+    const { places, portals } = await loadRouteData();
 
     // Resolve from point
     const fromPointResult = await resolveRoutePoint(

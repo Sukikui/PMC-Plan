@@ -9,6 +9,13 @@ jest.mock('../app/api/utils/shared', () => ({
   loadPortals: jest.fn(() => Promise.resolve(mockPortals))
 }));
 
+jest.mock('../app/api/route/service/route-data', () => ({
+  loadRouteData: jest.fn(() => Promise.resolve({
+    places: mockPlaces,
+    portals: mockPortals,
+  })),
+}));
+
 describe('Route API Integration Tests - Real Behavior Validation', () => {
   
   describe('Overworld to Overworld Routes', () => {
