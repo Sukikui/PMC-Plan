@@ -16,6 +16,7 @@ import { setMapEntrySpace } from '@/lib/map-entry/space-association';
 import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
+import { invalidateRouteData } from '../../route/service/route-data';
 
 
 import { UpdatePlaceSchema } from '../../utils/schemas';
@@ -119,6 +120,7 @@ export async function PUT(request: NextRequest, context: any) {
       }
       return updatedPlace;
     });
+    invalidateRouteData();
 
     return NextResponse.json(
       {
@@ -178,6 +180,7 @@ export async function DELETE(request: NextRequest, context: any) {
     await prisma.mapEntry.delete({
       where: { id: place.mapEntryId },
     });
+    invalidateRouteData();
 
     return NextResponse.json({ message: 'Lieu supprimé avec succès.' }, { status: 200 });
   } catch (error: unknown) {

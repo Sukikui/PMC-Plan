@@ -66,18 +66,16 @@ export class PlayerCoordsApi {
   /**
    * Get current player coordinates and world information
    * @returns Promise resolving to player data
-   * @throws PlayerCoordsApiError with categorized error types
-   */
+  * @throws PlayerCoordsApiError with categorized error types
+  */
   async getCoords(): Promise<PlayerData> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-      
       const response = await fetch(`${this.baseUrl}/api/coords`, {
         signal: controller.signal
       });
-      
-      clearTimeout(timeoutId);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -140,6 +138,8 @@ export class PlayerCoordsApi {
         PlayerCoordsApiErrorType.UNKNOWN,
         rawErrorMessage
       );
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

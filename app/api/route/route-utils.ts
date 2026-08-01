@@ -1,56 +1,68 @@
-import { 
-  Portal, 
+import {
   calculateEuclideanDistance,
-  convertOverworldToNether, 
+  convertOverworldToNether,
   resolveNetherAddressForWorld
 } from '../utils/shared';
-import { RoutePoint } from './route-types';
+import type {
+  RouteEntity,
+  RoutePoint,
+  RoutePortal,
+  RoutePortalWithDistance,
+} from './route-types';
 import { NextResponse } from 'next/server';
-import { Place } from '../utils/shared';
 
-export async function callNearestPortals(x: number, y: number, z: number, world: string, allPortals: Portal[], maxDistance?: number): Promise<(Portal & {distance: number})[]> {
-  const worldPortals = allPortals.filter(portal => portal.world === world);
-  
-  const portalsWithDistance = worldPortals
-    .map(portal => ({
-      ...portal,
-      distance: calculateEuclideanDistance(
-        x, y, z,
-        portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
-      )
-    }))
-    .sort((a, b) => a.distance - b.distance);
-  
-  return maxDistance 
-    ? portalsWithDistance.filter(portal => portal.distance <= maxDistance)
-    : portalsWithDistance;
+export function callNearestPortal(
+  x: number,
+  y: number,
+  z: number,
+  world: string,
+  allPortals: RoutePortal[],
+  maxDistance?: number,
+): RoutePortalWithDistance | null {
+  let nearest: RoutePortalWithDistance | null = null;
+
+  allPortals.forEach((portal) => {
+    if (portal.world !== world) return;
+    const distance = calculateEuclideanDistance(
+      x, y, z,
+      portal.coordinates.x, portal.coordinates.y, portal.coordinates.z,
+    );
+    if (maxDistance !== undefined && distance > maxDistance) return;
+    if (!nearest || distance < nearest.distance) nearest = { ...portal, distance };
+  });
+
+  return nearest;
 }
 
-export async function callLinkedPortal(x: number, y: number, z: number, fromWorld: string, allPortals: Portal[]): Promise<(Portal & {distance: number}) | null> {
+export function callLinkedPortal<T extends RoutePortal>(
+  x: number,
+  y: number,
+  z: number,
+  fromWorld: string,
+  allPortals: T[],
+): (T & { distance: number }) | null {
   const targetWorld = fromWorld === 'overworld' ? 'nether' : 'overworld';
   const searchCoords = fromWorld === 'overworld' 
     ? convertOverworldToNether(x, z)
     : { x: x * 8, z: z * 8 };
   
   const searchRadius = targetWorld === 'overworld' ? 128 : 16;
-  const targetWorldPortals = allPortals.filter(portal => portal.world === targetWorld);
-  
-  const candidatePortals = targetWorldPortals
-    .filter(portal => {
-      const deltaX = Math.abs(portal.coordinates.x - searchCoords.x);
-      const deltaZ = Math.abs(portal.coordinates.z - searchCoords.z);
-      return deltaX <= searchRadius && deltaZ <= searchRadius;
-    })
-    .map(portal => ({
-      ...portal,
-      distance: calculateEuclideanDistance(
-        searchCoords.x, y, searchCoords.z,
-        portal.coordinates.x, portal.coordinates.y, portal.coordinates.z
-      )
-    }))
-    .sort((a, b) => a.distance - b.distance);
-  
-  return candidatePortals.length > 0 ? candidatePortals[0] : null;
+  let nearest: (T & { distance: number }) | null = null;
+
+  allPortals.forEach((portal) => {
+    if (portal.world !== targetWorld) return;
+    const deltaX = Math.abs(portal.coordinates.x - searchCoords.x);
+    const deltaZ = Math.abs(portal.coordinates.z - searchCoords.z);
+    if (deltaX > searchRadius || deltaZ > searchRadius) return;
+
+    const distance = calculateEuclideanDistance(
+      searchCoords.x, y, searchCoords.z,
+      portal.coordinates.x, portal.coordinates.y, portal.coordinates.z,
+    );
+    if (!nearest || distance < nearest.distance) nearest = { ...portal, distance };
+  });
+
+  return nearest;
 }
 
 export async function resolveRoutePoint(
@@ -60,12 +72,12 @@ export async function resolveRoutePoint(
   y: number | undefined,
   z: number | undefined,
   world: string | undefined | null,
-  places: Place[],
-  portals: Portal[],
+  places: RouteEntity[],
+  portals: RoutePortal[],
   pointType: 'from' | 'to'
 ): Promise<RoutePoint | NextResponse> {
   if (isPlace) {
-    let foundPlace: Place | Portal | undefined = places.find(p => p.id === placeId);
+    let foundPlace: RouteEntity | undefined = places.find(p => p.id === placeId);
     if (!foundPlace) {
       foundPlace = portals.find(p => p.id === placeId);
     }

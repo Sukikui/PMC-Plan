@@ -1,4 +1,9 @@
-import { buildRouteBreadcrumb, type RouteData } from '../lib/route-planning';
+import {
+  buildRouteBreadcrumb,
+  resolveRouteOrigin,
+  shouldRefreshRouteOrigin,
+  type RouteData,
+} from '../lib/route-planning';
 
 describe('buildRouteBreadcrumb', () => {
   it('adds the nether address to an overworld portal waypoint before a portal crossing', () => {
@@ -251,5 +256,42 @@ describe('buildRouteBreadcrumb', () => {
         coordinates: { x: 128, y: 74, z: -2616 },
       },
     ]);
+  });
+});
+
+describe('route request origins', () => {
+  const origin = { x: 10, y: 70, z: 20, world: 'overworld' };
+
+  it('prioritizes the synchronized player position over manual coordinates', () => {
+    expect(resolveRouteOrigin(origin, {
+      x: '100',
+      y: '80',
+      z: '200',
+      world: 'nether',
+    })).toBe(origin);
+  });
+
+  it('does not refresh a synchronized route below the movement threshold', () => {
+    expect(shouldRefreshRouteOrigin(
+      origin,
+      { ...origin, x: 14.9 },
+      true,
+    )).toBe(false);
+  });
+
+  it('refreshes a synchronized route at the movement threshold', () => {
+    expect(shouldRefreshRouteOrigin(
+      origin,
+      { ...origin, x: 15 },
+      true,
+    )).toBe(true);
+  });
+
+  it('refreshes manual coordinates after any actual change', () => {
+    expect(shouldRefreshRouteOrigin(
+      origin,
+      { ...origin, z: 20.1 },
+      false,
+    )).toBe(true);
   });
 });

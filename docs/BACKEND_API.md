@@ -221,12 +221,11 @@ Calculates the optimal route between two locations using the full routing algori
     - `parseQueryParams()` in `app/api/utils/api-utils.ts`
     - `handleError()` in `app/api/utils/api-utils.ts`
     - `normalizeWorldName()` in `lib/world-utils.ts`
-    - `loadPlaces()` in `app/api/utils/shared.ts`
-    - `loadPortals()` in `app/api/utils/shared.ts`
+    - `loadRouteData()` in `app/api/route/service/route-data.ts`
     - `RouteService` class in `app/api/route/service/route-service.ts`
 - **`route-service.ts` (Service):**
     - `RouteService` constructor is initialized with `portals`.
-    - `callNearestPortals()` in `app/api/route/route-utils.ts`
+    - `callNearestPortal()` in `app/api/route/route-utils.ts`
     - `callLinkedPortal()` in `app/api/route/route-utils.ts`
     - `calculateEuclideanDistance()` in `app/api/utils/shared.ts`
 - **Nether network:**
@@ -236,6 +235,16 @@ Calculates the optimal route between two locations using the full routing algori
 **Note:** You must provide either coordinates (`x`, `y`, `z`) or `place_id` for both source and destination.
 
 #### Internal Logic
+
+- Route data uses a dedicated projection containing only identifiers, worlds,
+  coordinates, addresses, and portal pairing identities. It does not load
+  images, trade offers, spaces, owners, managers, or editor metadata.
+- Place and portal projections are queried concurrently and cached for up to
+  60 seconds in the Next.js data cache. Successful place and portal mutations
+  invalidate the shared cache immediately.
+- Nearest and linked portal searches scan the projected portal collection once
+  and retain only the best candidate, without sorting or copying the complete
+  collection.
 
 - **`Overworld to Overworld`**: 
   1. Calculates direct euclidean distance.

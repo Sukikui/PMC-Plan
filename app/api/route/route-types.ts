@@ -31,3 +31,30 @@ export interface RoutePoint {
   id?: string;
   address?: string;
 }
+
+export interface RouteEntity {
+  id: string;
+  name: string;
+  world: string;
+  coordinates: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  address?: string | null;
+}
+
+export interface RoutePortal extends RouteEntity {
+  slug: string;
+  mapEntryId: string;
+  address: string;
+}
+
+export interface RoutePortalWithDistance extends RoutePortal {
+  distance: number;
+}
+
+export interface RouteDataSet {
+  places: RouteEntity[];
+  portals: RoutePortal[];
+}

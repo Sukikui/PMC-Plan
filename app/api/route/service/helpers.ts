@@ -1,21 +1,20 @@
 import {
   convertOverworldToNether,
   resolveNetherAddressForWorld,
-  type Portal,
 } from '../../utils/shared';
 import { calculateNetherRoute } from '@/lib/nether/routing';
 import { callLinkedPortal } from '../route-utils';
-import type { RoutePoint } from '../route-types';
+import type { RoutePoint, RoutePortal, RoutePortalWithDistance } from '../route-types';
 
 export interface ResolvedNetherEndpoint {
-  linkedPortal: (Portal & { distance: number }) | null;
-  coordinates: Portal['coordinates'];
+  linkedPortal: RoutePortalWithDistance | null;
+  coordinates: RoutePortal['coordinates'];
   address?: string;
 }
 
 export async function resolveNetherEndpoint(
-  overworldPortal: Portal,
-  allPortals: Portal[]
+  overworldPortal: RoutePortal,
+  allPortals: RoutePortal[]
 ): Promise<ResolvedNetherEndpoint> {
   const linkedPortal = await callLinkedPortal(
     overworldPortal.coordinates.x,
@@ -60,7 +59,7 @@ export const toRoutePointStart = (point: RoutePoint) => ({
 });
 
 export const toPortalLocation = (
-  portal: Portal,
+  portal: RoutePortal,
   options: { world?: string; address?: string } = {}
 ) => ({
   id: portal.id,
@@ -81,7 +80,7 @@ export const toNetherEndpointLocation = (
 });
 
 interface NetherTransportLocation {
-  coordinates: Portal['coordinates'];
+  coordinates: RoutePortal['coordinates'];
 }
 
 export const buildNetherTransport = <

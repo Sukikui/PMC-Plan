@@ -29,27 +29,51 @@ export type {
 export const hasManualRouteCoordinates = (manualCoords?: ManualRouteCoordinates) =>
   Boolean(manualCoords?.x && manualCoords?.y && manualCoords?.z);
 
-export const buildRouteFromParams = (
+export const resolveRouteOrigin = (
   playerPosition?: PlayerRoutePosition | null,
-  manualCoords?: ManualRouteCoordinates
-) => {
-  if (playerPosition) {
-    return `from_x=${playerPosition.x}&from_y=${playerPosition.y}&from_z=${playerPosition.z}&from_world=${playerPosition.world}`;
-  }
-
-  if (!hasManualRouteCoordinates(manualCoords)) {
-    return null;
-  }
+  manualCoords?: ManualRouteCoordinates,
+): PlayerRoutePosition | null => {
+  if (playerPosition) return playerPosition;
+  if (!hasManualRouteCoordinates(manualCoords)) return null;
 
   const x = Number.parseFloat(manualCoords!.x);
   const y = Number.parseFloat(manualCoords!.y);
   const z = Number.parseFloat(manualCoords!.z);
+  if ([x, y, z].some(Number.isNaN)) return null;
 
-  if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(z)) {
-    throw new Error('Coordonnées invalides');
-  }
+  return { x, y, z, world: manualCoords!.world };
+};
 
-  return `from_x=${x}&from_y=${y}&from_z=${z}&from_world=${manualCoords!.world}`;
+export const shouldRefreshRouteOrigin = (
+  current: PlayerRoutePosition | null,
+  latest: PlayerRoutePosition | null,
+  synced: boolean,
+  syncedDistance = 5,
+) => {
+  if (!latest) return false;
+  if (!current || current.world !== latest.world) return true;
+
+  const distance = Math.hypot(
+    latest.x - current.x,
+    latest.y - current.y,
+    latest.z - current.z,
+  );
+  return synced ? distance >= syncedDistance : distance > 0;
+};
+
+export const buildRouteFromParams = (
+  playerPosition?: PlayerRoutePosition | null,
+  manualCoords?: ManualRouteCoordinates
+) => {
+  const origin = resolveRouteOrigin(playerPosition, manualCoords);
+  if (!origin) return null;
+
+  return new URLSearchParams({
+    from_x: String(origin.x),
+    from_y: String(origin.y),
+    from_z: String(origin.z),
+    from_world: origin.world,
+  }).toString();
 };
 
 export const getRouteTransportSteps = (route: RouteData) =>
