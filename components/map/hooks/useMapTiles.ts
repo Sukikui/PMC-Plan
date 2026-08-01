@@ -14,8 +14,8 @@ interface MapTileCacheEntry {
   image: HTMLImageElement | null;
   loadedAt: number | null;
   lastUsedAt: number;
-  promise: Promise<void>;
   failed: boolean;
+  loadListeners: Set<() => void>;
 }
 
 interface UseMapTilesOptions {
@@ -55,29 +55,33 @@ export const useMapTiles = ({
   }, [baseSize, enabled, metadata.tiles, pan, viewport, zoom]);
 
   useEffect(() => {
-    let active = true;
     const visibleSources = new Set(visibleTiles.map((tile) => tile.src));
+    const handleTileLoaded = () => {
+      setCacheRevision((revision) => revision + 1);
+    };
+    const entries = visibleTiles.map((tile) => loadMapTile(tile));
 
-    visibleTiles.forEach((tile) => {
-      loadMapTile(tile)
-        .then(() => {
-          if (active) {
-            setCacheRevision((revision) => revision + 1);
-          }
-        })
-        .catch(() => {});
+    entries.forEach((entry) => {
+      if (!entry.image && !entry.failed) {
+        entry.loadListeners.add(handleTileLoaded);
+      }
     });
     pruneMapTileCache(visibleSources);
 
     return () => {
-      active = false;
+      entries.forEach((entry) => entry.loadListeners.delete(handleTileLoaded));
     };
   }, [visibleTiles]);
 
   useEffect(() => {
+    const now = performance.now();
     const entries = visibleTiles
       .map((tile) => tileCache.get(tile.src))
-      .filter((entry): entry is MapTileCacheEntry => !!entry?.loadedAt);
+      .filter((entry): entry is MapTileCacheEntry => (
+        entry?.loadedAt !== null
+        && entry?.loadedAt !== undefined
+        && now - entry.loadedAt < MAP_TILE_FADE_DURATION_MS
+      ));
 
     if (entries.length === 0) {
       return;
@@ -93,7 +97,7 @@ export const useMapTiles = ({
       }
     };
 
-    updateAnimation();
+    frameId = requestAnimationFrame(updateAnimation);
     return () => {
       if (frameId !== null) {
         cancelAnimationFrame(frameId);
@@ -101,29 +105,27 @@ export const useMapTiles = ({
     };
   }, [cacheRevision, visibleTiles]);
 
-  return visibleTiles.flatMap((tile): LoadedMapTile[] => {
-    const entry = tileCache.get(tile.src);
-    if (!entry?.image || entry.loadedAt === null || entry.failed) {
-      return [];
-    }
+  return useMemo(() => {
+    // Cache entries mutate when their image finishes loading.
+    void cacheRevision;
+    return visibleTiles.flatMap((tile): LoadedMapTile[] => {
+      const entry = tileCache.get(tile.src);
+      if (!entry?.image || entry.loadedAt === null || entry.failed) return [];
 
-    return [{
-      ...tile,
-      image: entry.image,
-      opacity: clamp(
-        (animationTime - entry.loadedAt) / MAP_TILE_FADE_DURATION_MS,
-        0,
-        1
-      ),
-    }];
-  });
+      return [{
+        ...tile,
+        image: entry.image,
+        opacity: clamp((animationTime - entry.loadedAt) / MAP_TILE_FADE_DURATION_MS, 0, 1),
+      }];
+    });
+  }, [animationTime, cacheRevision, visibleTiles]);
 };
 
 const loadMapTile = (tile: MapTileDescriptor) => {
   const cached = tileCache.get(tile.src);
   if (cached) {
     cached.lastUsedAt = performance.now();
-    return cached.promise;
+    return cached;
   }
 
   const image = new Image();
@@ -132,31 +134,30 @@ const loadMapTile = (tile: MapTileDescriptor) => {
     loadedAt: null,
     lastUsedAt: performance.now(),
     failed: false,
-    promise: Promise.resolve(),
+    loadListeners: new Set(),
   };
 
-  entry.promise = new Promise<void>((resolve, reject) => {
-    image.onload = () => {
-      if (image.naturalWidth !== tile.width || image.naturalHeight !== tile.height) {
-        entry.failed = true;
-        reject(new Error(`Invalid map tile dimensions: ${tile.src}`));
-        return;
-      }
-
-      entry.image = image;
-      entry.loadedAt = performance.now();
-      entry.lastUsedAt = entry.loadedAt;
-      resolve();
-    };
-    image.onerror = () => {
+  image.onload = () => {
+    if (image.naturalWidth !== tile.width || image.naturalHeight !== tile.height) {
       entry.failed = true;
-      reject(new Error(`Unable to load map tile: ${tile.src}`));
-    };
-    image.src = tile.src;
-  });
+      entry.loadListeners.clear();
+      return;
+    }
+
+    entry.image = image;
+    entry.loadedAt = performance.now();
+    entry.lastUsedAt = entry.loadedAt;
+    entry.loadListeners.forEach((listener) => listener());
+    entry.loadListeners.clear();
+  };
+  image.onerror = () => {
+    entry.failed = true;
+    entry.loadListeners.clear();
+  };
+  image.src = tile.src;
 
   tileCache.set(tile.src, entry);
-  return entry.promise;
+  return entry;
 };
 
 const pruneMapTileCache = (protectedSources: Set<string>) => {

@@ -30,7 +30,6 @@ import { useMapView } from '../hooks/useMapView';
 import { usePointRenderMode } from '../hooks/usePointRenderMode';
 import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
 import type { InteractiveMapPoint, ScreenMapPoint } from '../core/map-types';
-
 export type {
   InteractiveMapPoint,
   InteractiveMapPointKind,
@@ -172,7 +171,7 @@ export default function InteractiveMapRenderer({
     maxZoom: view.maxZoom,
     clampPan: view.clampPan,
     commitPan: view.commitPan,
-    commitView: view.commitView,
+    scheduleView: view.scheduleView,
     cancelAnimation: view.cancelAnimation,
     onMapMoveStart: handleMapMoveStart,
     onPointSelect,
@@ -298,6 +297,7 @@ export default function InteractiveMapRenderer({
           pan={view.pan}
           metadata={metadata}
           lineOverlays={lineOverlays}
+          showBlockGrid={!interactions.isZooming}
         />
         {!isBlocked && activeRoute.focusKey && (
           <RouteMapCanvas
@@ -315,12 +315,12 @@ export default function InteractiveMapRenderer({
           />
         )}
         {!isBlocked && mapBounds && (
-          <MapEdgeHalo bounds={mapBounds} world={world} />
+          <MapEdgeHalo bounds={mapBounds} viewport={view.viewport} world={world} />
         )}
 
         {!isBlocked && (
           <MapPointsLayer
-            points={pointsState.screenPoints}
+            points={pointsState.renderedScreenPoints}
             pointRenderMode={effectivePointRenderMode}
             iconScale={iconScale}
             animatePointTransitions={animatePointTransitions && !isWorldSwitching}

@@ -39,10 +39,11 @@ export default function AppearanceSettings({
 
                 <div className="mt-4 flex items-center gap-2">
                     <Image
-                        src="/integrations/playercoords-api/icon.jpeg"
+                        src="/integrations/pcapi_icon.jpeg"
                         alt="Icône de PlayerCoordsAPI"
                         width={56}
                         height={56}
+                        unoptimized
                         className="h-14 w-14 shrink-0 rounded-lg object-cover"
                     />
 
@@ -63,7 +64,7 @@ export default function AppearanceSettings({
                     </p>
 
                     <Image
-                        src="/integrations/playercoords-api/configuration.png"
+                        src="/integrations/pcapi_config.png"
                         alt="Configuration de PlayerCoordsAPI dans Minecraft"
                         width={2040}
                         height={1498}

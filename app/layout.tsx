@@ -8,11 +8,47 @@ import './minecraft-effects.css';
 import './animations.css';
 
 const inter = Inter({ subsets: ['latin'] });
+const appName = 'PMC Plan';
+const appDescription = 'Tous les lieux, portails et commerces du serveur Play-MC.fr réunis ' +
+  'au sein d\'une même application de navigation !';
+const appMark = {
+  url: '/branding/pmc/mark.png',
+  width: 110,
+  height: 110,
+  alt: 'Logo PMC Plan',
+};
 
 export const metadata: Metadata = {
-  title: 'PMC Plan',
-  description: 'Application de navigation et annuaire du serveur Play-MC.fr !',
+  metadataBase: new URL('https://pmc-plan.vercel.app'),
+  title: appName,
+  description: appDescription,
+  applicationName: appName,
   keywords: 'minecraft, pathfinding, nether, portal, navigation, map',
+  alternates: {
+    canonical: '/',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: appMark.url, type: 'image/png' },
+    ],
+    apple: appMark.url,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: '/',
+    siteName: appName,
+    title: appName,
+    description: appDescription,
+    images: [appMark],
+  },
+  twitter: {
+    card: 'summary',
+    title: appName,
+    description: appDescription,
+    images: [appMark.url],
+  },
 };
 
 export default function RootLayout({

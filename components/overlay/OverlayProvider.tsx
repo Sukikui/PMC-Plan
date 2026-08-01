@@ -15,9 +15,13 @@ import {
 } from '@/lib/preload/main-screen';
 import { fetchSpaces } from '@/lib/spaces/client';
 import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
+import {
+  loadFormOverlay,
+  loadInfoOverlayStack,
+} from '@/lib/preload/overlay-modules';
 
-const FormOverlay = dynamic(() => import('@/components/form/FormOverlay'));
-const InfoOverlayStack = dynamic(() => import('@/components/overlay/InfoOverlayStack'));
+const FormOverlay = dynamic(loadFormOverlay);
+const InfoOverlayStack = dynamic(loadInfoOverlayStack);
 
 type MapEntryOverlayType = 'place' | 'portal';
 interface FormOverlayState {

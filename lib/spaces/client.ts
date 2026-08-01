@@ -30,11 +30,6 @@ const spaces = createCachedList<Space>({
 
 export const fetchSpaces = spaces.fetchAll;
 
-export function refreshSpaces() {
-  spaces.invalidate({ notify: false });
-  return spaces.fetchAll();
-}
-
 export async function createSpaceRequest(input: SpaceInput) {
   return sendSpaceRequest('/api/spaces', 'POST', input);
 }

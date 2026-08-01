@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { worldToMapPercent, type MapMetadata } from '@/lib/map/metadata';
+import { MAP_POINT_RENDER_OVERSCAN_PX } from '../core/map-constants';
 import { mapPercentToScreenPoint, type MapSize, type MapPan, type MapViewport } from '../core/map-view';
 import type { InteractiveMapPoint, PositionedMapPoint, ScreenMapPoint } from '../core/map-types';
 
@@ -38,10 +39,17 @@ export const useMapPoints = ({
     () => new Map(screenPoints.map((point) => [point.id, point])),
     [screenPoints]
   );
+  const renderedScreenPoints = useMemo(() => screenPoints.filter(({ screen }) => (
+    screen.left >= -MAP_POINT_RENDER_OVERSCAN_PX
+    && screen.left <= viewport.width + MAP_POINT_RENDER_OVERSCAN_PX
+    && screen.top >= -MAP_POINT_RENDER_OVERSCAN_PX
+    && screen.top <= viewport.height + MAP_POINT_RENDER_OVERSCAN_PX
+  )), [screenPoints, viewport.height, viewport.width]);
 
   return {
     positionedPoints,
     screenPoints,
+    renderedScreenPoints,
     screenPointById,
   };
 };

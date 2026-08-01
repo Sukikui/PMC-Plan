@@ -33,9 +33,13 @@ import type {
   SelectDestinationHandler,
 } from '@/lib/destination/selection';
 import type { Service } from '@/lib/services/types';
+import {
+  loadMinecraftLinkOverlay,
+  loadSettingsOverlay,
+} from '@/lib/preload/overlay-modules';
 
-const MinecraftLinkOverlay = dynamic(() => import('@/components/settings/MinecraftLinkOverlay'));
-const SettingsOverlay = dynamic(() => import('@/components/settings/overlay/SettingsOverlay'));
+const MinecraftLinkOverlay = dynamic(loadMinecraftLinkOverlay);
+const SettingsOverlay = dynamic(loadSettingsOverlay);
 
 interface SettingsPanelProps {
   onExpandedChange?: (expanded: boolean) => void;
