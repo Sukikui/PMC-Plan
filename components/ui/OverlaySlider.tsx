@@ -1,10 +1,17 @@
 'use client';
 
-import { useEffect, useState, type ReactNode, type Ref } from 'react';
+import {
+  startTransition,
+  useEffect,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import OverlayTabs, {
   type OverlayTabOption,
 } from '@/components/ui/OverlayTabs';
 import { themeColors } from '@/lib/theme-colors';
+import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
 
 export interface OverlaySlide<T extends string> {
   className?: string;
@@ -34,11 +41,57 @@ export function OverlaySlideTrack<T extends string>({
   );
 
   useEffect(() => {
-    setMountedValues((current) => {
-      if (current.has(activeValue)) return current;
-      return new Set([...current, activeValue]);
+    startTransition(() => {
+      setMountedValues((current) => {
+        if (current.has(activeValue)) return current;
+        return new Set([...current, activeValue]);
+      });
     });
   }, [activeValue]);
+
+  useEffect(() => {
+    const pendingValues = slides
+      .map((slide) => slide.value)
+      .filter((value) => value !== activeValue);
+    let idleCallbackId: number | null = null;
+    let preloadTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const mountNextSlide = () => {
+      const nextValue = pendingValues.shift();
+      if (!nextValue) return;
+
+      startTransition(() => {
+        setMountedValues((current) => {
+          if (current.has(nextValue)) return current;
+          return new Set([...current, nextValue]);
+        });
+      });
+
+      if (pendingValues.length > 0) {
+        scheduleNextMount();
+      }
+    };
+
+    const scheduleNextMount = () => {
+      if ('requestIdleCallback' in window) {
+        idleCallbackId = window.requestIdleCallback(mountNextSlide);
+        return;
+      }
+
+      preloadTimeoutId = setTimeout(mountNextSlide, 50);
+    };
+
+    preloadTimeoutId = setTimeout(scheduleNextMount, OVERLAY_TRANSITION_MS);
+
+    return () => {
+      if (preloadTimeoutId !== null) {
+        clearTimeout(preloadTimeoutId);
+      }
+      if (idleCallbackId !== null) {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+    };
+  }, [activeValue, slides]);
 
   return (
     <div
@@ -55,11 +108,13 @@ export function OverlaySlideTrack<T extends string>({
             key={slide.value}
             ref={slide.elementRef}
             aria-hidden={!active}
-            inert={!active}
             className={`min-w-0 shrink-0 ${
               active ? '' : 'pointer-events-none'
             } ${baseSlideClassName} ${slide.className ?? ''}`}
-            style={{ width: `${100 / slideCount}%` }}
+            style={{
+              contain: 'layout paint style',
+              width: `${100 / slideCount}%`,
+            }}
           >
             {(active || mountedValues.has(slide.value)) ? slide.content : null}
           </div>

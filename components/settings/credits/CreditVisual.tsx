@@ -56,8 +56,9 @@ export default function CreditVisual({ visual }: { visual: CreditVisualData }) {
         <Image
           src={visual.src}
           alt=""
-          width={28}
-          height={28}
+          width={32}
+          height={32}
+          unoptimized
           className="h-8 w-8 rounded-md object-cover"
         />
       )}

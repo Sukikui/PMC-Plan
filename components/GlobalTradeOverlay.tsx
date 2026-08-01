@@ -56,7 +56,6 @@ export default function GlobalTradeOverlay({
     subscribe: subscribeToMainScreenDataInvalidation,
   });
   const serviceState = useInvalidatedCollection({
-    enabled: activeTab === 'services',
     errorMessage: 'Impossible de charger les services.',
     loadItems: fetchServices,
     subscribe: subscribeToServicesInvalidation,

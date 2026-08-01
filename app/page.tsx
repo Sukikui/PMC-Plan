@@ -13,7 +13,11 @@ import StartupScreen from '@/components/StartupScreen';
 import MainMapBackground from '@/components/map/MainMapBackground';
 import RouteMapControls from '@/components/map/route/RouteMapControls';
 import { themeColors } from '@/lib/theme-colors';
-import { preloadMainScreenResources } from '@/lib/preload/main-screen';
+import { preloadStartupResources } from '@/lib/preload/startup';
+import {
+  loadGlobalTradeOverlay,
+  loadSpaceExplorerOverlay,
+} from '@/lib/preload/overlay-modules';
 import { NETHER_MAP_WORLD, OVERWORLD_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
 import { buildMapRoutePath, type MapRouteSegment } from '@/lib/map/route-path';
 import type { PlayerData } from '@/lib/playercoords-api';
@@ -22,8 +26,8 @@ import type { RouteData } from '@/lib/route-planning';
 
 import type { Place, Portal } from '@/lib/api/types';
 
-const GlobalTradeOverlay = dynamic(() => import('@/components/GlobalTradeOverlay'));
-const SpaceExplorerOverlay = dynamic(() => import('@/components/spaces/SpaceExplorerOverlay'));
+const GlobalTradeOverlay = dynamic(loadGlobalTradeOverlay);
+const SpaceExplorerOverlay = dynamic(loadSpaceExplorerOverlay);
 
 export default function Home() {
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -53,7 +57,7 @@ export default function Home() {
     let cancelled = false;
     const minimumStartupDelay = new Promise((resolve) => setTimeout(resolve, 1000));
 
-    Promise.all([preloadMainScreenResources(), minimumStartupDelay]).finally(() => {
+    Promise.all([preloadStartupResources(), minimumStartupDelay]).finally(() => {
       if (!cancelled) {
         setStartupPreloadComplete(true);
       }

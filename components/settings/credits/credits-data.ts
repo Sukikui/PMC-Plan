@@ -80,9 +80,9 @@ export const creditGroups: CreditGroup[] = [
   {
     title: 'Écosystème Minecraft',
     items: [
-      { name: 'PlayerCoordsAPI', description: 'Mod client transmettant la position du client Minecraft du joueur.', visual: { kind: 'image', src: '/integrations/playercoords-api/icon.jpeg' }, href: 'https://modrinth.com/mod/playercoordsapi' },
-      { name: 'MineVerify', description: 'Plugin serveur vérifiant les comptes Minecraft lors de leur liaison.', visual: emoji('🔗'), href: 'https://github.com/Sukikui/MineVerify' },
-      { name: 'BiomeMap', description: 'Plugin serveur générant les rendus des cartes interactives.', visual: emoji('🗺️') },
+      { name: 'PlayerCoordsAPI', description: 'Mod client transmettant la position du client Minecraft du joueur.', visual: { kind: 'image', src: '/integrations/pcapi_icon.jpeg' }, href: 'https://modrinth.com/mod/playercoordsapi' },
+      { name: 'MineVerify', description: 'Plugin serveur vérifiant les comptes Minecraft lors de leur liaison.', visual: { kind: 'image', src: '/integrations/mineverify_icon.jpeg' }, href: 'https://modrinth.com/plugin/mineverify' },
+      { name: 'BiomeMap', description: 'Plugin serveur générant les rendus des cartes interactives.', visual: emoji('🗺️'), href: 'https://modrinth.com/plugin/biomemap' },
     ],
   },
   {

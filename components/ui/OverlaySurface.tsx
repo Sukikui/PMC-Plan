@@ -54,7 +54,7 @@ const OverlaySurface = forwardRef<HTMLElement, OverlaySurfaceProps>(
         aria-modal="true"
         role="dialog"
         tabIndex={-1}
-        className={`pointer-events-auto relative flex w-full min-w-0 flex-col overflow-hidden border ${sizeClasses[size]} ${heightClasses[resolvedHeight]} ${themeColors.border.primary} ${themeColors.panel.primary} ${themeColors.blur} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${shadowClass} ${className}`}
+        className={`pointer-events-auto relative flex w-full min-w-0 flex-col overflow-hidden border ${sizeClasses[size]} ${heightClasses[resolvedHeight]} ${themeColors.border.primary} ${themeColors.panel.primary} ${themeColors.util.roundedXl} [box-shadow:0_0_25px_0_var(--tw-shadow-color)] ${shadowClass} ${className}`}
         style={style}
       >
         {children}

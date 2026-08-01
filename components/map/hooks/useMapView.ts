@@ -16,10 +16,13 @@ export const useMapView = (metadata: MapMetadata) => {
   const [pan, setPan] = useState<MapPan>({ x: 0, y: 0 });
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  // Interaction refs are authoritative between rendered frames.
   const panRef = useRef(pan);
   const zoomRef = useRef(zoom);
   const queuedPanRef = useRef<MapPan>(pan);
+  const queuedZoomRef = useRef(zoom);
   const panFrameRef = useRef<number | null>(null);
+  const viewFrameRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   const baseSize = useMemo(() => getFittedMapSize(viewport, metadata), [viewport, metadata]);
@@ -63,11 +66,29 @@ export const useMapView = (metadata: MapMetadata) => {
   }, []);
 
   const commitView = useCallback((nextZoom: number, nextPan: MapPan) => {
+    if (viewFrameRef.current) {
+      cancelAnimationFrame(viewFrameRef.current);
+      viewFrameRef.current = null;
+    }
     zoomRef.current = nextZoom;
     panRef.current = nextPan;
     queuedPanRef.current = nextPan;
     setZoom(nextZoom);
     setPan(nextPan);
+  }, []);
+
+  const scheduleView = useCallback((nextZoom: number, nextPan: MapPan) => {
+    zoomRef.current = nextZoom;
+    panRef.current = nextPan;
+    queuedZoomRef.current = nextZoom;
+    queuedPanRef.current = nextPan;
+    if (viewFrameRef.current) return;
+
+    viewFrameRef.current = requestAnimationFrame(() => {
+      viewFrameRef.current = null;
+      setZoom(queuedZoomRef.current);
+      setPan(queuedPanRef.current);
+    });
   }, []);
 
   const cancelAnimation = useCallback(() => {
@@ -109,15 +130,6 @@ export const useMapView = (metadata: MapMetadata) => {
   }, [cancelAnimation, clampPan, commitView, maxZoom]);
 
   useEffect(() => {
-    panRef.current = pan;
-    queuedPanRef.current = pan;
-  }, [pan]);
-
-  useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
-
-  useEffect(() => {
     const node = viewportRef.current;
     if (!node) return;
 
@@ -140,6 +152,9 @@ export const useMapView = (metadata: MapMetadata) => {
     if (panFrameRef.current) {
       cancelAnimationFrame(panFrameRef.current);
     }
+    if (viewFrameRef.current) {
+      cancelAnimationFrame(viewFrameRef.current);
+    }
     cancelAnimation();
   }, [cancelAnimation]);
 
@@ -156,6 +171,7 @@ export const useMapView = (metadata: MapMetadata) => {
     clampPan,
     commitPan,
     commitView,
+    scheduleView,
     animateView,
     cancelAnimation,
   };

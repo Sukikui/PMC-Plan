@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import {
   CLICK_DRAG_TOLERANCE_PX,
   MAX_WHEEL_DELTA,
+  WHEEL_ZOOM_IDLE_DELAY_MS,
   WHEEL_ZOOM_INTENSITY,
 } from '../core/map-constants';
 import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
@@ -17,7 +18,7 @@ interface UseMapInteractionsParams {
   maxZoom: number;
   clampPan: (nextPan: MapPan, nextZoom: number) => MapPan;
   commitPan: (nextPan: MapPan) => void;
-  commitView: (nextZoom: number, nextPan: MapPan) => void;
+  scheduleView: (nextZoom: number, nextPan: MapPan) => void;
   cancelAnimation: () => void;
   onMapMoveStart: () => void;
   onPointSelect?: (point: InteractiveMapPoint) => void;
@@ -32,17 +33,19 @@ export const useMapInteractions = ({
   maxZoom,
   clampPan,
   commitPan,
-  commitView,
+  scheduleView,
   cancelAnimation,
   onMapMoveStart,
   onPointSelect,
 }: UseMapInteractionsParams) => {
   const [isPanning, setIsPanning] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
   const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
   const pendingPointSelectRef = useRef<InteractiveMapPoint | null>(null);
   const hasDraggedRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
+  const zoomEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopPanning = useCallback((target?: HTMLDivElement, pointerId?: number) => {
     if (target && pointerId !== undefined && target.hasPointerCapture(pointerId)) {
@@ -66,25 +69,40 @@ export const useMapInteractions = ({
     event.stopPropagation();
     if (isBlocked || !viewportRef.current) return;
 
+    const delta = clamp(event.deltaY, -MAX_WHEEL_DELTA, MAX_WHEEL_DELTA);
+    const currentZoom = zoomRef.current;
+    const nextZoom = clamp(
+      currentZoom * Math.exp(-delta * WHEEL_ZOOM_INTENSITY),
+      MIN_ZOOM,
+      maxZoom
+    );
+    if (nextZoom === currentZoom) return;
+
     startMapInteraction();
+    setIsZooming(true);
+    if (zoomEndTimeoutRef.current) clearTimeout(zoomEndTimeoutRef.current);
+    zoomEndTimeoutRef.current = setTimeout(() => {
+      zoomEndTimeoutRef.current = null;
+      setIsZooming(false);
+    }, WHEEL_ZOOM_IDLE_DELAY_MS);
 
     const rect = viewportRef.current.getBoundingClientRect();
     const pointer = {
       x: event.clientX - rect.left - rect.width / 2,
       y: event.clientY - rect.top - rect.height / 2,
     };
-    const delta = clamp(event.deltaY, -MAX_WHEEL_DELTA, MAX_WHEEL_DELTA);
-    const zoomFactor = Math.exp(-delta * WHEEL_ZOOM_INTENSITY);
-    const currentZoom = zoomRef.current;
-    const nextZoom = clamp(currentZoom * zoomFactor, MIN_ZOOM, maxZoom);
     const mapX = (pointer.x - panRef.current.x) / currentZoom;
     const mapY = (pointer.y - panRef.current.y) / currentZoom;
 
-    commitView(nextZoom, clampPan({
+    scheduleView(nextZoom, clampPan({
       x: pointer.x - mapX * nextZoom,
       y: pointer.y - mapY * nextZoom,
     }, nextZoom));
-  }, [clampPan, commitView, isBlocked, maxZoom, panRef, startMapInteraction, viewportRef, zoomRef]);
+  }, [clampPan, isBlocked, maxZoom, panRef, scheduleView, startMapInteraction, viewportRef, zoomRef]);
+
+  useEffect(() => () => {
+    if (zoomEndTimeoutRef.current) clearTimeout(zoomEndTimeoutRef.current);
+  }, []);
 
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (isBlocked || event.button !== 0) return;
@@ -141,6 +159,7 @@ export const useMapInteractions = ({
 
   return {
     isPanning,
+    isZooming,
     handleWheel,
     handlePointerDown,
     handlePointerMove,

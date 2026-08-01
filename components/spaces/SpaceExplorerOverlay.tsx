@@ -9,7 +9,7 @@ import OverlaySearchInput from '@/components/ui/OverlaySearchInput';
 import OverlaySurface from '@/components/ui/OverlaySurface';
 import { useInvalidatedCollection } from '@/components/ui/useInvalidatedCollection';
 import {
-  refreshSpaces,
+  fetchSpaces,
   subscribeToSpacesInvalidation,
 } from '@/lib/spaces/client';
 import type { Space } from '@/lib/spaces/types';
@@ -32,7 +32,7 @@ export default function SpaceExplorerOverlay({
     loading,
   } = useInvalidatedCollection({
     errorMessage: 'Impossible de charger les espaces.',
-    loadItems: refreshSpaces,
+    loadItems: fetchSpaces,
     subscribe: subscribeToSpacesInvalidation,
   });
   const filteredSpaces = useMemo(

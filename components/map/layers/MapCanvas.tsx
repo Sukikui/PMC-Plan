@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type React from 'react';
 import { themeColors } from '@/lib/theme-colors';
 import { worldToMapPercent, type MapMetadata } from '@/lib/map/metadata';
@@ -21,6 +21,7 @@ interface MapCanvasProps {
   pan: MapPan;
   metadata: MapMetadata;
   lineOverlays?: MapLineOverlay[];
+  showBlockGrid?: boolean;
 }
 
 export default function MapCanvas({
@@ -33,9 +34,8 @@ export default function MapCanvas({
   pan,
   metadata,
   lineOverlays = [],
+  showBlockGrid = true,
 }: MapCanvasProps) {
-  const lineOverlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !viewport.width || !viewport.height || !baseSize.width || !baseSize.height) {
@@ -67,15 +67,11 @@ export default function MapCanvas({
       drawWidth / metadata.overview.width / metadata.overview.cellSize
     );
 
-    if (!drawMapRaster(ctx, { mapImage, mapTiles, metadata, drawRect })) {
+    if (!drawMapRaster(ctx, { mapImage, mapTiles, metadata, drawRect, viewport })) {
       return;
     }
 
-    if (!lineOverlayCanvasRef.current) {
-      lineOverlayCanvasRef.current = document.createElement('canvas');
-    }
-    drawLineOverlays(ctx, lineOverlayCanvasRef.current, lineOverlays, {
-      pixelRatio,
+    drawLineOverlays(ctx, lineOverlays, {
       metadata,
       viewport,
       baseSize,
@@ -84,7 +80,7 @@ export default function MapCanvas({
       blockPixelSize,
     });
 
-    if (blockPixelSize < BLOCK_GRID_MIN_PIXEL_SIZE) {
+    if (!showBlockGrid || blockPixelSize < BLOCK_GRID_MIN_PIXEL_SIZE) {
       return;
     }
 
@@ -101,7 +97,7 @@ export default function MapCanvas({
 
     ctx.save();
     ctx.strokeStyle = themeColors.map.blockGridStroke;
-    ctx.lineWidth = blockPixelSize <= 2 ? 0.5 : 1;
+    ctx.lineWidth = 1;
     ctx.beginPath();
 
     for (let blockX = minVisibleX; blockX <= maxVisibleX; blockX += 1) {
@@ -118,7 +114,7 @@ export default function MapCanvas({
 
     ctx.stroke();
     ctx.restore();
-  }, [baseSize, canvasRef, lineOverlays, mapImage, mapTiles, metadata, pan, viewport, zoom]);
+  }, [baseSize, canvasRef, lineOverlays, mapImage, mapTiles, metadata, pan, showBlockGrid, viewport, zoom]);
 
   return (
     <canvas
@@ -131,10 +127,8 @@ export default function MapCanvas({
 
 function drawLineOverlays(
   ctx: CanvasRenderingContext2D,
-  overlayCanvas: HTMLCanvasElement,
   overlays: MapLineOverlay[],
   view: {
-    pixelRatio: number;
     metadata: MapMetadata;
     viewport: MapViewport;
     baseSize: MapSize;
@@ -147,27 +141,16 @@ function drawLineOverlays(
     return;
   }
 
-  const overlayWidth = Math.max(1, Math.floor(view.viewport.width * view.pixelRatio));
-  const overlayHeight = Math.max(1, Math.floor(view.viewport.height * view.pixelRatio));
-  if (overlayCanvas.width !== overlayWidth || overlayCanvas.height !== overlayHeight) {
-    overlayCanvas.width = overlayWidth;
-    overlayCanvas.height = overlayHeight;
-  }
+  getOverlayGroups(overlays).forEach((group) => {
+    ctx.save();
+    ctx.globalAlpha = group.strokeOpacity;
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    ctx.strokeStyle = group.strokeStyle;
+    ctx.lineWidth = Math.max(1.5, group.widthBlocks * view.blockPixelSize);
+    ctx.beginPath();
 
-  getOverlayGroups(overlays).forEach(({ overlays: groupedOverlays, strokeStyle, strokeOpacity }) => {
-
-    const overlayCtx = overlayCanvas.getContext('2d');
-    if (!overlayCtx) {
-      return;
-    }
-
-    overlayCtx.setTransform(view.pixelRatio, 0, 0, view.pixelRatio, 0, 0);
-    overlayCtx.clearRect(0, 0, view.viewport.width, view.viewport.height);
-    overlayCtx.lineCap = 'butt';
-    overlayCtx.lineJoin = 'miter';
-    overlayCtx.strokeStyle = strokeStyle;
-
-    groupedOverlays.forEach((overlay) => {
+    group.overlays.forEach((overlay) => {
       const screenPoints = overlay.points
         .map((point) => worldToMapPercent(view.metadata, point))
         .filter((position) => position.inBounds)
@@ -183,20 +166,14 @@ function drawLineOverlays(
         return;
       }
 
-      overlayCtx.lineWidth = Math.max(1.5, overlay.widthBlocks * view.blockPixelSize);
-      overlayCtx.beginPath();
-      overlayCtx.moveTo(screenPoints[0].left, screenPoints[0].top);
+      ctx.moveTo(screenPoints[0].left, screenPoints[0].top);
 
       for (let index = 1; index < screenPoints.length; index += 1) {
-        overlayCtx.lineTo(screenPoints[index].left, screenPoints[index].top);
+        ctx.lineTo(screenPoints[index].left, screenPoints[index].top);
       }
-
-      overlayCtx.stroke();
     });
 
-    ctx.save();
-    ctx.globalAlpha = strokeOpacity;
-    ctx.drawImage(overlayCanvas, 0, 0, view.viewport.width, view.viewport.height);
+    ctx.stroke();
     ctx.restore();
   });
 }
@@ -205,12 +182,13 @@ function getOverlayGroups(overlays: MapLineOverlay[]) {
   const groups = new Map<string, {
     strokeStyle: string;
     strokeOpacity: number;
+    widthBlocks: number;
     overlays: MapLineOverlay[];
   }>();
 
   overlays.forEach((overlay) => {
     const strokeOpacity = overlay.strokeOpacity ?? 1;
-    const groupKey = `${overlay.strokeStyle}-${strokeOpacity}`;
+    const groupKey = `${overlay.strokeStyle}-${strokeOpacity}-${overlay.widthBlocks}`;
     const group = groups.get(groupKey);
 
     if (group) {
@@ -221,6 +199,7 @@ function getOverlayGroups(overlays: MapLineOverlay[]) {
     groups.set(groupKey, {
       strokeStyle: overlay.strokeStyle,
       strokeOpacity,
+      widthBlocks: overlay.widthBlocks,
       overlays: [overlay],
     });
   });

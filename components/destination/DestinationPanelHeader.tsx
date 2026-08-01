@@ -45,6 +45,14 @@ export default function DestinationPanelHeader({
   onToggleTag,
   onToggleTagFilterLogic,
 }: DestinationPanelHeaderProps) {
+  const runFilterAction = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: () => void,
+  ) => {
+    action();
+    if (event.detail > 0) event.currentTarget.blur();
+  };
+
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       if (filteredDestinationsLength === 0 || hasSelectedDestination) {
@@ -83,7 +91,7 @@ export default function DestinationPanelHeader({
       <div role="group" aria-label="Filtrer par tags">
         <div className="flex flex-wrap gap-1">
           <button
-            onClick={onToggleTagFilterLogic}
+            onClick={(event) => runFilterAction(event, onToggleTagFilterLogic)}
             className={`w-10 py-1 px-2 ${themeColors.util.roundedFull} border ${themeColors.transition} font-semibold flex items-center justify-center ${themeColors.tag.filterLogic}`}
             title={`Mode actuel: ${tagFilterLogic === 'SINGLE' ? 'Un seul tag' : tagFilterLogic === 'OR' ? 'OU (au moins un tag)' : 'ET (tous les tags)'}`}
           >
@@ -92,7 +100,7 @@ export default function DestinationPanelHeader({
           {allTags.map((tag) => (
             <button
               key={tag}
-              onClick={() => onToggleTag(tag)}
+              onClick={(event) => runFilterAction(event, () => onToggleTag(tag))}
               className={`px-2 py-1 text-xs ${themeColors.util.roundedFull} border ${themeColors.transition} ${
                 enabledTags.has(tag) ? themeColors.tag.active : themeColors.tag.inactive
               }`}
@@ -102,7 +110,7 @@ export default function DestinationPanelHeader({
           ))}
           {enabledTags.size > 0 && (
             <button
-              onClick={onClearTags}
+              onClick={(event) => runFilterAction(event, onClearTags)}
               className={`flex items-center justify-center ${themeColors.text.secondary} ${themeColors.interactive.hoverText} ${themeColors.transition}`}
               aria-label="Effacer les tags"
             >

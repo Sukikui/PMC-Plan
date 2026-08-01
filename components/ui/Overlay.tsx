@@ -24,7 +24,10 @@ const FOCUSABLE_SELECTOR = [
 
 function getFocusableElements(container: HTMLElement) {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
-    .filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
+    .filter((element) => (
+      !element.hidden
+      && !element.closest('[aria-hidden="true"], [inert]')
+    ));
 }
 
 const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, children, className = '', closing = false }) => {
@@ -142,13 +145,13 @@ const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, children, className 
     <div
       className={`pointer-events-none fixed inset-0 flex items-center justify-center p-4 ${className}`}
       style={{ zIndex }}
-      aria-hidden={!interactive}
-      inert={!interactive}
+      aria-hidden={!top}
+      inert={!top}
     >
       <div
         ref={contentRef}
         tabIndex={-1}
-        className="flex h-full w-full items-center justify-center transition-transform duration-300 ease-out"
+        className="flex w-full items-center justify-center transition-transform duration-300 ease-out"
         style={{
           transform: entered
             ? 'translateY(0)'
