@@ -419,10 +419,12 @@ curl "http://localhost:3000/api/route?from_x=1000&from_y=65&from_z=-500&from_wor
 
 ## Account Approval and Content Authorization
 
-New Discord accounts are stored with the `pending` role. Account approval is
-represented by the single role transition `pending -> user`; there is no
-separate certification field and places or portals no longer have individual
-approval statuses.
+New Discord accounts are stored with the `pending` role when manual approval is
+enabled. Administrators can instead enable automatic approval, which assigns
+the `user` role during account creation. Changing this setting never modifies
+accounts that are already pending. Account approval is represented by the
+single role transition `pending -> user`; there is no separate certification
+field and places or portals no longer have individual approval statuses.
 
 Content mutation permissions are:
 
@@ -464,6 +466,47 @@ role and hides the floating mode control.
 
 ---
 
+### GET `/admin/settings`
+
+Returns the global application settings used by the Administration view. The
+effective request role must be `admin` or `super_admin`.
+
+**Internal logic:**
+- Resolves the effective request role, including debug-mode restrictions.
+- Reads the singleton `ApplicationSettings` record.
+- Falls back to manual approval when the record has not been created yet.
+
+**Response:**
+```json
+{
+  "settings": {
+    "automaticUserApproval": false
+  }
+}
+```
+
+---
+
+### PATCH `/admin/settings`
+
+Updates the global application settings. The effective request role must be
+`admin` or `super_admin`.
+
+**Body:**
+```json
+{
+  "automaticUserApproval": true
+}
+```
+
+**Internal logic:**
+- Validates the complete settings payload with Zod.
+- Upserts the singleton settings record.
+- Applies the selected approval policy only to Discord accounts created after
+  the update; existing pending accounts remain unchanged.
+
+---
+
 ### GET `/admin/users`
 
 Returns a paginated, read-only list of registered users for the settings
@@ -472,8 +515,9 @@ administration view. The authenticated session must have the `admin` or
 
 **Parameters:**
 - `page` (integer, optional) - One-based page number. Defaults to `1`.
-- `query` (string, optional) - Case-insensitive search across Discord display
-  name, Discord username, Minecraft name, and Minecraft UUID.
+- `query` (string, optional) - Case-insensitive search across the displayed
+  Discord and Minecraft identities, including the Discord fallback ID and the
+  `Non lié` state. Discord usernames accept an optional leading `@`.
 - `role` (`all`, `pending`, or `administrators`, optional) - Account role filter.
   `pending` returns accounts waiting for approval.
   `administrators` includes both `admin` and `super_admin`. Defaults to `all`.
@@ -482,7 +526,7 @@ administration view. The authenticated session must have the `admin` or
 - Resolves the effective request role and rejects non-administration modes with
   `403`.
 - Validates and normalizes query parameters with Zod.
-- Reads users in reverse registration order with 20 records per page.
+- Reads users in reverse registration order with 7 records per page.
 - Runs the page query and total count in one Prisma transaction.
 - Returns only account summary fields; OAuth tokens and session records are
   never exposed.
@@ -505,8 +549,94 @@ administration view. The authenticated session must have the `admin` or
   ],
   "pagination": {
     "page": 1,
-    "pageSize": 20,
+    "pageSize": 6,
     "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### GET `/account/content`
+
+Returns one paginated page of content managed by the authenticated Discord
+user. The response uses the same summaries and ordering as the administration
+content endpoint.
+
+**Parameters:**
+- `type` (`place`, `portal`, `space`, or `service`, required) - Content page.
+- `page` (integer, optional) - One-based page number. Defaults to `1`.
+- `query` (string, optional) - Case-insensitive search over the text displayed
+  in each row. It also accepts the Discord username of any manager, with or
+  without the leading `@`.
+- `filter` (optional) - Accepts `all`; `overworld`, `nether`, or `linked` for
+  places and portals; and `none`, `primary_manager`, or `custom` for services.
+
+**Internal logic:**
+- Requires an authenticated Discord session and returns `401` otherwise.
+- Applies the authenticated user ID directly in PostgreSQL pagination.
+- Includes content where the user is either the primary manager or one of the
+  secondary managers.
+- Reuses the administration query, serialization, filtering, six-item page
+  size, and latest-update ordering.
+
+**Response:**
+```json
+{
+  "items": [],
+  "pagination": {
+    "page": 1,
+    "pageSize": 6,
+    "total": 0,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### GET `/admin/content`
+
+Returns one paginated administration page for places, portals, spaces, or
+services. The authenticated session must have an effective `admin` or
+`super_admin` role.
+
+**Parameters:**
+- `type` (`place`, `portal`, `space`, or `service`, required) - Content page.
+- `page` (integer, optional) - One-based page number. Defaults to `1`.
+- `query` (string, optional) - Case-insensitive search over the text displayed
+  in each row. It also accepts the Discord username of any manager, with or
+  without the leading `@`.
+- `filter` (optional) - Accepts `all`; `overworld`, `nether`, or `linked` for
+  places and portals; and `none`, `primary_manager`, or `custom` for services.
+  `linked` selects portal map entries containing both worlds.
+
+**Internal logic:**
+- Resolves the effective request role and returns `403` outside an
+  administration mode.
+- Validates all query parameters with Zod.
+- Reuses the shared content-management query without a manager restriction.
+- Searches names and slugs, associated-space names where displayed, primary
+  manager names, and Discord usernames for primary or secondary managers.
+- Excludes hidden content fields and values already represented by filters.
+- Paginates directly in PostgreSQL with 7 records per page and orders content
+  by latest update.
+- Queries places, portals, and services through their shared `MapEntry`, while
+  spaces use their own management relation.
+- Groups linked Overworld and Nether portals by immutable map-entry ID, so one
+  logical portal always produces one administration row.
+- Returns only list summaries: identity, context, primary manager, and
+  secondary-manager count.
+
+**Response:**
+```json
+{
+  "items": [],
+  "pagination": {
+    "page": 1,
+    "pageSize": 6,
+    "total": 0,
     "totalPages": 1
   }
 }

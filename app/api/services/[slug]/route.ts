@@ -17,6 +17,31 @@ interface ServiceRouteContext {
   params: Promise<{ slug: string }>;
 }
 
+export async function GET(
+  _request: NextRequest,
+  { params }: ServiceRouteContext,
+) {
+  try {
+    const { slug } = await params;
+    const service = await prisma.service.findUnique({
+      where: { slug },
+      include: serviceInclude,
+    });
+    if (!service) {
+      return NextResponse.json(
+        { error: 'Service introuvable.' },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json({ service: toService(service) });
+  } catch (error) {
+    return handleServiceApiError(
+      error,
+      'Impossible de charger le service.',
+    );
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: ServiceRouteContext,

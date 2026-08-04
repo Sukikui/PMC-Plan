@@ -7,13 +7,14 @@ import type { OpenFormOverlayOptions } from '@/components/form/FormOverlay';
 import { useInfoOverlayStack } from '@/components/overlay/useInfoOverlayStack';
 import type { Place, Portal } from '@/lib/api/types';
 import type { Space } from '@/lib/spaces/types';
+import type { Service } from '@/lib/services/types';
 import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import {
   loadPlacesData,
   loadPortalsData,
   subscribeToMapEntryManagementUpdates,
 } from '@/lib/preload/main-screen';
-import { fetchSpaces } from '@/lib/spaces/client';
+import { fetchSpace } from '@/lib/spaces/client';
 import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
 import {
   loadFormOverlay,
@@ -32,10 +33,15 @@ interface FormOverlayState {
 
 interface OverlayContextValue {
   openPlaceInfoById: (placeId: string, onSelectItem?: SelectDestinationHandler) => Promise<void>;
-  openMapEntryInfoById: (mapEntryId: string, type: MapEntryOverlayType) => Promise<void>;
+  openMapEntryInfoById: (
+    mapEntryId: string,
+    type: MapEntryOverlayType,
+    onSelectItem?: SelectDestinationHandler,
+  ) => Promise<void>;
   openPlaceInfo: (item: Place | Portal, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => void;
   openSpaceInfo: (space: Space) => void;
   openSpaceInfoBySlug: (slug: string) => Promise<void>;
+  openServiceEditor: (service: Service, canDelete: boolean) => void;
   closeOverlay: () => void;
   openFormOverlay: (options: OpenFormOverlayOptions) => void;
 }
@@ -95,22 +101,33 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const openSpaceInfoBySlug = async (slug: string) => {
     try {
-      const space = (await fetchSpaces()).find((item) => item.slug === slug);
-      if (space) openSpaceInfo(space);
+      openSpaceInfo(await fetchSpace(slug));
     } catch {
       // The source overlay remains usable if the space cannot be loaded.
     }
   };
 
+  const openServiceEditor = (service: Service, canDelete: boolean) => {
+    openFormOverlay({
+      initialData: {
+        ...service,
+        canDelete,
+        type: 'service',
+      },
+      mode: 'edit',
+    });
+  };
+
   const openMapEntryInfoById = async (
     mapEntryId: string,
     type: MapEntryOverlayType,
+    onSelectItem?: SelectDestinationHandler,
   ) => {
     const item = type === 'place'
       ? (await loadPlacesData()).find((entry) => entry.mapEntryId === mapEntryId)
       : (await loadPortalsData({ mergeNetherPortals: true }))
         .find((entry) => entry.mapEntryId === mapEntryId);
-    if (item) openPlaceInfo(item, type);
+    if (item) openPlaceInfo(item, type, onSelectItem);
   };
 
   const closeOverlay = infoStack.closeTop;
@@ -171,7 +188,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <OverlayContext.Provider value={{ openPlaceInfoById, openMapEntryInfoById, openPlaceInfo, openSpaceInfo, openSpaceInfoBySlug, closeOverlay, openFormOverlay }}>
+    <OverlayContext.Provider value={{ openPlaceInfoById, openMapEntryInfoById, openPlaceInfo, openSpaceInfo, openSpaceInfoBySlug, openServiceEditor, closeOverlay, openFormOverlay }}>
       {children}
       {infoStack.layers.length > 0 && (
         <InfoOverlayStack

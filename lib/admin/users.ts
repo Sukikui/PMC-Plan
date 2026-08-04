@@ -1,7 +1,6 @@
 import type { Role } from '@prisma/client';
 import type { MapEntryManagement } from '@/lib/map-entry/types';
 
-export const ADMIN_USERS_PAGE_SIZE = 20;
 export const PRIMARY_MANAGEMENT_TRANSFER_REQUIRED =
   'PRIMARY_MANAGEMENT_TRANSFER_REQUIRED';
 

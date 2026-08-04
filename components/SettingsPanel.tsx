@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import type { Place, Portal } from '@/lib/api/types';
 import AddContentButton from '@/components/AddContentButton';
 import BigPlusIcon from '@/components/icons/BigPlusIcon';
 import BigTradeIcon from '@/components/icons/BigTradeIcon';
@@ -19,7 +18,6 @@ import {
 } from '@/components/settings/SettingsOverlayProvider';
 import ThemeSelector from '@/components/settings/ThemeSelector';
 import { useMinecraftLink } from '@/components/settings/useMinecraftLink';
-import { useOverlay } from '@/components/overlay/OverlayProvider';
 import IconActionButton from '@/components/ui/IconActionButton';
 import IconButtonRound from '@/components/ui/IconButtonRound';
 import Panel from '@/components/ui/Panel';
@@ -28,11 +26,7 @@ import SectionSeparator from '@/components/ui/SectionSeparator';
 import { useOverlayDisclosure } from '@/components/ui/useOverlayDisclosure';
 import { themeColors } from '@/lib/theme-colors';
 import { useTheme } from '@/lib/use-theme';
-import type {
-  DestinationType,
-  SelectDestinationHandler,
-} from '@/lib/destination/selection';
-import type { Service } from '@/lib/services/types';
+import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import {
   loadMinecraftLinkOverlay,
   loadSettingsOverlay,
@@ -69,11 +63,6 @@ export default function SettingsPanel({
   const minecraftOverlay = useOverlayDisclosure();
   const { theme, changeTheme } = useTheme();
   const { data: session } = useSession();
-  const {
-    openFormOverlay,
-    openPlaceInfo,
-    openSpaceInfo,
-  } = useOverlay();
   const minecraftLink = useMinecraftLink(
     Boolean(session?.user),
     settingsOverlay.isOpen || minecraftOverlay.isOpen,
@@ -111,23 +100,6 @@ export default function SettingsPanel({
   const signInFromSettings = () => {
     rememberSettingsOverlayForAuthReturn();
     void signIn('discord');
-  };
-
-  const openAccountContent = (
-    item: Place | Portal,
-    type: DestinationType,
-  ) => {
-    openPlaceInfo(item, type, onSelectItem);
-  };
-  const openAccountService = (service: Service) => {
-    openFormOverlay({
-      initialData: {
-        ...service,
-        canDelete: service.primaryManagerId === session?.user?.id,
-        type: 'service',
-      },
-      mode: 'edit',
-    });
   };
 
   return (
@@ -211,9 +183,7 @@ export default function SettingsPanel({
           onSignOut={() => void signOut()}
           onThemeChange={changeTheme}
           onUnlinkMinecraft={() => void minecraftLink.unlinkAccount()}
-          onOpenContent={openAccountContent}
-          onOpenService={openAccountService}
-          onOpenSpace={openSpaceInfo}
+          onSelectItem={onSelectItem}
         />
       )}
 

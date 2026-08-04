@@ -63,7 +63,7 @@ export const creditGroups: CreditGroup[] = [
   {
     title: 'Infrastructure',
     items: [
-      { name: 'GitHub', description: 'Code source et pipelines CI/CD avec GitHub Actions et Vercel.', visual: brand('github'), href: 'https://github.com' },
+      { name: 'GitHub', description: 'Code source et pipelines CI/CD.', visual: brand('github'), href: 'https://github.com' },
       { name: 'Vercel', description: 'Hébergement, analytics et déploiement automatisé depuis GitHub.', visual: brand('vercel'), href: 'https://vercel.com' },
       { name: 'Supabase', description: 'Hébergement de la base de données PostgreSQL.', visual: brand('supabase'), href: 'https://supabase.com' },
     ],

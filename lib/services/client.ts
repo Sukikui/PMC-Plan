@@ -22,6 +22,15 @@ const services = createCachedList<Service>({
 export const fetchServices = services.fetchAll;
 export const subscribeToServicesInvalidation = services.subscribe;
 
+export async function fetchService(slug: string) {
+  const payload = await requestJson<ServiceResponse>(
+    `/api/services/${encodeURIComponent(slug)}`,
+    { cache: 'no-store' },
+    'Impossible de charger ce service.',
+  );
+  return payload.service;
+}
+
 export async function createServiceRequest(input: ServiceInput) {
   return sendServiceRequest('/api/services', 'POST', input);
 }

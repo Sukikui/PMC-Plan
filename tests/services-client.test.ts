@@ -1,5 +1,6 @@
 import { requestJson } from '@/lib/api-client';
 import {
+  fetchService,
   subscribeToServicesInvalidation,
   updateServiceRequest,
 } from '@/lib/services/client';
@@ -44,5 +45,21 @@ describe('service client invalidation', () => {
 
     expect(listener).toHaveBeenCalledTimes(1);
     unsubscribe();
+  });
+
+  it('loads one service without invalidating shared lists', async () => {
+    const service = {
+      id: 'redstone',
+      slug: 'redstone',
+      name: 'Redstone',
+    };
+    requestJsonMock.mockResolvedValue({ service });
+
+    await expect(fetchService('redstone')).resolves.toBe(service);
+    expect(requestJsonMock).toHaveBeenCalledWith(
+      '/api/services/redstone',
+      { cache: 'no-store' },
+      'Impossible de charger ce service.',
+    );
   });
 });

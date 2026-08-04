@@ -252,18 +252,19 @@ export const themeColors = {
     mapStepInactive: 'text-gray-600 dark:text-gray-300',
   },
 
-  // Specific colors for SyncNotification 
-  syncNotification: {
-    // Error notification container - improved contrast for dark mode
-    errorBg: 'bg-red-50 dark:bg-red-950',
-    errorBorder: 'border-red-200 dark:border-red-800/60',
-    
-    // Status indicator (red dot) - more visible in dark mode
-    statusDot: 'bg-red-500 dark:bg-red-400',
-    
-    // Error messages - better contrast in dark mode
-    errorText: 'text-red-700 dark:text-red-200',
-    helpText: 'text-red-600 dark:text-red-300',
+  statusNotification: {
+    error: {
+      background: 'bg-red-50 dark:bg-red-950',
+      border: 'border-red-200 dark:border-red-800/60',
+      dot: 'bg-red-500 dark:bg-red-400',
+      title: 'text-red-700 dark:text-red-200',
+      description: 'text-red-600 dark:text-red-300',
+    },
+    info: {
+      dot: 'bg-blue-500 dark:bg-blue-400',
+      title: 'text-blue-700 dark:text-blue-200',
+      description: 'text-blue-600 dark:text-blue-300',
+    },
   },
 
   // Specific colors for BetaLockScreen
