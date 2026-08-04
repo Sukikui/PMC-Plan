@@ -1,22 +1,18 @@
 import type { Prisma } from '@prisma/client';
 import { sortByLocalizedName } from '@/lib/content/sorting';
+import {
+  discordIdentitySelect,
+  toPublicDiscordIdentity,
+} from '@/lib/discord-user';
 import { prioritizePrimaryManagerOwner } from '@/lib/map-entry/owners';
 import type { Space } from './types';
 
 const spaceUserSelect = {
-  id: true,
-  name: true,
-  username: true,
-  image: true,
+  ...discordIdentitySelect,
   role: true,
 } satisfies Prisma.UserSelect;
 
-const spaceEditorSelect = {
-  id: true,
-  name: true,
-  username: true,
-  image: true,
-} satisfies Prisma.UserSelect;
+const spaceEditorSelect = discordIdentitySelect;
 
 export const spaceInclude = {
   primaryManager: { select: spaceUserSelect },
@@ -142,13 +138,16 @@ export function toSpace(record: SpaceRecord): Space {
     ).values())),
     primaryManagerId: record.primaryManagerId,
     managerIds: record.managers.map(({ userId }) => userId),
-    primaryManager: record.primaryManager,
-    managers: record.managers.map(({ user }) => user),
+    primaryManager: {
+      ...toPublicDiscordIdentity(record.primaryManager),
+      role: record.primaryManager.role,
+    },
+    managers: record.managers.map(({ user }) => ({
+      ...toPublicDiscordIdentity(user),
+      role: user.role,
+    })),
     lastEditor: {
-      id: lastEditor.id,
-      name: lastEditor.name,
-      username: lastEditor.username,
-      image: lastEditor.image,
+      ...toPublicDiscordIdentity(lastEditor),
       editedAt: record.updatedAt.toISOString(),
     },
     createdAt: record.createdAt.toISOString(),

@@ -127,13 +127,13 @@ describe('map-entry service', () => {
       {
         id: 'primary-user',
         role: 'user',
-        username: 'primary',
+        discordUsername: 'primary',
         minecraftProfile: { uuid: 'primary-uuid', name: 'PrimaryMC' },
       },
       {
         id: 'new-manager',
         role: 'user',
-        username: 'manager',
+        discordUsername: 'manager',
         minecraftProfile: { uuid: 'manager-uuid', name: 'ManagerMC' },
       },
     ]);
@@ -176,13 +176,13 @@ describe('map-entry service', () => {
       {
         id: 'next-primary',
         role: 'user',
-        username: 'next_primary',
+        discordUsername: 'next_primary',
         minecraftProfile: null,
       },
       {
         id: 'primary-user',
         role: 'user',
-        username: 'primary',
+        discordUsername: 'primary',
         minecraftProfile: null,
       },
     ]);
@@ -215,13 +215,13 @@ describe('map-entry service', () => {
       {
         id: 'primary-user',
         role: 'user',
-        username: 'primary',
+        discordUsername: 'primary',
         minecraftProfile: null,
       },
       {
         id: 'secondary-user',
         role: 'user',
-        username: 'secondary',
+        discordUsername: 'secondary',
         minecraftProfile: null,
       },
     ]);

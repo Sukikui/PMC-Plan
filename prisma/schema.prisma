@@ -11,19 +11,15 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-// User model - minimal for Discord OAuth
 model User {
-  id            String    @id @default(cuid())
-  email         String?   @unique
-  name          String?
-  username      String?   @unique
-  image         String?
-  emailVerified DateTime?
-  role          Role      @default(pending)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String   @id @default(cuid())
+  discordId          String   @unique @map("discord_id")
+  discordUsername    String   @map("discord_username")
+  discordDisplayName String?  @map("discord_display_name")
+  discordAvatarUrl   String?  @map("discord_avatar_url")
+  role               Role     @default(pending)
+  createdAt          DateTime @default(now()) @map("created_at")
 
-  accounts              Account[]
   minecraftLinkRequests MinecraftLinkRequest[]
   minecraftProfile      MinecraftProfile?      @relation("LinkedMinecraftProfile")
   primaryManagedEntries MapEntry[]             @relation("PrimaryMapEntryManager")
@@ -42,27 +38,6 @@ model ApplicationSettings {
   updatedAt             DateTime @updatedAt @map("updated_at")
 
   @@map("application_settings")
-}
-
-// Account model - stores Discord OAuth connection
-model Account {
-  id                String  @id @default(cuid())
-  userId            String  @map("user_id")
-  type              String
-  provider          String
-  providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
 }
 
 model MinecraftLinkRequest {

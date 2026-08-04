@@ -47,9 +47,9 @@ function createEntry(primaryProfileUuid: string) {
     updatedAt: new Date('2026-07-29T12:00:00.000Z'),
     primaryManager: {
       id: 'primary-user',
-      image: null,
-      name: 'Primary',
-      username: 'primary',
+      discordAvatarUrl: null,
+      discordDisplayName: 'Primary',
+      discordUsername: 'primary',
       minecraftProfile: {
         uuid: primaryProfileUuid,
         name: 'PrimaryMC',

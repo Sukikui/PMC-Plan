@@ -85,10 +85,10 @@ describe('content management query', () => {
           { slug: searchText('@builder') },
         ] } } },
         { space: { is: { name: searchText('@builder') } } },
-        { primaryManager: { is: { name: searchText('@builder') } } },
-        { primaryManager: { is: { username: searchText('builder') } } },
+        { primaryManager: { is: { discordDisplayName: searchText('@builder') } } },
+        { primaryManager: { is: { discordUsername: searchText('builder') } } },
         { managers: { some: {
-          user: { is: { username: searchText('builder') } },
+          user: { is: { discordUsername: searchText('builder') } },
         } } },
       ],
     }]));
@@ -111,10 +111,10 @@ describe('content management query', () => {
         { name: searchText('redstone') },
         { slug: searchText('redstone') },
       ] } } },
-      { primaryManager: { is: { name: searchText('redstone') } } },
-      { primaryManager: { is: { username: searchText('redstone') } } },
+      { primaryManager: { is: { discordDisplayName: searchText('redstone') } } },
+      { primaryManager: { is: { discordUsername: searchText('redstone') } } },
       { managers: { some: {
-        user: { is: { username: searchText('redstone') } },
+        user: { is: { discordUsername: searchText('redstone') } },
       } } },
     ]);
   });

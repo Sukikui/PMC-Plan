@@ -10,6 +10,7 @@ import { MANAGEMENT_LIST_PAGE_SIZE } from '@/lib/management/pagination';
 import {
   publicMapEntryInclude,
 } from '@/lib/map-entry/serialization';
+import { toPublicDiscordIdentity } from '@/lib/discord-user';
 import { DEFAULT_PLACE_CATEGORY, isPlaceCategory } from '@/lib/place/categories';
 import { getMapEntryWhere, getSpaceWhere } from './filters';
 
@@ -89,7 +90,7 @@ function toMapEntrySummary(
   const common = {
     id: record.id,
     managerCount: record._count.managers,
-    primaryManager: record.primaryManager,
+    primaryManager: toPublicDiscordIdentity(record.primaryManager),
   };
   if (type === 'place' && record.place) {
     return [{
@@ -183,7 +184,7 @@ async function listSpaces(
     ),
     placeCount: record.entries.filter(({ place }) => place).length,
     portalCount: record.entries.filter(({ portals }) => portals.length > 0).length,
-    primaryManager: record.primaryManager,
+    primaryManager: toPublicDiscordIdentity(record.primaryManager),
     slug: record.slug,
   })));
 }

@@ -152,7 +152,7 @@ export default function SettingsPanel({
                     <span className="flex w-6 shrink-0 justify-center">
                       <SettingsIcon className="h-4 w-4" />
                     </span>
-                    Gérer les paramètres
+                    Gérer mes paramètres
                   </PillActionButton>
                   <AddContentButton fullWidth className="h-10 !py-0">
                     <span className="flex w-6 shrink-0 justify-center">

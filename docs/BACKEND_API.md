@@ -417,6 +417,27 @@ curl "http://localhost:3000/api/route?from_x=1000&from_y=65&from_z=-500&from_wor
 
 ---
 
+## Discord Authentication
+
+Discord OAuth requests only the `identify` scope. PMC Plan never requests or
+stores the user's email address. The returned Discord snowflake is the stable
+external identifier; usernames remain editable display data and are not used
+as database keys.
+
+The OAuth callback upserts the application user by `discordId`, refreshes the
+username, display name, and avatar URL, then stores the internal user ID and
+role in the signed Auth.js JWT. Existing roles are never changed during a
+subsequent login. The approval setting only determines the role assigned in
+the create branch.
+
+No Auth.js database adapter is used. Discord access and refresh tokens stay in
+the transient OAuth callback and are discarded afterwards. PostgreSQL stores
+only the internal user ID, Discord identity fields, role, creation date, and
+application relations. The public session and API serializers keep exposing
+the compact `name`, `username`, and `image` shape expected by the frontend.
+
+---
+
 ## Account Approval and Content Authorization
 
 New Discord accounts are stored with the `pending` role when manual approval is
@@ -528,8 +549,7 @@ administration view. The authenticated session must have the `admin` or
 - Validates and normalizes query parameters with Zod.
 - Reads users in reverse registration order with 7 records per page.
 - Runs the page query and total count in one Prisma transaction.
-- Returns only account summary fields; OAuth tokens and session records are
-  never exposed.
+- Returns only account summary fields; OAuth tokens are never persisted.
 
 **Response:**
 ```json
@@ -720,8 +740,8 @@ manager of one or more map entries or spaces.
   already present.
 - Deletes against the previously read role to prevent a concurrent role change
   from bypassing the hierarchy.
-- Deletes related OAuth accounts, sessions, and Minecraft linking requests
-  through Prisma cascading relations.
+- Deletes related Minecraft linking requests through Prisma cascading
+  relations. Authentication has no separate account or session rows.
 - Returns the updated management records for every affected map entry so the
   client can patch its caches without reloading the map.
 

@@ -7,11 +7,14 @@ import type {
   MinecraftOwner,
 } from './types';
 import type { SpaceReference } from '@/lib/spaces/types';
+import {
+  discordIdentitySelect,
+  type StoredDiscordIdentity,
+  toPublicDiscordIdentity,
+} from '@/lib/discord-user';
 import { prioritizePrimaryManagerOwner } from './owners';
 
-type MapEntryEditorIdentity = Omit<MapEntryEditor, 'editedAt'>;
-
-interface PublicPrimaryManagerRecord extends MapEntryEditorIdentity {
+interface PublicPrimaryManagerRecord extends StoredDiscordIdentity {
   minecraftProfile: MinecraftOwner | null;
 }
 
@@ -20,17 +23,13 @@ interface PublicMapEntryRecord {
   primaryManagerId: string;
   updatedAt: Date;
   primaryManager: PublicPrimaryManagerRecord;
-  lastEditor: MapEntryEditorIdentity | null;
+  lastEditor: StoredDiscordIdentity | null;
   managers: Array<{ userId: string }>;
   owners: Array<{ profile: MinecraftOwner }>;
   space: SpaceReference | null;
 }
 
-interface ManagementUserRecord {
-  id: string;
-  name: string | null;
-  username: string | null;
-  image: string | null;
+interface ManagementUserRecord extends StoredDiscordIdentity {
   role: MapEntryUser['role'];
   minecraftProfile: MinecraftOwner | null;
 }
@@ -46,22 +45,14 @@ interface ManagementMapEntryRecord extends PublicMapEntryRecord {
 export const publicMapEntryInclude = {
   primaryManager: {
     select: {
-      id: true,
-      name: true,
-      username: true,
-      image: true,
+      ...discordIdentitySelect,
       minecraftProfile: {
         select: { uuid: true, name: true },
       },
     },
   },
   lastEditor: {
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      image: true,
-    },
+    select: discordIdentitySelect,
   },
   managers: {
     select: { userId: true },
@@ -91,10 +82,7 @@ export const publicMapEntryInclude = {
 export const managementMapEntryInclude = {
   primaryManager: {
     select: {
-      id: true,
-      name: true,
-      username: true,
-      image: true,
+      ...discordIdentitySelect,
       role: true,
       minecraftProfile: {
         select: { uuid: true, name: true },
@@ -108,10 +96,7 @@ export const managementMapEntryInclude = {
       userId: true,
       user: {
         select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
+          ...discordIdentitySelect,
           role: true,
           minecraftProfile: {
             select: { uuid: true, name: true },
@@ -143,10 +128,7 @@ export function toMinecraftOwners(entry: PublicMapEntryRecord): MinecraftOwner[]
 export function toMapEntryEditor(entry: PublicMapEntryRecord): MapEntryEditor {
   const editor = entry.lastEditor ?? entry.primaryManager;
   return {
-    id: editor.id,
-    name: editor.name,
-    username: editor.username,
-    image: editor.image,
+    ...toPublicDiscordIdentity(editor),
     editedAt: entry.updatedAt,
   };
 }
@@ -154,8 +136,7 @@ export function toMapEntryEditor(entry: PublicMapEntryRecord): MapEntryEditor {
 export function toMapEntryPrimaryManager(
   entry: PublicMapEntryRecord,
 ): MapEntryIdentity {
-  const { id, image, name, username } = entry.primaryManager;
-  return { id, image, name, username };
+  return toPublicDiscordIdentity(entry.primaryManager);
 }
 
 export function toMapEntrySpace(
@@ -168,8 +149,16 @@ export function toMapEntryManagement(entry: ManagementMapEntryRecord): MapEntryM
   return {
     access: toMapEntryAccess(entry),
     lastEditor: toMapEntryEditor(entry),
-    primaryManager: entry.primaryManager,
-    managers: entry.managers.map(({ user }) => user),
+    primaryManager: toManagementUser(entry.primaryManager),
+    managers: entry.managers.map(({ user }) => toManagementUser(user)),
     owners: toMinecraftOwners(entry),
+  };
+}
+
+function toManagementUser(user: ManagementUserRecord): MapEntryUser {
+  return {
+    ...toPublicDiscordIdentity(user),
+    role: user.role,
+    minecraftProfile: user.minecraftProfile,
   };
 }

@@ -10,6 +10,10 @@ import { MANAGEMENT_LIST_PAGE_SIZE } from '@/lib/management/pagination';
 import { isAdministrationRole } from '@/lib/admin/roles';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { normalizeDiscordUserQuery } from '@/lib/discord/user-search';
+import {
+  discordIdentitySelect,
+  toPublicDiscordIdentity,
+} from '@/lib/discord-user';
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -49,10 +53,7 @@ export async function GET(request: NextRequest) {
       skip: (page - 1) * MANAGEMENT_LIST_PAGE_SIZE,
       take: MANAGEMENT_LIST_PAGE_SIZE,
       select: {
-        id: true,
-        name: true,
-        username: true,
-        image: true,
+        ...discordIdentitySelect,
         role: true,
         minecraftProfile: {
           select: {
@@ -69,10 +70,7 @@ export async function GET(request: NextRequest) {
 
   const response: AdminUsersResponse = {
     users: users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      username: user.username,
-      image: user.image,
+      ...toPublicDiscordIdentity(user),
       role: user.role,
       minecraftUuid: user.minecraftProfile?.uuid ?? null,
       minecraftName: user.minecraftProfile?.name ?? null,
@@ -94,7 +92,7 @@ function getUserSearchFilters(query: string): Prisma.UserWhereInput[] {
   const text = { contains: query, mode: Prisma.QueryMode.insensitive };
   const discordQuery = normalizeDiscordUserQuery(query);
   const filters: Prisma.UserWhereInput[] = [
-    { name: text },
+    { discordDisplayName: text },
     { id: text },
     { minecraftProfile: { is: { name: text } } },
     { minecraftProfile: { is: { uuid: text } } },
@@ -102,14 +100,14 @@ function getUserSearchFilters(query: string): Prisma.UserWhereInput[] {
 
   if (discordQuery) {
     filters.push({
-      username: {
+      discordUsername: {
         contains: discordQuery,
         mode: Prisma.QueryMode.insensitive,
       },
     });
   }
   if (matchesDisplayedLabel('Utilisateur', query)) {
-    filters.push({ name: null });
+    filters.push({ discordDisplayName: null });
   }
   if (matchesDisplayedLabel('Non lié', query)) {
     filters.push({ minecraftProfile: { is: null } });

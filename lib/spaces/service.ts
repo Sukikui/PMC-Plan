@@ -153,7 +153,7 @@ export function transferSpace(
 
     const nextPrimary = await tx.user.findUnique({
       where: { id: nextPrimaryManagerId },
-      select: { role: true, username: true },
+      select: { role: true, discordUsername: true },
     });
     if (!nextPrimary || !canContribute(nextPrimary.role)) {
       throw new SpaceError(
@@ -162,8 +162,7 @@ export function transferSpace(
       );
     }
     if (
-      !nextPrimary.username
-      || confirmation !== `@${nextPrimary.username}`
+      confirmation !== `@${nextPrimary.discordUsername}`
     ) {
       throw new SpaceError(
         'La confirmation ne correspond pas à l’identifiant Discord.',
