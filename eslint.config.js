@@ -12,8 +12,9 @@ export default tseslint.config(
     ignores: [
       ".next/**",
       "coverage/**",
-      "*.config.js",
-      "*.config.cjs",
+      "jest.config.cjs",
+      "postcss.config.cjs",
+      "tailwind.config.cjs",
       "tests/**",
       ".github/**",
     ],
