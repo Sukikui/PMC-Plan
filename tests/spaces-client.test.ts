@@ -1,6 +1,7 @@
 import { requestJson } from '@/lib/api-client';
 import { invalidateMainScreenDataCaches } from '@/lib/preload/main-screen';
 import {
+  fetchSpace,
   subscribeToSpacesInvalidation,
   updateSpaceRequest,
 } from '@/lib/spaces/client';
@@ -51,5 +52,21 @@ describe('space client invalidation', () => {
     expect(invalidateMainScreenDataCachesMock).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledTimes(1);
     unsubscribe();
+  });
+
+  it('loads one space without invalidating shared lists', async () => {
+    const space = {
+      id: 'space-1',
+      slug: 'valnyfrost',
+      name: 'ValnyFrost',
+    };
+    requestJsonMock.mockResolvedValue({ space });
+
+    await expect(fetchSpace('valnyfrost')).resolves.toBe(space);
+    expect(requestJsonMock).toHaveBeenCalledWith(
+      '/api/spaces/valnyfrost',
+      { cache: 'no-store' },
+      'Impossible de charger cet espace.',
+    );
   });
 });

@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import {
-  ADMIN_USERS_PAGE_SIZE,
   type AdminUsersResponse,
 } from '@/lib/admin/users';
+import { MANAGEMENT_LIST_PAGE_SIZE } from '@/lib/management/pagination';
 import { isAdministrationRole } from '@/lib/admin/roles';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
+import { normalizeDiscordUserQuery } from '@/lib/discord/user-search';
 
 const querySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -32,14 +33,7 @@ export async function GET(request: NextRequest) {
 
   const { page, query, role } = parsedQuery.data;
   const where: Prisma.UserWhereInput = {
-    ...(query && {
-      OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { username: { contains: query, mode: 'insensitive' } },
-        { minecraftProfile: { is: { name: { contains: query, mode: 'insensitive' } } } },
-        { minecraftProfile: { is: { uuid: { contains: query, mode: 'insensitive' } } } },
-      ],
-    }),
+    ...(query && { OR: getUserSearchFilters(query) }),
     ...(role === 'administrators' && {
       role: { in: ['admin', 'super_admin'] },
     }),
@@ -52,8 +46,8 @@ export async function GET(request: NextRequest) {
     prisma.user.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * ADMIN_USERS_PAGE_SIZE,
-      take: ADMIN_USERS_PAGE_SIZE,
+      skip: (page - 1) * MANAGEMENT_LIST_PAGE_SIZE,
+      take: MANAGEMENT_LIST_PAGE_SIZE,
       select: {
         id: true,
         name: true,
@@ -87,11 +81,46 @@ export async function GET(request: NextRequest) {
     })),
     pagination: {
       page,
-      pageSize: ADMIN_USERS_PAGE_SIZE,
+      pageSize: MANAGEMENT_LIST_PAGE_SIZE,
       total,
-      totalPages: Math.max(1, Math.ceil(total / ADMIN_USERS_PAGE_SIZE)),
+      totalPages: Math.max(1, Math.ceil(total / MANAGEMENT_LIST_PAGE_SIZE)),
     },
   };
 
   return NextResponse.json(response);
+}
+
+function getUserSearchFilters(query: string): Prisma.UserWhereInput[] {
+  const text = { contains: query, mode: Prisma.QueryMode.insensitive };
+  const discordQuery = normalizeDiscordUserQuery(query);
+  const filters: Prisma.UserWhereInput[] = [
+    { name: text },
+    { id: text },
+    { minecraftProfile: { is: { name: text } } },
+    { minecraftProfile: { is: { uuid: text } } },
+  ];
+
+  if (discordQuery) {
+    filters.push({
+      username: {
+        contains: discordQuery,
+        mode: Prisma.QueryMode.insensitive,
+      },
+    });
+  }
+  if (matchesDisplayedLabel('Utilisateur', query)) {
+    filters.push({ name: null });
+  }
+  if (matchesDisplayedLabel('Non lié', query)) {
+    filters.push({ minecraftProfile: { is: null } });
+  }
+  return filters;
+}
+
+function matchesDisplayedLabel(label: string, query: string) {
+  const normalize = (value: string) => value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('fr');
+  return normalize(label).includes(normalize(query));
 }

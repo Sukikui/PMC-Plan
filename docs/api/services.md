@@ -107,6 +107,21 @@ Returns every service ordered by title.
 }
 ```
 
+## GET `/api/services/{slug}`
+
+Returns one complete service by slug. The response uses the same serialized
+shape as the collection endpoint and returns `404` when the service does not
+exist. This endpoint lets focused interfaces load an editor without fetching
+the complete service collection.
+
+**Response:**
+
+```json
+{
+  "service": {}
+}
+```
+
 ## POST `/api/services`
 
 Creates a service with the authenticated user as primary manager and latest

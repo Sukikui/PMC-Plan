@@ -30,6 +30,15 @@ const spaces = createCachedList<Space>({
 
 export const fetchSpaces = spaces.fetchAll;
 
+export async function fetchSpace(slug: string) {
+  const payload = await requestJson<SpaceResponse>(
+    `/api/spaces/${encodeURIComponent(slug)}`,
+    { cache: 'no-store' },
+    'Impossible de charger cet espace.',
+  );
+  return payload.space;
+}
+
 export async function createSpaceRequest(input: SpaceInput) {
   return sendSpaceRequest('/api/spaces', 'POST', input);
 }

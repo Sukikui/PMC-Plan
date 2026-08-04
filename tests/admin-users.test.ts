@@ -55,13 +55,13 @@ describe('admin users API', () => {
 
     expect(response.status).toBe(200);
     expect(mockedPrisma.user.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ skip: 20, take: 20 })
+      expect.objectContaining({ skip: 7, take: 7 })
     );
     expect(body.pagination).toEqual({
       page: 2,
-      pageSize: 20,
+      pageSize: 7,
       total: 21,
-      totalPages: 2,
+      totalPages: 3,
     });
     expect(body.users[0]).toEqual(
       expect.objectContaining({
@@ -84,6 +84,27 @@ describe('admin users API', () => {
         }),
       })
     );
+  });
+
+  it('searches displayed identities and normalizes Discord usernames', async () => {
+    await GET(new NextRequest(
+      'http://localhost/api/admin/users?query=%40suki',
+    ));
+
+    const where = mockedPrisma.user.findMany.mock.calls[0][0].where;
+    expect(where.OR).toEqual(expect.arrayContaining([
+      { id: { contains: '@suki', mode: 'insensitive' } },
+      { username: { contains: 'suki', mode: 'insensitive' } },
+    ]));
+  });
+
+  it('searches the displayed unlinked Minecraft state', async () => {
+    await GET(new NextRequest(
+      'http://localhost/api/admin/users?query=non%20lie',
+    ));
+
+    const where = mockedPrisma.user.findMany.mock.calls[0][0].where;
+    expect(where.OR).toContainEqual({ minecraftProfile: { is: null } });
   });
 
   it('filters users awaiting approval', async () => {

@@ -1,8 +1,7 @@
 'use client';
 
 import type { Session } from 'next-auth';
-import type { Place, Portal } from '@/lib/api/types';
-import type { DestinationType } from '@/lib/destination/selection';
+import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
 import { themeColors } from '@/lib/theme-colors';
 import ActionButton from '@/components/ui/ActionButton';
@@ -14,8 +13,6 @@ import AdminRoleBadge from '@/components/settings/admin/AdminRoleBadge';
 import AccountContentList from '@/components/settings/account/AccountContentList';
 import { unlinkedIdentityClass } from '@/components/settings/account-identity-styles';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
-import type { Space } from '@/lib/spaces/types';
-import type { Service } from '@/lib/services/types';
 
 interface AccountSettingsProps {
   user?: Session['user'];
@@ -25,9 +22,7 @@ interface AccountSettingsProps {
   onSignIn: () => void;
   onSignOut: () => void;
   onUnlinkMinecraft: () => void;
-  onOpenContent: (item: Place | Portal, type: DestinationType) => void;
-  onOpenService: (service: Service) => void;
-  onOpenSpace: (space: Space) => void;
+  onSelectItem?: SelectDestinationHandler;
 }
 
 export default function AccountSettings({
@@ -38,9 +33,7 @@ export default function AccountSettings({
   onSignIn,
   onSignOut,
   onUnlinkMinecraft,
-  onOpenContent,
-  onOpenService,
-  onOpenSpace,
+  onSelectItem,
 }: AccountSettingsProps) {
   const { effectiveRole } = useAdminMode();
 
@@ -93,12 +86,7 @@ export default function AccountSettings({
       {user && (
         <>
           <SectionSeparator className="my-6" />
-          <AccountContentList
-            onOpenContent={onOpenContent}
-            onOpenService={onOpenService}
-            onOpenSpace={onOpenSpace}
-            userId={user.id}
-          />
+          <AccountContentList onSelectItem={onSelectItem} />
         </>
       )}
     </section>

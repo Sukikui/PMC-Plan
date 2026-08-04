@@ -4,12 +4,7 @@ import type { MapEntryEditor } from '@/lib/map-entry/types';
 import { themeColors } from '@/lib/theme-colors';
 import UserAvatar from '@/components/ui/UserAvatar';
 import FloatingStatusBubble from '@/components/ui/FloatingStatusBubble';
-
-const lastEditDateFormatter = new Intl.DateTimeFormat('fr-FR', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-  timeZone: 'Europe/Paris',
-});
+import { formatAppDateTime } from '@/lib/date-format';
 
 export default function LastEditorIndicator({
   editor,
@@ -17,10 +12,7 @@ export default function LastEditorIndicator({
   editor: MapEntryEditor;
 }) {
   const name = editor.name ?? editor.username ?? 'Utilisateur inconnu';
-  const editedAt = new Date(editor.editedAt);
-  const formattedDate = Number.isNaN(editedAt.getTime())
-    ? 'Date inconnue'
-    : lastEditDateFormatter.format(editedAt);
+  const formattedDate = formatAppDateTime(editor.editedAt);
 
   return (
     <div className="pointer-events-none absolute left-full top-0 z-10 ml-2 w-max max-w-[calc(100vw-2rem)]">

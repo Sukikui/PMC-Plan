@@ -36,6 +36,14 @@ model User {
   @@map("users")
 }
 
+model ApplicationSettings {
+  id                    String   @id @default("global")
+  automaticUserApproval Boolean  @default(false) @map("automatic_user_approval")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("application_settings")
+}
+
 // Account model - stores Discord OAuth connection
 model Account {
   id                String  @id @default(cuid())

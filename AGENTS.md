@@ -3,10 +3,11 @@
 ## Most Important: Agent-Specific Instructions
 - Domain: This is an itinerary planner for a French Minecraft server; keep domain wording consistent.
 - Language: Keep UI copy, end-user messages, and user-facing data/config values in French. Code identifiers, code comments, technical configuration keys, and repository documentation must always be written in English.
-- Git: Do not run git commands in automation; maintainers handle commits.
+- Git: Do not run written git commands such as `git commit` or `git push`. But you can use git commands to check the status of the repository, such as `git status`, `git diff`, and `git log`. For other git commands, you can ask me for accepting command running.
 - Theming: App supports light and dark modes—never hardcode colors. Use shared tokens (see `lib/theme-colors.ts`) and update both themes.
 - API Docs: When API endpoints or logic change, update `BACKEND_API.md` with clear internal logic for each endpoint.
 - Principle: Adhere strictly to DRY; prefer shared utilities to duplication.
+- Cleaning: When removing features, also remove related helpers, submodules, and tests to keep the codebase clean and DRY.
 - Features: When I'm asking you to implement or refactor features, always check for existing helpers, utilities, or components that can be reused. Avoid creating new files unless necessary.
 - Don't hesitate to propose a codebase refactoring / improvenents if you see two or more different modules that should share a common frontend and backend logic but are currently implemented in different ways.
 - No source files with more than 350 lines; split into focused modules if needed. This limit does not apply to docs, data files, generated files, lockfiles, or binary assets.

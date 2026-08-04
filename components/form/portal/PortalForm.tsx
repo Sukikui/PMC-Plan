@@ -6,7 +6,6 @@ import { createPortalSnapshot } from '../common/form-change-detection';
 import {
   parseCoordinateTriplet,
   renderCoordinateInputs,
-  SubHeader,
   type CoordinatesInput,
 } from '../common/form-utils';
 import { useEntityForm } from '../common/useEntityForm';
@@ -29,6 +28,7 @@ import {
 import type { SpaceReference } from '@/lib/spaces/types';
 
 const blankCoords = { x: '', y: '', z: '' };
+const NETHER_ADDRESS_LABEL = 'Adresse dans le nether';
 
 export interface InitialPortalData {
   type: 'portal';
@@ -215,12 +215,12 @@ export default function PortalForm({
     return (
       <div className="space-y-4">
         <div className="space-y-3">
-          {renderCoordinateInputs(singleCoords, setSingleCoords, 'Coordonnées')}
+          {renderCoordinateInputs(singleCoords, setSingleCoords, `Coordonnées ${world}`)}
         </div>
         {world === 'nether' && (
           <NetherAddressField
             address={singleAddress}
-            label="Adresse sur l'autoroute du nether"
+            label={NETHER_ADDRESS_LABEL}
           />
         )}
       </div>
@@ -229,18 +229,20 @@ export default function PortalForm({
 
   const renderLinkedForm = () => (
     <div className="space-y-4">
+      {renderCoordinateInputs(
+        overworldCoords,
+        setOverworldCoords,
+        'Coordonnées overworld',
+      )}
       <div className="space-y-3">
-        <SubHeader title="Portail overworld" />
-        {renderCoordinateInputs(overworldCoords, setOverworldCoords, 'Coordonnées')}
-      </div>
-      <div className="space-y-3">
-        <SubHeader title="Portail nether" />
-        <div className="flex flex-col gap-2">
-          {renderCoordinateInputs(netherCoords, setNetherCoords, 'Coordonnées')}
-        </div>
+        {renderCoordinateInputs(
+          netherCoords,
+          setNetherCoords,
+          'Coordonnées nether',
+        )}
         <NetherAddressField
           address={netherAddress}
-          label="Adresse dans le nether"
+          label={NETHER_ADDRESS_LABEL}
         />
       </div>
     </div>

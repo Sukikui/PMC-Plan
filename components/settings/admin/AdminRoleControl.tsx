@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Role } from '@prisma/client';
 import type { AssignableRole } from '@/lib/admin/roles';
 import { themeColors } from '@/lib/theme-colors';
+import { updateAdminUserRole } from '@/lib/admin/client';
 import AdminRoleBadge from './AdminRoleBadge';
 
 interface AdminRoleControlProps {
@@ -30,21 +31,7 @@ export default function AdminRoleControl({
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}/role`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: nextRole }),
-      });
-      const body = await response.json() as {
-        user?: { role: Role };
-        error?: string;
-      };
-
-      if (!response.ok || !body.user) {
-        throw new Error(body.error ?? 'Impossible de modifier le rôle.');
-      }
-
-      onRoleChanged(body.user.role);
+      onRoleChanged(await updateAdminUserRole(userId, nextRole));
     } catch (requestError) {
       onError(
         requestError instanceof Error

@@ -12,6 +12,7 @@ import {
   fetchSpaces,
   subscribeToSpacesInvalidation,
 } from '@/lib/spaces/client';
+import { formatSpaceContentSummary } from '@/lib/spaces/summary';
 import type { Space } from '@/lib/spaces/types';
 import { filterSpaces } from '@/lib/spaces/search';
 import { themeColors } from '@/lib/theme-colors';
@@ -183,19 +184,19 @@ function SpaceExplorerTile({
 }
 
 function SpaceTileSummary({ space }: { space: Space }) {
-  const stats = [
-    formatCount(space.places.length, 'lieu', 'lieux'),
-    formatCount(space.portals.length, 'portail', 'portails'),
-    formatCount(space.offerCount ?? 0, 'offre', 'offres'),
-  ].filter(Boolean);
+  const summary = formatSpaceContentSummary({
+    offerCount: space.offerCount ?? 0,
+    placeCount: space.places.length,
+    portalCount: space.portals.length,
+  });
   const member = space.members[0] ?? null;
   const additionalMemberCount = Math.max(0, space.members.length - 1);
 
   return (
     <div className={`mt-4 flex min-h-11 min-w-0 items-center gap-3 border-t pt-3 ${themeColors.border.light}`}>
-      {stats.length > 0 && (
+      {summary && (
         <span className={`shrink-0 text-xs ${themeColors.text.tertiary}`}>
-          {stats.join(' · ')}
+          {summary}
         </span>
       )}
       {member && (
@@ -218,9 +219,4 @@ function SpaceTileSummary({ space }: { space: Space }) {
       )}
     </div>
   );
-}
-
-function formatCount(count: number, singular: string, plural: string) {
-  if (count === 0) return null;
-  return `${count} ${count === 1 ? singular : plural}`;
 }

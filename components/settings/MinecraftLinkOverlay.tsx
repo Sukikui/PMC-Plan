@@ -41,7 +41,7 @@ export default function MinecraftLinkOverlay({
         <MinecraftLinkOverlayContent status={status} loading={loading} />
 
         {error && (
-          <div className={`text-xs border ${themeColors.syncNotification.errorBorder} ${themeColors.syncNotification.errorBg} ${themeColors.syncNotification.errorText} ${themeColors.util.roundedLg} px-3 py-2`}>
+          <div className={`text-xs border ${themeColors.statusNotification.error.border} ${themeColors.statusNotification.error.background} ${themeColors.statusNotification.error.title} ${themeColors.util.roundedLg} px-3 py-2`}>
             {error}
           </div>
         )}

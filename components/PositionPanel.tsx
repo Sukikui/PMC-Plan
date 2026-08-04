@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useSettingsOverlay } from '@/components/settings/SettingsOverlayProvider';
+import AdminApprovalNotification from '@/components/admin/AdminApprovalNotification';
 import SyncNotification from './SyncNotification';
 import ManualPositionInput from './position/ManualPositionInput';
 import PlayerPositionView from './position/PlayerPositionView';
@@ -54,10 +55,6 @@ export default function PositionPanel({
   useEffect(() => {
     if (playerUsername) setPreviewUsername(playerUsername);
   }, [playerUsername]);
-
-  useEffect(() => {
-    if (isSafariPlayerCoordsSyncBlocked()) setSyncError(SAFARI_SYNC_ERROR);
-  }, []);
 
   useEffect(() => {
     if (isConnected) {
@@ -219,15 +216,21 @@ export default function PositionPanel({
           />
         )}
       </Panel>
-      <SyncNotification
-        error={syncError}
-        onClose={() => setSyncError(null)}
-        topOffset={
+      <div
+        className="pointer-events-none fixed right-4 z-50 flex w-[calc(100vw-2rem)] max-w-80 flex-col gap-2"
+        style={{
+          top:
           POSITION_PANEL_TOP_PX
           + MAP_CONTROL_PANEL_COLLAPSED_HEIGHT_PX
-          + NOTIFICATION_GAP_PX
-        }
-      />
+          + NOTIFICATION_GAP_PX,
+        }}
+      >
+        <SyncNotification
+          error={syncError}
+          onClose={() => setSyncError(null)}
+        />
+        <AdminApprovalNotification />
+      </div>
     </>
   );
 }

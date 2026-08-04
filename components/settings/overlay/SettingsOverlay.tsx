@@ -7,8 +7,7 @@ import {
   useState,
 } from 'react';
 import type { Session } from 'next-auth';
-import type { Place, Portal } from '@/lib/api/types';
-import type { DestinationType } from '@/lib/destination/selection';
+import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
 import type { AppTheme } from '@/components/settings/ThemeSelector';
 import AccountSettings from '@/components/settings/account/AccountSettings';
@@ -22,8 +21,6 @@ import { isAdministrationRole } from '@/lib/admin/roles';
 import type { SettingsTab } from '@/components/settings/SettingsOverlayProvider';
 import { useOverlayDisclosure } from '@/components/ui/useOverlayDisclosure';
 import type { AdminUserTransferRequest } from '@/lib/admin/users';
-import type { Space } from '@/lib/spaces/types';
-import type { Service } from '@/lib/services/types';
 
 interface SettingsOverlayProps {
   isOpen: boolean;
@@ -40,9 +37,7 @@ interface SettingsOverlayProps {
   onSignOut: () => void;
   onThemeChange: (theme: AppTheme) => void;
   onUnlinkMinecraft: () => void;
-  onOpenContent: (item: Place | Portal, type: DestinationType) => void;
-  onOpenService: (service: Service) => void;
-  onOpenSpace: (space: Space) => void;
+  onSelectItem?: SelectDestinationHandler;
 }
 
 export default function SettingsOverlay({
@@ -60,9 +55,7 @@ export default function SettingsOverlay({
   onSignOut,
   onThemeChange,
   onUnlinkMinecraft,
-  onOpenContent,
-  onOpenService,
-  onOpenSpace,
+  onSelectItem,
 }: SettingsOverlayProps) {
   const hasAdminAccess = isAdministrationRole(user?.role);
   const {
@@ -131,9 +124,7 @@ export default function SettingsOverlay({
                     onSignIn={onSignIn}
                     onSignOut={onSignOut}
                     onUnlinkMinecraft={onUnlinkMinecraft}
-                    onOpenContent={onOpenContent}
-                    onOpenService={onOpenService}
-                    onOpenSpace={onOpenSpace}
+                    onSelectItem={onSelectItem}
                   />
                 )}
                 {tab.id === 'appearance' && (

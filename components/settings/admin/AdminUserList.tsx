@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Role } from '@prisma/client';
 import {
   PRIMARY_MANAGEMENT_TRANSFER_REQUIRED,
@@ -11,6 +11,7 @@ import {
 import {
   AdminUserApiError,
   deleteAdminUser,
+  fetchAdminUsers,
 } from '@/lib/admin/client';
 import {
   canDeleteUserAccount,
@@ -22,13 +23,15 @@ import IdentitySummary from '@/components/settings/IdentitySummary';
 import { ListRow } from '@/components/ui/ListRow';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { applyMapEntryManagementUpdate } from '@/lib/preload/main-screen';
+import { MANAGEMENT_LIST_ROW_HEIGHT_PX } from '@/lib/management/pagination';
+import ManagementListFrame from '@/components/settings/management/ManagementListFrame';
 import AdminUserDeleteControl from './AdminUserDeleteControl';
 import AdminRoleControl from './AdminRoleControl';
+import usePaginatedManagementQuery, {
+  type ManagementPageData,
+} from '@/components/settings/management/usePaginatedManagementQuery';
 
-const emptyResponse: AdminUsersResponse = {
-  users: [],
-  pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 },
-};
+type AdminUser = AdminUsersResponse['users'][number];
 
 export default function AdminUserList({
   canApproveUsers,
@@ -45,69 +48,45 @@ export default function AdminUserList({
   onTransferRequired: (request: AdminUserTransferRequest) => void;
   refreshKey: string;
 }) {
-  const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<AdminUserRoleFilter>('all');
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState(emptyResponse);
-  const [loading, setLoading] = useState(true);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(async () => {
-      setLoading(true);
-      setError(null);
-      const params = new URLSearchParams({
-        page: String(page),
-        query,
-        role: filter,
-      });
-
-      try {
-        const response = await fetch(`/api/admin/users?${params}`, {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error('Impossible de charger les utilisateurs.');
-        setData(await response.json() as AdminUsersResponse);
-      } catch (requestError) {
-        if (!controller.signal.aborted) {
-          setError(requestError instanceof Error ? requestError.message : 'Erreur inconnue.');
-        }
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }, 250);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeoutId);
-    };
-  }, [filter, page, query, refreshKey]);
-
-  const updateQuery = (value: string) => {
-    setQuery(value);
-    setPage(1);
-  };
+  const load = useCallback(async (
+    page: number,
+    query: string,
+    signal: AbortSignal,
+  ) => {
+    const response = await fetchAdminUsers({
+      page,
+      query,
+      role: filter,
+      signal,
+    });
+    return { items: response.users, pagination: response.pagination };
+  }, [filter]);
+  const state = usePaginatedManagementQuery({ load, refreshKey });
 
   const updateFilter = (value: AdminUserRoleFilter) => {
     setFilter(value);
-    setPage(1);
+    state.setPage(1);
   };
-
   const updateUserRole = (userId: string, role: Role) => {
-    setData((current) => ({
+    state.setData((current) => ({
       ...current,
-      users: current.users.map((user) => (
+      items: current.items.map((user) => (
         user.id === userId ? { ...user, role } : user
       )),
     }));
   };
-
-  const deleteUser = async (user: AdminUsersResponse['users'][number]) => {
+  const removeDeletedUser = (userId: string) => {
+    if (state.data.items.length === 1 && state.page > 1) {
+      state.setPage((current) => Math.max(1, current - 1));
+      return;
+    }
+    state.setData((current) => removeUserFromResponse(current, userId));
+  };
+  const deleteUser = async (user: AdminUser) => {
     setDeletingUserId(user.id);
-    setError(null);
+    state.setError(null);
 
     try {
       const response = await deleteAdminUser(user.id);
@@ -125,110 +104,80 @@ export default function AdminUserList({
         });
         return;
       }
-      setError(requestError instanceof Error ? requestError.message : 'Erreur inconnue.');
+      state.setError(requestError instanceof Error
+        ? requestError.message
+        : 'Erreur inconnue.');
     } finally {
       setDeletingUserId(null);
     }
   };
 
-  const removeDeletedUser = (userId: string) => {
-    if (data.users.length === 1 && page > 1) {
-      setPage((current) => Math.max(1, current - 1));
-      return;
-    }
-    setData((current) => removeUserFromResponse(current, userId));
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => updateQuery(event.target.value)}
-          placeholder="Rechercher un utilisateur..."
-          className={`w-full px-3 py-2 text-sm lg:max-w-sm ${themeColors.input.search} border ${themeColors.util.roundedLg} focus:outline-none focus:ring-2 ${themeColors.placeholder}`}
-        />
+    <ManagementListFrame
+      controls={(
         <div className="flex gap-1">
-          {([
-            ['all', 'Tous'],
-            ['pending', 'En attente'],
-            ['administrators', 'Administrateurs'],
-          ] as const).map(([value, label]) => (
+          {userFilters.map(({ label, value }) => (
             <button
               key={value}
               type="button"
               onClick={() => updateFilter(value)}
               className={`${themeColors.toggle.compactBase} ${
-                filter === value ? themeColors.toggle.activeBlue : themeColors.toggle.inactive
+                filter === value
+                  ? themeColors.toggle.activeBlue
+                  : themeColors.toggle.inactive
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-      </div>
-
-      {error && <p className={`text-sm ${themeColors.feedback.errorText}`}>{error}</p>}
-      {loading ? (
-        <p className={`py-8 text-center text-sm ${themeColors.text.tertiary}`}>Chargement...</p>
-      ) : data.users.length === 0 ? (
-        <p className={`py-8 text-center text-sm ${themeColors.text.tertiary}`}>Aucun utilisateur trouvé.</p>
-      ) : (
-        <div>
-          {data.users.map((user) => (
-            <AdminUserRow
-              key={user.id}
-              user={user}
-              canApproveUsers={canApproveUsers}
-              canManageRoles={canManageRoles}
-              canDelete={isAdministrationRole(deleteMode)}
-              deleteDisabled={
-                deletingUserId !== null
-                || !canDeleteUserAccount(
-                  deleteMode,
-                  user.role,
-                  user.id === currentUserId,
-                )
-              }
-              deleting={deletingUserId === user.id}
-              onError={setError}
-              onRoleChanged={(role) => updateUserRole(user.id, role)}
-              onDelete={() => deleteUser(user)}
-            />
-          ))}
-        </div>
       )}
-
-      <div className="flex items-center justify-between gap-4">
-        <span className={`text-xs ${themeColors.text.tertiary}`}>
-          {data.pagination.total} utilisateur{data.pagination.total > 1 ? 's' : ''}
-        </span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            className={paginationButtonClass}
-          >
-            Précédent
-          </button>
-          <span className={`text-xs tabular-nums ${themeColors.text.secondary}`}>
-            {data.pagination.page}/{data.pagination.totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= data.pagination.totalPages || loading}
-            onClick={() => setPage((current) => current + 1)}
-            className={paginationButtonClass}
-          >
-            Suivant
-          </button>
-        </div>
+      empty={state.data.items.length === 0}
+      emptyLabel="Aucun utilisateur trouvé."
+      error={state.error}
+      loading={state.loading}
+      onPageChange={state.setPage}
+      onQueryChange={state.setQuery}
+      pagination={state.data.pagination}
+      query={state.query}
+      resultLabel={`utilisateur${state.data.pagination.total > 1 ? 's' : ''}`}
+      searchPlaceholder="Rechercher un utilisateur..."
+    >
+      <div>
+        {state.data.items.map((user) => (
+          <AdminUserRow
+            key={user.id}
+            user={user}
+            canApproveUsers={canApproveUsers}
+            canManageRoles={canManageRoles}
+            canDelete={isAdministrationRole(deleteMode)}
+            deleteDisabled={
+              deletingUserId !== null
+              || !canDeleteUserAccount(
+                deleteMode,
+                user.role,
+                user.id === currentUserId,
+              )
+            }
+            deleting={deletingUserId === user.id}
+            onError={state.setError}
+            onRoleChanged={(role) => updateUserRole(user.id, role)}
+            onDelete={() => deleteUser(user)}
+          />
+        ))}
       </div>
-    </div>
+    </ManagementListFrame>
   );
 }
+
+const userFilters: Array<{
+  label: string;
+  value: AdminUserRoleFilter;
+}> = [
+  { value: 'all', label: 'Tous' },
+  { value: 'pending', label: 'En attente' },
+  { value: 'administrators', label: 'Administrateurs' },
+];
 
 function AdminUserRow({
   user,
@@ -241,7 +190,7 @@ function AdminUserRow({
   onRoleChanged,
   onDelete,
 }: {
-  user: AdminUsersResponse['users'][number];
+  user: AdminUser;
   canApproveUsers: boolean;
   canManageRoles: boolean;
   canDelete: boolean;
@@ -252,7 +201,10 @@ function AdminUserRow({
   onDelete: () => void;
 }) {
   return (
-    <ListRow className="relative grid gap-3 pr-8 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start">
+    <ListRow
+      className="relative grid gap-3 pr-8 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start"
+      style={{ height: MANAGEMENT_LIST_ROW_HEIGHT_PX }}
+    >
       <div className="flex min-h-9 items-center">
         <AdminRoleControl
           canApproveUsers={canApproveUsers}
@@ -289,15 +241,13 @@ function AdminUserRow({
   );
 }
 
-const paginationButtonClass = `rounded-lg px-2.5 py-1.5 text-xs ${themeColors.button.ghost} ${themeColors.transitionAll} ${themeColors.util.activeScale} disabled:cursor-not-allowed disabled:opacity-40`;
-
 function removeUserFromResponse(
-  response: AdminUsersResponse,
+  response: ManagementPageData<AdminUser>,
   userId: string,
-): AdminUsersResponse {
+): ManagementPageData<AdminUser> {
   const total = Math.max(0, response.pagination.total - 1);
   return {
-    users: response.users.filter((user) => user.id !== userId),
+    items: response.items.filter((user) => user.id !== userId),
     pagination: {
       ...response.pagination,
       total,
