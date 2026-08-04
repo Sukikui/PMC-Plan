@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import {
-  applyApprovalPolicyToCreatedUser,
   getApplicationSettings,
+  getInitialUserRole,
   saveApplicationSettings,
 } from '@/lib/admin/application-settings-service';
 
@@ -11,9 +11,6 @@ jest.mock('@/lib/prisma', () => ({
       findUnique: jest.fn(),
       upsert: jest.fn(),
     },
-    user: {
-      update: jest.fn(),
-    },
   },
 }));
 
@@ -22,16 +19,6 @@ const mockedPrisma = prisma as unknown as {
     findUnique: jest.Mock;
     upsert: jest.Mock;
   };
-  user: { update: jest.Mock };
-};
-
-const pendingUser = {
-  id: 'user-1',
-  email: 'user@example.com',
-  emailVerified: null,
-  image: null,
-  name: 'Suki',
-  role: 'pending' as const,
 };
 
 describe('application settings service', () => {
@@ -62,29 +49,18 @@ describe('application settings service', () => {
     });
   });
 
-  it('keeps newly created users pending in manual mode', async () => {
+  it('returns the pending role in manual mode', async () => {
     mockedPrisma.applicationSettings.findUnique.mockResolvedValue({
       automaticUserApproval: false,
     });
 
-    await expect(applyApprovalPolicyToCreatedUser(pendingUser))
-      .resolves.toBe(pendingUser);
-    expect(mockedPrisma.user.update).not.toHaveBeenCalled();
+    await expect(getInitialUserRole()).resolves.toBe('pending');
   });
 
-  it('approves newly created users in automatic mode', async () => {
-    const approvedUser = { ...pendingUser, role: 'user' as const };
+  it('returns the user role in automatic mode', async () => {
     mockedPrisma.applicationSettings.findUnique.mockResolvedValue({
       automaticUserApproval: true,
     });
-    mockedPrisma.user.update.mockResolvedValue(approvedUser);
-
-    await expect(applyApprovalPolicyToCreatedUser(pendingUser))
-      .resolves.toEqual(approvedUser);
-    expect(mockedPrisma.user.update).toHaveBeenCalledWith({
-      where: { id: pendingUser.id },
-      data: { role: 'user' },
-      select: { role: true },
-    });
+    await expect(getInitialUserRole()).resolves.toBe('user');
   });
 });

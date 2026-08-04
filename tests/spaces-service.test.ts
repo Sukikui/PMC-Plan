@@ -150,7 +150,7 @@ describe('space service', () => {
     tx.space.findUnique.mockResolvedValue(createSpaceAccess());
     tx.user.findUnique.mockResolvedValue({
       role: 'user',
-      username: 'next_manager',
+      discordUsername: 'next_manager',
     });
     tx.space.update.mockResolvedValue(createSpaceRecord({
       primaryManagerId: 'manager-user',
@@ -214,9 +214,9 @@ function createSpaceRecord(
 function createSpaceRecordBase() {
   const primaryManager = {
     id: 'primary-user',
-    name: 'Primary',
-    username: 'primary',
-    image: null,
+    discordDisplayName: 'Primary',
+    discordUsername: 'primary',
+    discordAvatarUrl: null,
     role: 'user',
     minecraftProfile: {
       uuid: 'member-b',
@@ -243,9 +243,9 @@ function createSpaceRecordBase() {
       userId: 'manager-user',
       user: {
         id: 'manager-user',
-        name: 'Manager',
-        username: 'next_manager',
-        image: null,
+        discordDisplayName: 'Manager',
+        discordUsername: 'next_manager',
+        discordAvatarUrl: null,
         role: 'user',
       },
     }],

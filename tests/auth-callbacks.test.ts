@@ -3,17 +3,21 @@ import { prisma } from '@/lib/prisma';
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    applicationSettings: {
+      findUnique: jest.fn(),
+    },
     user: {
       findUnique: jest.fn(),
-      update: jest.fn(),
+      upsert: jest.fn(),
     },
   },
 }));
 
 const mockedPrisma = prisma as unknown as {
+  applicationSettings: { findUnique: jest.Mock };
   user: {
     findUnique: jest.Mock;
-    update: jest.Mock;
+    upsert: jest.Mock;
   };
 };
 const jwtCallback = authCallbacks.jwt as (params: Record<string, unknown>) => Promise<any>;
@@ -42,15 +46,21 @@ describe('Auth.js callbacks', () => {
   });
 
   it('synchronizes Discord identity fields when a user signs in', async () => {
-    mockedPrisma.user.update.mockResolvedValue({ id: 'user-1' });
+    mockedPrisma.applicationSettings.findUnique.mockResolvedValue({
+      automaticUserApproval: false,
+    });
+    mockedPrisma.user.upsert.mockResolvedValue({
+      id: 'user-1',
+      discordUsername: 'new-name',
+      discordDisplayName: 'New Name',
+      discordAvatarUrl: 'https://cdn.discordapp.com/avatars/discord-1/avatar-hash.png',
+      role: 'admin',
+    });
 
     const token = await jwtCallback({
       token: {},
       user: {
         id: 'user-1',
-        role: 'admin',
-        username: 'old-name',
-        name: 'Old Name',
         image: null,
       },
       account: { provider: 'discord' },
@@ -62,12 +72,26 @@ describe('Auth.js callbacks', () => {
       },
     });
 
-    expect(mockedPrisma.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
-      data: {
-        username: 'new-name',
-        name: 'New Name',
-        image: 'https://cdn.discordapp.com/avatars/discord-1/avatar-hash.png',
+    expect(mockedPrisma.user.upsert).toHaveBeenCalledWith({
+      where: { discordId: 'discord-1' },
+      create: {
+        discordId: 'discord-1',
+        discordUsername: 'new-name',
+        discordDisplayName: 'New Name',
+        discordAvatarUrl: 'https://cdn.discordapp.com/avatars/discord-1/avatar-hash.png',
+        role: 'pending',
+      },
+      update: {
+        discordUsername: 'new-name',
+        discordDisplayName: 'New Name',
+        discordAvatarUrl: 'https://cdn.discordapp.com/avatars/discord-1/avatar-hash.png',
+      },
+      select: {
+        id: true,
+        discordUsername: true,
+        discordDisplayName: true,
+        discordAvatarUrl: true,
+        role: true,
       },
     });
     expect(token).toMatchObject({

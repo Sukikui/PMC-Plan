@@ -1,4 +1,4 @@
-import type { AdapterUser } from '@auth/core/adapters';
+import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import {
   DEFAULT_APPLICATION_SETTINGS,
@@ -26,18 +26,7 @@ export async function saveApplicationSettings(
   });
 }
 
-export async function applyApprovalPolicyToCreatedUser(
-  user: AdapterUser,
-): Promise<AdapterUser> {
-  if (user.role !== 'pending') return user;
-
+export async function getInitialUserRole(): Promise<Role> {
   const settings = await getApplicationSettings();
-  if (!settings.automaticUserApproval) return user;
-
-  const approvedUser = await prisma.user.update({
-    where: { id: user.id },
-    data: { role: 'user' },
-    select: { role: true },
-  });
-  return { ...user, role: approvedUser.role };
+  return settings.automaticUserApproval ? 'user' : 'pending';
 }

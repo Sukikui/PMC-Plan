@@ -54,7 +54,7 @@ export async function updateMapEntryManagement(
     select: {
       id: true,
       role: true,
-      username: true,
+      discordUsername: true,
       minecraftProfile: { select: { uuid: true, name: true } },
     },
   });
@@ -74,8 +74,7 @@ export async function updateMapEntryManagement(
 
   if (primaryManagerId !== entry.primaryManagerId) {
     if (
-      !primaryManager.username
-      || input.transferConfirmation !== `@${primaryManager.username}`
+      input.transferConfirmation !== `@${primaryManager.discordUsername}`
     ) {
       throw new MapEntryError(
         'La confirmation ne correspond pas à l’identifiant Discord.',

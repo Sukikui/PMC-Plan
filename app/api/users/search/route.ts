@@ -4,6 +4,10 @@ import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { canContribute } from '@/lib/content-permissions';
 import { normalizeDiscordUserQuery } from '@/lib/discord/user-search';
+import {
+  discordIdentitySelect,
+  toPublicDiscordIdentity,
+} from '@/lib/discord-user';
 import { prisma } from '@/lib/prisma';
 import type { MapEntryUser } from '@/lib/map-entry/types';
 
@@ -34,17 +38,14 @@ export async function GET(request: NextRequest) {
     where: {
       role: { in: ['user', 'admin', 'super_admin'] },
       OR: [
-        { name: { contains: parsed.data.query, mode: 'insensitive' } },
-        { username: { contains: parsed.data.query, mode: 'insensitive' } },
+        { discordDisplayName: { contains: parsed.data.query, mode: 'insensitive' } },
+        { discordUsername: { contains: parsed.data.query, mode: 'insensitive' } },
       ],
     },
-    orderBy: [{ name: 'asc' }, { username: 'asc' }],
+    orderBy: [{ discordDisplayName: 'asc' }, { discordUsername: 'asc' }],
     take: 8,
     select: {
-      id: true,
-      name: true,
-      username: true,
-      image: true,
+      ...discordIdentitySelect,
       role: true,
       minecraftProfile: {
         select: { uuid: true, name: true },
@@ -52,5 +53,11 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({ users: users satisfies MapEntryUser[] });
+  return NextResponse.json({
+    users: users.map((user) => ({
+      ...toPublicDiscordIdentity(user),
+      role: user.role,
+      minecraftProfile: user.minecraftProfile,
+    })) satisfies MapEntryUser[],
+  });
 }

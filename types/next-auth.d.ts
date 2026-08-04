@@ -1,7 +1,5 @@
 import { DefaultSession } from "next-auth"
 import type { Role } from "@prisma/client"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { AdapterUser } from "@auth/core/adapters"
 
 declare module "next-auth" {
   interface Session {
@@ -14,7 +12,7 @@ declare module "next-auth" {
   }
 
   interface User {
-    role: Role
+    role?: Role
     username?: string | null
     globalName?: string | null
   }
@@ -27,11 +25,5 @@ declare module "next-auth/jwt" {
     username?: string
     globalName?: string
     picture?: string
-  }
-}
-
-declare module "@auth/core/adapters" {
-  interface AdapterUser {
-    role: Role
   }
 }

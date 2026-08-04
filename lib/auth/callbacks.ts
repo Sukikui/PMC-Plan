@@ -1,32 +1,32 @@
-import type { User } from '@prisma/client';
 import type { NextAuthConfig } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
-import { getDiscordDisplayName, getDiscordImage } from '@/lib/discord-user';
+import {
+  syncDiscordUser,
+  toPublicDiscordIdentity,
+} from '@/lib/discord-user';
 import { prisma } from '@/lib/prisma';
 import type { DiscordProfile } from '@/types/discord-profile';
 
 export const authCallbacks = {
   async jwt({ token, user, account, profile }) {
-    if (user) {
-      token.role = (user as User).role;
-      token.id = user.id as string;
+    if (account?.provider === 'discord' && profile) {
+      const storedUser = await syncDiscordUser(
+        toDiscordProfile(profile),
+        user?.image,
+      );
+      const identity = toPublicDiscordIdentity(storedUser);
+      token.id = storedUser.id;
+      token.role = storedUser.role;
+      token.username = identity.username;
+      token.globalName = identity.name;
+      token.name = identity.name;
+      token.picture = identity.image ?? undefined;
     } else if (token.id) {
       const currentUser = await prisma.user.findUnique({
         where: { id: token.id },
         select: { role: true },
       });
       token.role = currentUser?.role ?? 'pending';
-    }
-
-    if (account?.provider === 'discord' && profile) {
-      const discordIdentity = await syncDiscordIdentity(
-        user as User | undefined,
-        profile as DiscordProfile
-      );
-      token.username = discordIdentity.username ?? token.username;
-      token.globalName = discordIdentity.displayName ?? token.globalName;
-      token.name = discordIdentity.displayName ?? token.name;
-      if (discordIdentity.image) token.picture = discordIdentity.image;
     }
 
     return token;
@@ -43,38 +43,17 @@ export const authCallbacks = {
   },
 } satisfies NonNullable<NextAuthConfig['callbacks']>;
 
-async function syncDiscordIdentity(user: User | undefined, profile: DiscordProfile) {
-  const displayName = getDiscordDisplayName(profile);
-  const image = getDiscordImage(profile);
-
-  if (user) {
-    const updates: {
-      username?: string;
-      name?: string | null;
-      image?: string | null;
-    } = {};
-
-    if (profile.username && profile.username !== user.username) {
-      updates.username = profile.username;
-    }
-    if (displayName && displayName !== user.name) {
-      updates.name = displayName;
-    }
-    if (image !== (user.image ?? null)) {
-      updates.image = image;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: updates,
-      });
-    }
+function toDiscordProfile(profile: Record<string, unknown>): DiscordProfile {
+  if (typeof profile.id !== 'string' || typeof profile.username !== 'string') {
+    throw new Error('Discord returned an incomplete identity.');
   }
 
   return {
+    id: profile.id,
     username: profile.username,
-    displayName,
-    image,
+    global_name: typeof profile.global_name === 'string'
+      ? profile.global_name
+      : null,
+    avatar: typeof profile.avatar === 'string' ? profile.avatar : null,
   };
 }

@@ -27,8 +27,8 @@ export function getMapEntryWhere(
     : [{ space: { is: { name: text } } }];
   const discordManagerSearch: Prisma.MapEntryWhereInput[] = discordQuery
     ? [
-        { primaryManager: { is: { username: discordText } } },
-        { managers: { some: { user: { is: { username: discordText } } } } },
+        { primaryManager: { is: { discordUsername: discordText } } },
+        { managers: { some: { user: { is: { discordUsername: discordText } } } } },
       ]
     : [];
 
@@ -36,7 +36,7 @@ export function getMapEntryWhere(
     OR: [
       getContentSearch(type, text),
       ...contextSearch,
-      { primaryManager: { is: { name: text } } },
+      { primaryManager: { is: { discordDisplayName: text } } },
       ...discordManagerSearch,
     ],
   });
@@ -54,15 +54,15 @@ export function getSpaceWhere(
     const discordText = searchText(discordQuery);
     const discordManagerSearch: Prisma.SpaceWhereInput[] = discordQuery
       ? [
-          { primaryManager: { is: { username: discordText } } },
-          { managers: { some: { user: { is: { username: discordText } } } } },
+          { primaryManager: { is: { discordUsername: discordText } } },
+          { managers: { some: { user: { is: { discordUsername: discordText } } } } },
         ]
       : [];
     constraints.push({
       OR: [
         { name: text },
         { slug: text },
-        { primaryManager: { is: { name: text } } },
+        { primaryManager: { is: { discordDisplayName: text } } },
         ...discordManagerSearch,
       ],
     });

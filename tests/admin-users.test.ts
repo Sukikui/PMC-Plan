@@ -31,9 +31,9 @@ describe('admin users API', () => {
     mockedPrisma.user.findMany.mockResolvedValue([
       {
         id: 'user-1',
-        name: 'Suki',
-        username: 'suki',
-        image: null,
+        discordDisplayName: 'Suki',
+        discordUsername: 'suki',
+        discordAvatarUrl: null,
         role: 'user',
         minecraftProfile: {
           uuid: 'minecraft-uuid',
@@ -94,7 +94,7 @@ describe('admin users API', () => {
     const where = mockedPrisma.user.findMany.mock.calls[0][0].where;
     expect(where.OR).toEqual(expect.arrayContaining([
       { id: { contains: '@suki', mode: 'insensitive' } },
-      { username: { contains: 'suki', mode: 'insensitive' } },
+      { discordUsername: { contains: 'suki', mode: 'insensitive' } },
     ]));
   });
 
