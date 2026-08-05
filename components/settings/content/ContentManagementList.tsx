@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
@@ -14,12 +15,8 @@ import type {
 } from '@/lib/content-management/types';
 import { canAdministerContent } from '@/lib/content-permissions';
 import type { SelectDestinationHandler } from '@/lib/destination/selection';
-import {
-  fetchService,
-  subscribeToServicesInvalidation,
-} from '@/lib/services/client';
-import { subscribeToSpacesInvalidation } from '@/lib/spaces/client';
-import { subscribeToMainScreenDataInvalidation } from '@/lib/preload/main-screen';
+import { subscribeToContentUpdates } from '@/lib/content/client-events';
+import { serviceDetailQueryOptions } from '@/lib/services/client';
 import { themeColors } from '@/lib/theme-colors';
 import ManagementListFrame from '@/components/settings/management/ManagementListFrame';
 import usePaginatedManagementQuery from '@/components/settings/management/usePaginatedManagementQuery';
@@ -34,12 +31,13 @@ export default function ContentManagementList({
   scope: ContentManagementScope;
   type: ContentManagementType;
 }) {
+  const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { effectiveRole } = useAdminMode();
   const {
     openMapEntryInfoById,
     openServiceEditor,
-    openSpaceInfoBySlug,
+    openSpaceInfo,
   } = useOverlay();
   const [filter, setFilter] = useState<ContentManagementFilter>('all');
   const [openingId, setOpeningId] = useState<string | null>(null);
@@ -63,12 +61,11 @@ export default function ContentManagementList({
   const config = contentListConfig[type];
 
   useEffect(() => {
-    const subscribe = type === 'space'
-      ? subscribeToSpacesInvalidation
-      : type === 'service'
-        ? subscribeToServicesInvalidation
-        : subscribeToMainScreenDataInvalidation;
-    return subscribe(() => setRefreshVersion((current) => current + 1));
+    return subscribeToContentUpdates((updatedType) => {
+      if (updatedType === 'all' || updatedType === type) {
+        setRefreshVersion((current) => current + 1);
+      }
+    });
   }, [type]);
 
   const updateFilter = (value: ContentManagementFilter) => {
@@ -82,9 +79,20 @@ export default function ContentManagementList({
       if (item.type === 'place' || item.type === 'portal') {
         await openMapEntryInfoById(item.mapEntryId, item.type, onSelectItem);
       } else if (item.type === 'space') {
-        await openSpaceInfoBySlug(item.slug);
+        openSpaceInfo({
+          color: item.color,
+          discordUrl: item.discordUrl,
+          id: item.id,
+          logoBackground: item.logoBackground,
+          logoUrl: item.logoUrl,
+          logoZoom: item.logoZoom,
+          name: item.name,
+          slug: item.slug,
+        });
       } else {
-        const service = await fetchService(item.slug);
+        const service = await queryClient.ensureQueryData(
+          serviceDetailQueryOptions(item.slug),
+        );
         openServiceEditor(
           service,
           canAdministerContent(

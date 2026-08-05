@@ -3,7 +3,7 @@
 import PlusIcon from '@/components/icons/PlusIcon';
 import IconActionButton from '@/components/ui/IconActionButton';
 import WorldBadge from '@/components/ui/WorldBadge';
-import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import { themeColors } from '@/lib/theme-colors';
 import {
   DEFAULT_PLACE_CATEGORY,
@@ -55,7 +55,7 @@ function DestinationName({
   space,
 }: {
   name: string;
-  space: Place['space'];
+  space: PlaceSummary['space'];
 }) {
   return (
     <div className="min-w-0 flex-1">
@@ -114,7 +114,7 @@ function DestinationCoordinates({
   );
 }
 
-export function PlaceDestinationCard({ place, actions }: { place: Place; actions: DestinationCardActions }) {
+export function PlaceDestinationCard({ place, actions }: { place: PlaceSummary; actions: DestinationCardActions }) {
   const isSelected = actions.selectedId === place.id;
   const isHighlighted = actions.shouldHighlightDestination &&
     actions.highlightedDestination?.type === 'place' &&
@@ -163,7 +163,7 @@ export function PlaceDestinationCard({ place, actions }: { place: Place; actions
   );
 }
 
-export function PortalDestinationCard({ portal, actions }: { portal: Portal; actions: DestinationCardActions }) {
+export function PortalDestinationCard({ portal, actions }: { portal: PortalSummary; actions: DestinationCardActions }) {
   const isSelected = actions.selectedId === portal.id;
   const isHighlighted = actions.shouldHighlightDestination &&
     actions.highlightedDestination?.type === 'portal' &&

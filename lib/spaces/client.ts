@@ -1,9 +1,16 @@
+import {
+  infiniteQueryOptions,
+  keepPreviousData,
+  queryOptions,
+} from '@tanstack/react-query';
 import { requestJson } from '@/lib/api-client';
-import { createCachedList } from '@/lib/client/cached-list';
-import { invalidateMainScreenDataCaches } from '@/lib/preload/main-screen';
+import type { PaginatedResponse } from '@/lib/api/pagination';
+import { queryKeys } from '@/lib/query/keys';
 import type {
   Space,
   SpaceInput,
+  SpaceReference,
+  SpaceSummary,
   SpaceUpdateInput,
 } from './types';
 
@@ -12,24 +19,6 @@ interface SpaceResponse {
   space: Space;
 }
 
-const SPACES_INVALIDATED_EVENT = 'pmc-plan:spaces-invalidated';
-const spaces = createCachedList<Space>({
-  eventName: SPACES_INVALIDATED_EVENT,
-  load: async () => {
-    const response = await fetch('/api/spaces', { cache: 'no-store' });
-    const payload = await response.json() as {
-      error?: string;
-      spaces?: Space[];
-    };
-    if (!response.ok || !payload.spaces) {
-      throw new Error(payload.error ?? 'Impossible de charger les espaces.');
-    }
-    return payload.spaces;
-  },
-});
-
-export const fetchSpaces = spaces.fetchAll;
-
 export async function fetchSpace(slug: string) {
   const payload = await requestJson<SpaceResponse>(
     `/api/spaces/${encodeURIComponent(slug)}`,
@@ -37,6 +26,45 @@ export async function fetchSpace(slug: string) {
     'Impossible de charger cet espace.',
   );
   return payload.space;
+}
+
+export function spaceDetailQueryOptions(slug: string) {
+  return queryOptions({
+    queryKey: queryKeys.spaceDetail(slug),
+    queryFn: () => fetchSpace(slug),
+  });
+}
+
+export function spaceReferencesQueryOptions(role?: string) {
+  return queryOptions({
+    queryKey: queryKeys.spaceReferences(role),
+    queryFn: async () => {
+      const payload = await requestJson<{ spaces: SpaceReference[] }>(
+        '/api/spaces?view=reference',
+        {},
+        'Impossible de charger les espaces.',
+      );
+      return payload.spaces;
+    },
+  });
+}
+
+export function spaceSummariesQueryOptions(query: string) {
+  return infiniteQueryOptions({
+    queryKey: queryKeys.spaceList(query),
+    initialPageParam: 1,
+    placeholderData: keepPreviousData,
+    queryFn: ({ pageParam, signal }) => requestJson<PaginatedResponse<SpaceSummary>>(
+      `/api/spaces?view=summary&page=${pageParam}&q=${encodeURIComponent(query)}`,
+      { signal },
+      'Impossible de charger les espaces.',
+    ),
+    getNextPageParam: (lastPage) => (
+      lastPage.pagination.page < lastPage.pagination.totalPages
+        ? lastPage.pagination.page + 1
+        : undefined
+    ),
+  });
 }
 
 export async function createSpaceRequest(input: SpaceInput) {
@@ -70,18 +98,7 @@ export async function deleteSpaceRequest(slug: string) {
   await requestJson(`/api/spaces/${encodeURIComponent(slug)}`, {
     method: 'DELETE',
   }, 'Impossible de supprimer cet espace.');
-  invalidateSpaceMutationCaches();
 }
-
-export function invalidateSpacesCache({
-  notify = true,
-}: {
-  notify?: boolean;
-} = {}) {
-  spaces.invalidate({ notify });
-}
-
-export const subscribeToSpacesInvalidation = spaces.subscribe;
 
 async function sendSpaceRequest(
   url: string,
@@ -96,12 +113,5 @@ async function sendSpaceRequest(
   if (!payload.space) {
     throw new Error(payload.error ?? 'Impossible d’enregistrer cet espace.');
   }
-  invalidateSpaceMutationCaches();
   return payload.space;
-}
-
-function invalidateSpaceMutationCaches() {
-  invalidateSpacesCache({ notify: false });
-  invalidateMainScreenDataCaches();
-  spaces.notify();
 }

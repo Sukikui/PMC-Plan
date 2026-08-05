@@ -19,6 +19,7 @@ import {
   mergeLinkedPortalPair,
 } from '@/lib/portal/linked-portals';
 import { invalidateRouteData } from '../route/service/route-data';
+import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
 
 const QuerySchema = z.object({
   'merge-nether-portals': z.coerce.boolean().optional().default(false),
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
         });
       });
       invalidateRouteData();
+      invalidateMapEntryPublicData('portal', created.mapEntryId);
 
       return NextResponse.json(
         {
@@ -164,6 +166,7 @@ export async function POST(request: NextRequest) {
       return { overworldPortal, netherPortal };
     });
     invalidateRouteData();
+    invalidateMapEntryPublicData('portal', result.overworldPortal.mapEntryId);
 
     return NextResponse.json(
       {

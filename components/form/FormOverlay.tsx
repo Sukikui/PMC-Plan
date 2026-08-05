@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import ContentOverlayFrame from '@/components/overlay/ContentOverlayFrame';
 import OverlayHeader from '@/components/ui/OverlayHeader';
 import OverlaySlider from '@/components/ui/OverlaySlider';
@@ -11,7 +12,6 @@ import PortalForm from './portal/PortalForm';
 import ServiceForm, {
   type InitialServiceData,
 } from './service/ServiceForm';
-import { invalidateMainScreenDataCaches } from '@/lib/preload/main-screen';
 import SpaceForm from '@/components/spaces/SpaceForm';
 import { useSession } from 'next-auth/react';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
@@ -19,7 +19,6 @@ import { requestJson } from '@/lib/api-client';
 import {
   createSpaceRequest,
   deleteSpaceRequest,
-  invalidateSpacesCache,
   transferSpaceRequest,
   updateSpaceRequest,
 } from '@/lib/spaces/client';
@@ -33,6 +32,8 @@ import {
   updateServiceRequest,
 } from '@/lib/services/client';
 import type { ServiceInput } from '@/lib/services/types';
+import { invalidateContentQueries } from '@/lib/query/content-invalidation';
+import { queryKeys } from '@/lib/query/keys';
 import {
   getMapEntryDeleteEndpoint,
   getMapEntrySaveEndpoint,
@@ -79,6 +80,7 @@ export default function FormOverlay({
   onSpaceDeleted,
   onSpaceSaved,
 }: FormOverlayProps) {
+  const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { effectiveRole } = useAdminMode();
   const [activeCategory, setActiveCategory] = useState<FormCategory>(
@@ -117,8 +119,10 @@ export default function FormOverlay({
       body: JSON.stringify(payload),
     }, `Impossible de ${mode === 'add' ? 'créer' : 'modifier'} le ${entityLabel}.`);
 
-    invalidateSpacesCache();
-    invalidateMainScreenDataCaches();
+    invalidateContentQueries(queryClient, {
+      mapEntryId: mapEntryData?.mapEntryId,
+      type: entityType,
+    });
     await onSaved?.(entityType, payload);
     onClose();
   };
@@ -143,8 +147,10 @@ export default function FormOverlay({
     await requestJson(getMapEntryDeleteEndpoint(initialData), {
       method: 'DELETE',
     }, `Impossible de supprimer le ${entityLabel}.`);
-    invalidateSpacesCache();
-    invalidateMainScreenDataCaches();
+    invalidateContentQueries(queryClient, {
+      mapEntryId: initialData.mapEntryId,
+      type: initialData.type,
+    });
     onClose();
   };
 
@@ -152,6 +158,14 @@ export default function FormOverlay({
     const saved = mode === 'edit' && initialData?.type === 'space'
       ? await updateSpaceRequest(initialData.slug, input)
       : await createSpaceRequest(input);
+    queryClient.setQueryData(queryKeys.spaceDetail(saved.slug), saved);
+    invalidateContentQueries(queryClient, {
+      nextSlug: saved.slug,
+      previousSlug: initialData?.type === 'space'
+        ? initialData.slug
+        : undefined,
+      type: 'space',
+    });
     onSpaceSaved?.(saved);
     onClose();
   };
@@ -161,16 +175,26 @@ export default function FormOverlay({
       throw new Error('Espace à supprimer introuvable.');
     }
     await deleteSpaceRequest(initialData.slug);
+    invalidateContentQueries(queryClient, {
+      previousSlug: initialData.slug,
+      type: 'space',
+    });
     onSpaceDeleted?.(initialData);
     onClose();
   };
 
   const handleServiceSubmit = async (input: ServiceInput) => {
-    if (mode === 'edit' && initialData?.type === 'service') {
-      await updateServiceRequest(initialData.slug, input);
-    } else {
-      await createServiceRequest(input);
-    }
+    const saved = mode === 'edit' && initialData?.type === 'service'
+      ? await updateServiceRequest(initialData.slug, input)
+      : await createServiceRequest(input);
+    queryClient.setQueryData(queryKeys.serviceDetail(saved.slug), saved);
+    invalidateContentQueries(queryClient, {
+      nextSlug: saved.slug,
+      previousSlug: initialData?.type === 'service'
+        ? initialData.slug
+        : undefined,
+      type: 'service',
+    });
     onClose();
   };
 
@@ -179,6 +203,10 @@ export default function FormOverlay({
       throw new Error('Service à supprimer introuvable.');
     }
     await deleteServiceRequest(initialData.slug);
+    invalidateContentQueries(queryClient, {
+      previousSlug: initialData.slug,
+      type: 'service',
+    });
     onClose();
   };
 
@@ -194,6 +222,12 @@ export default function FormOverlay({
       userId,
       confirmation,
     );
+    queryClient.setQueryData(queryKeys.spaceDetail(saved.slug), saved);
+    invalidateContentQueries(queryClient, {
+      nextSlug: saved.slug,
+      previousSlug: initialData.slug,
+      type: 'space',
+    });
     onSpaceSaved?.(saved);
     onClose();
   };

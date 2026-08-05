@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import PlusIcon from '@/components/icons/PlusIcon';
 import GlobalMarketToolbar, {
   type GlobalMarketTab,
@@ -18,22 +19,11 @@ import OverlayHeader from '@/components/ui/OverlayHeader';
 import { OverlaySlideTrack } from '@/components/ui/OverlaySlider';
 import OverlaySurface from '@/components/ui/OverlaySurface';
 import type { SelectDestinationHandler } from '@/lib/destination/selection';
-import { useInvalidatedCollection } from '@/components/ui/useInvalidatedCollection';
-import {
-  fetchServices,
-  subscribeToServicesInvalidation,
-} from '@/lib/services/client';
-import { filterServices } from '@/lib/services/search';
-import {
-  loadPlacesData,
-  subscribeToMainScreenDataInvalidation,
-} from '@/lib/preload/main-screen';
+import InfiniteLoadSentinel from '@/components/ui/InfiniteLoadSentinel';
+import { useDebouncedValue } from '@/components/ui/useDebouncedValue';
+import { serviceListQueryOptions } from '@/lib/services/client';
+import { marketOffersQueryOptions } from '@/lib/market/client';
 import { themeColors } from '@/lib/theme-colors';
-import {
-  filterGlobalOffers,
-  flattenPlaceOffers,
-  type GlobalOffer,
-} from '@/lib/trade/global-offers';
 
 interface GlobalTradeOverlayProps {
   onBack?: () => void;
@@ -49,28 +39,34 @@ export default function GlobalTradeOverlay({
   const { openPlaceInfoById } = useOverlay();
   const [activeTab, setActiveTab] = useState<GlobalMarketTab>('offers');
   const [query, setQuery] = useState('');
-  const offerState = useInvalidatedCollection({
+  const deferredQuery = useDebouncedValue(query.trim());
+  const offerState = useInfiniteQuery({
+    ...marketOffersQueryOptions(deferredQuery),
     enabled: activeTab === 'offers',
-    errorMessage: 'Impossible de charger les offres.',
-    loadItems: loadGlobalOffers,
-    subscribe: subscribeToMainScreenDataInvalidation,
   });
-  const serviceState = useInvalidatedCollection({
-    errorMessage: 'Impossible de charger les services.',
-    loadItems: fetchServices,
-    subscribe: subscribeToServicesInvalidation,
+  const serviceState = useInfiniteQuery({
+    ...serviceListQueryOptions(deferredQuery),
+    enabled: activeTab === 'services',
   });
-  const filteredOffers = useMemo(
-    () => filterGlobalOffers(offerState.items, query),
-    [offerState.items, query],
+  const offers = useMemo(
+    () => offerState.data?.pages.flatMap(({ items }) => items) ?? [],
+    [offerState.data],
   );
-  const filteredServices = useMemo(
-    () => filterServices(serviceState.items, query),
-    [query, serviceState.items],
+  const services = useMemo(
+    () => serviceState.data?.pages.flatMap(({ items }) => items) ?? [],
+    [serviceState.data],
   );
   const activeState = activeTab === 'offers'
-    ? { ...offerState, count: filteredOffers.length, label: 'offre' }
-    : { ...serviceState, count: filteredServices.length, label: 'service' };
+    ? {
+        count: offerState.data?.pages[0]?.pagination.total ?? 0,
+        label: 'offre',
+        loading: offerState.isPending,
+      }
+    : {
+        count: serviceState.data?.pages[0]?.pagination.total ?? 0,
+        label: 'service',
+        loading: serviceState.isPending,
+      };
 
   return (
     <OverlaySurface ariaLabel="Place de marché" size="wide">
@@ -104,18 +100,23 @@ export default function GlobalTradeOverlay({
               value: 'offers',
               content: (
                 <MarketSlideState
-                  error={offerState.error}
-                  loading={offerState.loading}
-                  empty={filteredOffers.length === 0}
+                  error={offerState.error?.message ?? null}
+                  loading={offerState.isPending}
+                  empty={offers.length === 0}
                 >
                   <GlobalOffersList
-                    offers={filteredOffers}
+                    offers={offers}
                     onOpenPlace={(placeId, selectItem) => {
                       if (placeId) {
                         void openPlaceInfoById(placeId, selectItem);
                       }
                     }}
                     onSelectItem={onSelectItem}
+                  />
+                  <InfiniteLoadSentinel
+                    hasNextPage={Boolean(offerState.hasNextPage)}
+                    loading={offerState.isFetchingNextPage}
+                    onLoadMore={() => void offerState.fetchNextPage()}
                   />
                 </MarketSlideState>
               ),
@@ -124,11 +125,16 @@ export default function GlobalTradeOverlay({
               value: 'services',
               content: (
                 <MarketSlideState
-                  error={serviceState.error}
-                  loading={serviceState.loading}
-                  empty={filteredServices.length === 0}
+                  error={serviceState.error?.message ?? null}
+                  loading={serviceState.isPending}
+                  empty={services.length === 0}
                 >
-                  <GlobalServicesList services={filteredServices} />
+                  <GlobalServicesList services={services} />
+                  <InfiniteLoadSentinel
+                    hasNextPage={Boolean(serviceState.hasNextPage)}
+                    loading={serviceState.isFetchingNextPage}
+                    onLoadMore={() => void serviceState.fetchNextPage()}
+                  />
                 </MarketSlideState>
               ),
             },
@@ -170,7 +176,3 @@ function MarketSlideState({
   }
   return children;
 }
-
-const loadGlobalOffers = async (): Promise<GlobalOffer[]> => (
-  flattenPlaceOffers(await loadPlacesData())
-);

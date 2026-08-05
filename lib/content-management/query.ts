@@ -13,6 +13,7 @@ import {
 import { toPublicDiscordIdentity } from '@/lib/discord-user';
 import { DEFAULT_PLACE_CATEGORY, isPlaceCategory } from '@/lib/place/categories';
 import { getMapEntryWhere, getSpaceWhere } from './filters';
+import { validTradeOfferWhere } from '@/lib/trade/query';
 
 interface ListContentManagementOptions {
   filter: ContentManagementFilter;
@@ -157,7 +158,11 @@ async function listSpaces(
             place: {
               select: {
                 uid: true,
-                _count: { select: { tradeOffers: true } },
+                _count: {
+                  select: {
+                    tradeOffers: { where: validTradeOfferWhere },
+                  },
+                },
               },
             },
             portals: { take: 1, select: { uid: true } },
@@ -173,6 +178,7 @@ async function listSpaces(
     id: record.id,
     type: 'space' as const,
     color: record.color,
+    discordUrl: record.discordUrl,
     logoBackground: record.logoBackground,
     logoUrl: record.logoUrl,
     logoZoom: record.logoZoom,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import DiscordUserSearch from '@/components/form/management/DiscordUserSearch';
 import {
   RemoveButton,
@@ -15,7 +16,8 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import { deleteAdminUser } from '@/lib/admin/client';
 import type { AdminUserTransferRequest } from '@/lib/admin/users';
 import type { MapEntryUser } from '@/lib/map-entry/types';
-import { applyMapEntryManagementUpdate } from '@/lib/preload/main-screen';
+import { applyMapEntryManagementUpdate } from '@/lib/map-entry/client-updates';
+import { invalidateManagementQueries } from '@/lib/query/content-invalidation';
 import { themeColors } from '@/lib/theme-colors';
 
 interface AdminUserTransferOverlayProps {
@@ -33,6 +35,7 @@ export default function AdminUserTransferOverlay({
   onComplete,
   request,
 }: AdminUserTransferOverlayProps) {
+  const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<MapEntryUser | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +55,10 @@ export default function AdminUserTransferOverlay({
     setError(null);
     try {
       const response = await deleteAdminUser(request.user.id, selectedUser.id);
-      response.managementUpdates.forEach(applyMapEntryManagementUpdate);
+      response.managementUpdates.forEach((management) => {
+        applyMapEntryManagementUpdate(queryClient, management);
+      });
+      invalidateManagementQueries(queryClient);
       onComplete(request.user.id);
     } catch (requestError) {
       setError(

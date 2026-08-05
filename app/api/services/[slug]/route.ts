@@ -12,6 +12,8 @@ import { updateServiceSchema } from '@/lib/services/schemas';
 import { serviceInclude, toService } from '@/lib/services/serialization';
 import { getServiceWriteData } from '@/lib/services/write-data';
 import { handleServiceApiError } from '../service-api';
+import { loadServiceDetail } from '@/lib/services/detail-server';
+import { invalidateServicePublicData } from '@/lib/content/cache-tags';
 
 interface ServiceRouteContext {
   params: Promise<{ slug: string }>;
@@ -23,17 +25,14 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
-    const service = await prisma.service.findUnique({
-      where: { slug },
-      include: serviceInclude,
-    });
+    const service = await loadServiceDetail(slug);
     if (!service) {
       return NextResponse.json(
         { error: 'Service introuvable.' },
         { status: 404 },
       );
     }
-    return NextResponse.json({ service: toService(service) });
+    return NextResponse.json({ service });
   } catch (error) {
     return handleServiceApiError(
       error,
@@ -109,6 +108,7 @@ export async function PUT(
         include: serviceInclude,
       });
     });
+    invalidateServicePublicData(slug, service.slug);
 
     return NextResponse.json({ service: toService(service) });
   } catch (error) {
@@ -156,6 +156,7 @@ export async function DELETE(
     }
 
     await prisma.mapEntry.delete({ where: { id: service.mapEntryId } });
+    invalidateServicePublicData(slug);
     return NextResponse.json({ message: 'Service supprimé.' });
   } catch (error) {
     return handleServiceApiError(

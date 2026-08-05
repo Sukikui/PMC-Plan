@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Role } from '@prisma/client';
 import {
   PRIMARY_MANAGEMENT_TRANSFER_REQUIRED,
@@ -22,7 +23,8 @@ import { themeColors } from '@/lib/theme-colors';
 import IdentitySummary from '@/components/settings/IdentitySummary';
 import { ListRow } from '@/components/ui/ListRow';
 import UserAvatar from '@/components/ui/UserAvatar';
-import { applyMapEntryManagementUpdate } from '@/lib/preload/main-screen';
+import { applyMapEntryManagementUpdate } from '@/lib/map-entry/client-updates';
+import { invalidateManagementQueries } from '@/lib/query/content-invalidation';
 import { MANAGEMENT_LIST_ROW_HEIGHT_PX } from '@/lib/management/pagination';
 import ManagementListFrame from '@/components/settings/management/ManagementListFrame';
 import AdminUserDeleteControl from './AdminUserDeleteControl';
@@ -48,6 +50,7 @@ export default function AdminUserList({
   onTransferRequired: (request: AdminUserTransferRequest) => void;
   refreshKey: string;
 }) {
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<AdminUserRoleFilter>('all');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const load = useCallback(async (
@@ -90,7 +93,10 @@ export default function AdminUserList({
 
     try {
       const response = await deleteAdminUser(user.id);
-      response.managementUpdates.forEach(applyMapEntryManagementUpdate);
+      response.managementUpdates.forEach((management) => {
+        applyMapEntryManagementUpdate(queryClient, management);
+      });
+      invalidateManagementQueries(queryClient);
       removeDeletedUser(user.id);
     } catch (requestError) {
       if (

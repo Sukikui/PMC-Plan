@@ -1,26 +1,37 @@
+import {
+  infiniteQueryOptions,
+  keepPreviousData,
+  queryOptions,
+} from '@tanstack/react-query';
 import { requestJson } from '@/lib/api-client';
-import { createCachedList } from '@/lib/client/cached-list';
+import type { PaginatedResponse } from '@/lib/api/pagination';
+import { queryKeys } from '@/lib/query/keys';
 import type {
-  Service,
   ServiceInput,
+  ServiceListItem,
   ServiceResponse,
-  ServicesResponse,
 } from './types';
 
-const services = createCachedList<Service>({
-  eventName: 'pmc-plan:services-invalidated',
-  load: async () => {
-    const payload = await requestJson<ServicesResponse>(
-      '/api/services',
-      { cache: 'no-store' },
+export function serviceListQueryOptions(query: string, contact = 'all') {
+  const contactParam = contact === 'all'
+    ? ''
+    : `&contact=${encodeURIComponent(contact)}`;
+  return infiniteQueryOptions({
+    queryKey: queryKeys.serviceList(query, contact),
+    initialPageParam: 1,
+    placeholderData: keepPreviousData,
+    queryFn: ({ pageParam, signal }) => requestJson<PaginatedResponse<ServiceListItem>>(
+      `/api/services?view=summary&page=${pageParam}&q=${encodeURIComponent(query)}${contactParam}`,
+      { signal },
       'Impossible de charger les services.',
-    );
-    return payload.services;
-  },
-});
-
-export const fetchServices = services.fetchAll;
-export const subscribeToServicesInvalidation = services.subscribe;
+    ),
+    getNextPageParam: (lastPage) => (
+      lastPage.pagination.page < lastPage.pagination.totalPages
+        ? lastPage.pagination.page + 1
+        : undefined
+    ),
+  });
+}
 
 export async function fetchService(slug: string) {
   const payload = await requestJson<ServiceResponse>(
@@ -29,6 +40,13 @@ export async function fetchService(slug: string) {
     'Impossible de charger ce service.',
   );
   return payload.service;
+}
+
+export function serviceDetailQueryOptions(slug: string) {
+  return queryOptions({
+    queryKey: queryKeys.serviceDetail(slug),
+    queryFn: () => fetchService(slug),
+  });
 }
 
 export async function createServiceRequest(input: ServiceInput) {
@@ -52,7 +70,6 @@ export async function deleteServiceRequest(slug: string) {
     { method: 'DELETE' },
     'Impossible de supprimer ce service.',
   );
-  invalidateServices();
 }
 
 async function sendServiceRequest(
@@ -65,11 +82,5 @@ async function sendServiceRequest(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   }, 'Impossible d’enregistrer ce service.');
-  invalidateServices();
   return payload.service;
-}
-
-function invalidateServices() {
-  services.invalidate({ notify: false });
-  services.notify();
 }

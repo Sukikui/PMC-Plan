@@ -14,6 +14,7 @@ import {
 } from '@/lib/admin/user-deletion';
 import { PRIMARY_MANAGEMENT_TRANSFER_REQUIRED } from '@/lib/admin/users';
 import { prisma } from '@/lib/prisma';
+import { invalidateAdministrativeTransferData } from '@/lib/content/cache-tags';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -75,8 +76,15 @@ export async function DELETE(request: Request, context: RouteContext) {
       targetUserId: id,
       transferToUserId: parsedBody.data.transferToUserId,
     });
+    invalidateAdministrativeTransferData({
+      mapEntryIds: result.managementUpdates.map(({ access }) => access.mapEntryId),
+      serviceSlugs: result.affectedServiceSlugs,
+      spaceSlugs: result.affectedSpaceSlugs,
+    });
     return NextResponse.json({
-      ...result,
+      managementUpdates: result.managementUpdates,
+      transferredEntryCount: result.transferredEntryCount,
+      transferredSpaceCount: result.transferredSpaceCount,
       message: 'Compte supprimé.',
     });
   } catch (error) {

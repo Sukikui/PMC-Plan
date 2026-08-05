@@ -2,6 +2,8 @@ import TargetIcon from '@/components/icons/TargetIcon';
 import SpaceHeaderLink from '@/components/spaces/SpaceHeaderLink';
 import WorldBadge from '@/components/ui/WorldBadge';
 import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
+import type { SpaceReference } from '@/lib/spaces/types';
 import { getMapIconSrc, type MapIconCategory } from '@/lib/place/categories';
 import { themeColors } from '@/lib/theme-colors';
 import ContentInfoOverlayHeader from './ContentInfoOverlayHeader';
@@ -9,9 +11,9 @@ import ContentInfoOverlayHeader from './ContentInfoOverlayHeader';
 interface InfoOverlayHeaderProps {
   canEdit: boolean;
   iconCategory: MapIconCategory;
-  item: Place | Portal;
+  item: Place | Portal | PlaceSummary | PortalSummary;
   itemNetherAddress?: string | null;
-  onOpenSpace: (slug: string) => void;
+  onOpenSpace: (space: SpaceReference) => void;
   type: 'place' | 'portal';
   onClose: () => void;
   onEdit: () => void;
@@ -56,7 +58,7 @@ export default function InfoOverlayHeader({
       secondaryIdentity={space ? (
         <SpaceHeaderLink
           space={space}
-          onClick={() => onOpenSpace(space.slug)}
+          onClick={() => onOpenSpace(space)}
         />
       ) : undefined}
       title={item.name}
@@ -70,7 +72,7 @@ function CoordinateRow({
   type,
   onSelectItem,
 }: {
-  item: Place | Portal;
+  item: Place | Portal | PlaceSummary | PortalSummary;
   itemNetherAddress?: string | null;
   type: 'place' | 'portal';
   onSelectItem: () => void;

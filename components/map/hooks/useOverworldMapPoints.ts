@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { Place, Portal } from '@/lib/api/types';
 import type {
   InteractiveMapPoint,
@@ -13,61 +14,21 @@ import {
   indexLinkedPortalPairs,
   mergeLinkedPortalPair,
 } from '@/lib/portal/linked-portals';
-import {
-  loadPlacesData,
-  loadPortalsData,
-  subscribeToMainScreenDataInvalidation,
-} from '@/lib/preload/main-screen';
+import { mapContentQueryOptions } from '@/lib/map-content/client';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
+
+const EMPTY_PLACES: PlaceSummary[] = [];
+const EMPTY_PORTALS: PortalSummary[] = [];
 
 export type InteractiveMapDataPoint = InteractiveMapPoint & {
-  item: Place | Portal;
+  item: Place | Portal | PlaceSummary | PortalSummary;
   itemType: 'place' | 'portal';
 };
 
 export function useWorldMapPoints(world: MapWorld) {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [portals, setPortals] = useState<Portal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const [placesData, portalsData] = await Promise.all([
-          loadPlacesData(),
-          loadPortalsData(),
-        ]);
-
-        if (cancelled) {
-          return;
-        }
-
-        setPlaces(placesData);
-        setPortals(portalsData);
-      } catch (err: unknown) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Erreur inattendue');
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-    const unsubscribe = subscribeToMainScreenDataInvalidation(load);
-
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, []);
+  const query = useQuery(mapContentQueryOptions);
+  const places = query.data?.places ?? EMPTY_PLACES;
+  const portals = query.data?.portals ?? EMPTY_PORTALS;
 
   const points = useMemo(
     () => buildWorldMapPoints(places, portals, world),
@@ -77,16 +38,16 @@ export function useWorldMapPoints(world: MapWorld) {
   const pointById = useMemo(() => new Map(points.map((point) => [point.id, point])), [points]);
 
   return {
-    loading,
-    error,
+    loading: query.isPending,
+    error: query.error?.message ?? null,
     points,
     pointById,
   };
 }
 
 export function buildWorldMapPoints(
-  places: Place[],
-  portals: Portal[],
+  places: Array<Place | PlaceSummary>,
+  portals: Array<Portal | PortalSummary>,
   world: MapWorld,
 ): InteractiveMapDataPoint[] {
   const placePoints = places
@@ -103,7 +64,9 @@ export function buildWorldMapPoints(
           : DEFAULT_PLACE_CATEGORY,
       ),
       markerColor: place.space?.color,
-      previewImageSrc: place.images[0],
+      previewImageSrc: 'previewImage' in place
+        ? place.previewImage ?? undefined
+        : place.images[0],
       spaceLogo: toMapTooltipSpaceLogo(place.space),
       item: place,
       itemType: 'place',

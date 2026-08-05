@@ -39,6 +39,7 @@ export interface ContentManagementPortalSummary extends ContentManagementBase {
 
 export interface ContentManagementSpaceSummary extends ContentManagementBase {
   color: string;
+  discordUrl: string | null;
   logoBackground: SpaceLogoBackground;
   logoUrl: string | null;
   logoZoom: number;

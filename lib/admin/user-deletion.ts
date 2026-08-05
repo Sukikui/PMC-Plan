@@ -20,6 +20,8 @@ interface DeleteUserAccountInput {
 }
 
 interface DeleteUserAccountResult {
+  affectedServiceSlugs: string[];
+  affectedSpaceSlugs: string[];
   managementUpdates: MapEntryManagement[];
   transferredEntryCount: number;
   transferredSpaceCount: number;
@@ -57,7 +59,7 @@ export function deleteUserAccount(
           select: { uid: true },
           take: 1,
         },
-        service: { select: { uid: true } },
+        service: { select: { slug: true, uid: true } },
       },
     });
     const primaryEntries = affectedEntries.filter(
@@ -73,6 +75,7 @@ export function deleteUserAccount(
       },
       select: {
         id: true,
+        slug: true,
         primaryManagerId: true,
       },
     });
@@ -128,6 +131,10 @@ export function deleteUserAccount(
       : [];
 
     return {
+      affectedServiceSlugs: affectedEntries.flatMap(({ service }) => (
+        service ? [service.slug] : []
+      )),
+      affectedSpaceSlugs: affectedSpaces.map(({ slug }) => slug),
       managementUpdates: updatedEntries.map(toMapEntryManagement),
       transferredEntryCount: primaryEntries.length,
       transferredSpaceCount: primarySpaces.length,

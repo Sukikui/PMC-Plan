@@ -3,7 +3,7 @@
 import AddContentButton from '@/components/AddContentButton';
 import RouteStepsPreview from '@/components/route/RouteStepsPreview';
 import EmptySearchResult from '@/components/ui/EmptySearchResult';
-import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import type { RouteData } from '@/lib/route-planning';
 import { themeColors } from '@/lib/theme-colors';
 import { PlaceDestinationCard, PortalDestinationCard } from './DestinationCards';
@@ -11,15 +11,15 @@ import type { DestinationCardActions } from './destination-panel-types';
 
 interface DestinationPanelContentProps {
   actions: DestinationCardActions;
-  filteredPlaces: Place[];
-  filteredPortals: Portal[];
+  filteredPlaces: PlaceSummary[];
+  filteredPortals: PortalSummary[];
   hasOrigin: boolean;
   loading: boolean;
   route: RouteData | null;
   routeError: string | null;
   routeLoading: boolean;
-  selectedPlace?: Place;
-  selectedPortal?: Portal;
+  selectedPlace?: PlaceSummary;
+  selectedPortal?: PortalSummary;
 }
 
 export default function DestinationPanelContent({

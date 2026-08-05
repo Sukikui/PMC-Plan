@@ -99,6 +99,10 @@ shapes. `mapEntryId` is the stable management identifier.
 
 Returns every service ordered by title.
 
+The marketplace uses the paginated `view=summary` projection documented in
+[Public Data Loading API](data-loading.md). Omitting `view` keeps this complete
+collection contract available for compatibility.
+
 **Response:**
 
 ```json

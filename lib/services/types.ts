@@ -25,6 +25,22 @@ export interface Service extends MapEntryAccess {
   updatedAt: string;
 }
 
+export type ServiceListItem = Pick<
+  Service,
+  | 'contactDiscordUrl'
+  | 'contactType'
+  | 'description'
+  | 'id'
+  | 'illustrationItemId'
+  | 'name'
+  | 'owners'
+  | 'paymentDescription'
+  | 'paymentItemId'
+  | 'primaryManager'
+  | 'slug'
+  | 'subtitle'
+>;
+
 export interface ServiceInput {
   name: string;
   subtitle: string;

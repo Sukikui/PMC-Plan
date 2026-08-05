@@ -1,7 +1,6 @@
 import { requestJson } from '@/lib/api-client';
 import {
   fetchService,
-  subscribeToServicesInvalidation,
   updateServiceRequest,
 } from '@/lib/services/client';
 
@@ -11,40 +10,32 @@ jest.mock('@/lib/api-client', () => ({
 
 const requestJsonMock = requestJson as jest.Mock;
 
-describe('service client invalidation', () => {
+describe('service client', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      value: new EventTarget(),
-    });
   });
 
-  afterEach(() => {
-    Reflect.deleteProperty(globalThis, 'window');
-  });
+  it('returns the updated service without managing shared caches', async () => {
+    const service = {
+      id: 'redstone',
+      slug: 'redstone',
+      name: 'Redstone',
+    };
+    requestJsonMock.mockResolvedValue({ service });
 
-  it('notifies every service view after an update', async () => {
-    const listener = jest.fn();
-    const unsubscribe = subscribeToServicesInvalidation(listener);
-    requestJsonMock.mockResolvedValue({
-      service: {
-        id: 'redstone',
-        slug: 'redstone',
-        name: 'Redstone',
-      },
-    });
-
-    await updateServiceRequest('redstone', {
+    await expect(updateServiceRequest('redstone', {
       name: 'Redstone',
       subtitle: 'Création de systèmes redstone',
       slug: 'redstone',
       description: 'Systèmes sur mesure.',
       contactType: 'none',
-    });
+    })).resolves.toBe(service);
 
-    expect(listener).toHaveBeenCalledTimes(1);
-    unsubscribe();
+    expect(requestJsonMock).toHaveBeenCalledWith(
+      '/api/services/redstone',
+      expect.objectContaining({ method: 'PUT' }),
+      'Impossible d’enregistrer ce service.',
+    );
   });
 
   it('loads one service without invalidating shared lists', async () => {

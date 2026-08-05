@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { TransferSpaceSchema } from '@/lib/spaces/schemas';
 import { transferSpace } from '@/lib/spaces/service';
+import { invalidateSpacePublicData } from '@/lib/content/cache-tags';
 import {
   getSpaceActor,
   spaceErrorResponse,
@@ -22,14 +23,14 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
     const input = TransferSpaceSchema.parse(await request.json());
-    return NextResponse.json({
-      space: await transferSpace(
-        slug,
-        actor,
-        input.userId,
-        input.confirmation,
-      ),
-    });
+    const space = await transferSpace(
+      slug,
+      actor,
+      input.userId,
+      input.confirmation,
+    );
+    invalidateSpacePublicData(slug);
+    return NextResponse.json({ space });
   } catch (error) {
     return spaceErrorResponse(error);
   }
