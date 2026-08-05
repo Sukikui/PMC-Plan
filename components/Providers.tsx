@@ -6,18 +6,21 @@ import { AdminModeProvider } from '@/components/admin/AdminModeProvider';
 import AdminModeIndicator from '@/components/admin/AdminModeIndicator';
 import { SettingsOverlayProvider } from '@/components/settings/SettingsOverlayProvider';
 import { OverlayStackProvider } from '@/components/ui/OverlayStackProvider';
+import DataQueryProvider from '@/components/DataQueryProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <AdminModeProvider>
-        <OverlayStackProvider>
-          <SettingsOverlayProvider>
-            <OverlayProvider>{children}</OverlayProvider>
-          </SettingsOverlayProvider>
-        </OverlayStackProvider>
-        <AdminModeIndicator />
-      </AdminModeProvider>
-    </SessionProvider>
+    <DataQueryProvider>
+      <SessionProvider>
+        <AdminModeProvider>
+          <OverlayStackProvider>
+            <SettingsOverlayProvider>
+              <OverlayProvider>{children}</OverlayProvider>
+            </SettingsOverlayProvider>
+          </OverlayStackProvider>
+          <AdminModeIndicator />
+        </AdminModeProvider>
+      </SessionProvider>
+    </DataQueryProvider>
   );
 }

@@ -1,8 +1,13 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_PLACE_CATEGORY, isPlaceCategory } from '@/lib/place/categories';
 import { normalizePlaceImages } from '@/lib/place/images';
 import { resolvePlaceDiscordUrl } from '@/lib/place/discord';
-import { normalizeLinkedPortalIdentities } from '@/lib/portal/linked-portals';
+import {
+  indexLinkedPortalPairs,
+  mergeLinkedPortalPair,
+  normalizeLinkedPortalIdentities,
+} from '@/lib/portal/linked-portals';
 import {
   publicMapEntryInclude,
   toMapEntryAccess,
@@ -14,91 +19,114 @@ import {
 import { toTradeOffer } from './trade';
 import type { Place, Portal, TradeOffer } from '@/lib/api/types';
 
+const portalInclude = {
+  mapEntry: { include: publicMapEntryInclude },
+} satisfies Prisma.PortalInclude;
+
+const placeInclude = {
+  tradeOffers: { include: { items: true } },
+  mapEntry: { include: publicMapEntryInclude },
+} satisfies Prisma.PlaceInclude;
+
+type PortalRecord = Prisma.PortalGetPayload<{ include: typeof portalInclude }>;
+type PlaceRecord = Prisma.PlaceGetPayload<{ include: typeof placeInclude }>;
+
 export async function loadPortals(): Promise<Portal[]> {
   const portalRecords = await prisma.portal.findMany({
-    include: {
-      mapEntry: {
-        include: publicMapEntryInclude,
-      },
-    },
+    include: portalInclude,
     orderBy: [{ name: 'asc' }],
   });
 
-  const portals = portalRecords.map((portal): Portal => {
-    const access = toMapEntryAccess(portal.mapEntry);
-    return {
-      id: portal.slug,
-      slug: portal.slug,
-      name: portal.name,
-      world: portal.world,
-      coordinates: {
-        x: portal.coordX,
-        y: portal.coordY,
-        z: portal.coordZ,
-      },
-      description: portal.description ?? null,
-      address: portal.address ?? '',
-      owners: toMinecraftOwners(portal.mapEntry),
-      space: toMapEntrySpace(portal.mapEntry),
-      lastEditor: toMapEntryEditor(portal.mapEntry),
-      primaryManager: toMapEntryPrimaryManager(portal.mapEntry),
-      'nether-associate': null,
-      ...access,
-      createdAt: portal.createdAt,
-      updatedAt: portal.updatedAt,
-    };
-  });
+  const portals = portalRecords.map(toPortal);
 
   return normalizeLinkedPortalIdentities(portals);
 }
 
 export async function loadPlaces(): Promise<Place[]> {
   const placeRecords = await prisma.place.findMany({
-    include: {
-      tradeOffers: {
-        include: {
-          items: true,
-        },
-      },
-      mapEntry: {
-        include: publicMapEntryInclude,
-      },
-    },
+    include: placeInclude,
     orderBy: [{ name: 'asc' }],
   });
 
-  return placeRecords.map((place) => {
-    const trades = place.tradeOffers
-      .map((offer) => toTradeOffer(offer))
-      .filter((offer): offer is TradeOffer => offer !== null);
-    const images = normalizePlaceImages(place.images);
-    const access = toMapEntryAccess(place.mapEntry);
-    const space = toMapEntrySpace(place.mapEntry);
+  return placeRecords.map(toPlace);
+}
 
-    return {
-      id: place.slug,
-      name: place.name,
-      world: place.world,
-      coordinates: {
-        x: place.coordX,
-        y: place.coordY,
-        z: place.coordZ,
-      },
-      description: place.description ?? null,
-      address: place.address ?? null,
-      category: isPlaceCategory(place.category) ? place.category : DEFAULT_PLACE_CATEGORY,
-      images,
-      tags: place.tags,
-      owners: toMinecraftOwners(place.mapEntry),
-      space,
-      lastEditor: toMapEntryEditor(place.mapEntry),
-      primaryManager: toMapEntryPrimaryManager(place.mapEntry),
-      discord: resolvePlaceDiscordUrl(place.discordUrl, space),
-      discordOverride: place.discordUrl ?? null,
-      trade: trades.length > 0 ? trades : null,
-      ...access,
-      createdAt: place.createdAt,
-      updatedAt: place.updatedAt,
-    };
+export async function loadPlaceByMapEntryId(mapEntryId: string) {
+  const place = await prisma.place.findUnique({
+    where: { mapEntryId },
+    include: placeInclude,
   });
+  return place ? toPlace(place) : null;
+}
+
+export async function loadPortalByMapEntryId(mapEntryId: string) {
+  const records = await prisma.portal.findMany({
+    where: { mapEntryId },
+    include: portalInclude,
+  });
+  const portals = normalizeLinkedPortalIdentities(records.map(toPortal));
+  const pair = indexLinkedPortalPairs(portals).get(mapEntryId);
+  return pair ? mergeLinkedPortalPair(pair) : (portals[0] ?? null);
+}
+
+function toPlace(place: PlaceRecord): Place {
+  const trades = place.tradeOffers
+    .map((offer) => toTradeOffer(offer))
+    .filter((offer): offer is TradeOffer => offer !== null);
+  const images = normalizePlaceImages(place.images);
+  const access = toMapEntryAccess(place.mapEntry);
+  const space = toMapEntrySpace(place.mapEntry);
+
+  return {
+    id: place.slug,
+    name: place.name,
+    world: place.world,
+    coordinates: {
+      x: place.coordX,
+      y: place.coordY,
+      z: place.coordZ,
+    },
+    description: place.description ?? null,
+    address: place.address ?? null,
+    category: isPlaceCategory(place.category)
+      ? place.category
+      : DEFAULT_PLACE_CATEGORY,
+    images,
+    tags: place.tags,
+    owners: toMinecraftOwners(place.mapEntry),
+    space,
+    lastEditor: toMapEntryEditor(place.mapEntry),
+    primaryManager: toMapEntryPrimaryManager(place.mapEntry),
+    discord: resolvePlaceDiscordUrl(place.discordUrl, space),
+    discordOverride: place.discordUrl ?? null,
+    trade: trades.length > 0 ? trades : null,
+    ...access,
+    createdAt: place.createdAt,
+    updatedAt: place.updatedAt,
+  };
+}
+
+function toPortal(portal: PortalRecord): Portal {
+  const access = toMapEntryAccess(portal.mapEntry);
+  return {
+    id: portal.slug,
+    slug: portal.slug,
+    name: portal.name,
+    world: portal.world,
+    coordinates: {
+      x: portal.coordX,
+      y: portal.coordY,
+      z: portal.coordZ,
+    },
+    description: portal.description ?? null,
+    address: portal.address ?? '',
+    owners: toMinecraftOwners(portal.mapEntry),
+    space: toMapEntrySpace(portal.mapEntry),
+    lastEditor: toMapEntryEditor(portal.mapEntry),
+    primaryManager: toMapEntryPrimaryManager(portal.mapEntry),
+    'nether-associate': null,
+    ...access,
+    createdAt: portal.createdAt,
+    updatedAt: portal.updatedAt,
+  };
 }

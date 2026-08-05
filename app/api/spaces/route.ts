@@ -1,10 +1,36 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getPagination } from '@/lib/api/pagination';
+import { auth } from '@/auth';
+import { getEffectiveRequestRole } from '@/lib/admin/request-role';
+import { invalidateSpacePublicData } from '@/lib/content/cache-tags';
 import { canContribute } from '@/lib/content-permissions';
 import { CreateSpaceSchema } from '@/lib/spaces/schemas';
 import { createSpace, listSpaces } from '@/lib/spaces/service';
+import {
+  listManageableSpaceReferences,
+  loadSpaceSummaries,
+} from '@/lib/spaces/summary-server';
 import { getSpaceActor, spaceErrorResponse } from './route-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const view = request.nextUrl.searchParams.get('view');
+  if (view === 'summary') {
+    const { page, pageSize } = getPagination(request.nextUrl.searchParams);
+    const query = request.nextUrl.searchParams.get('q')?.trim() ?? '';
+    return NextResponse.json(
+      await loadSpaceSummaries(page, pageSize, query),
+    );
+  }
+  if (view === 'reference') {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ spaces: [] });
+    }
+    const role = getEffectiveRequestRole(request, session.user.role);
+    return NextResponse.json({
+      spaces: await listManageableSpaceReferences(session.user.id, role),
+    });
+  }
   return NextResponse.json({ spaces: await listSpaces() });
 }
 
@@ -25,8 +51,10 @@ export async function POST(request: Request) {
 
   try {
     const input = CreateSpaceSchema.parse(await request.json());
+    const space = await createSpace(actor, input);
+    invalidateSpacePublicData(space.slug);
     return NextResponse.json(
-      { space: await createSpace(actor, input) },
+      { space },
       { status: 201 },
     );
   } catch (error) {

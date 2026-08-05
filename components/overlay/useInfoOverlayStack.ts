@@ -7,10 +7,11 @@ import {
   useState,
 } from 'react';
 import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import type { MapEntryManagement } from '@/lib/map-entry/types';
-import { getMapEntryManagementPatch } from '@/lib/preload/main-screen';
-import type { Space } from '@/lib/spaces/types';
+import { getMapEntryManagementPatch } from '@/lib/map-entry/client-updates';
+import type { Space, SpaceReference, SpaceSummary } from '@/lib/spaces/types';
 import {
   pushBoundedInfoLayer,
   type InfoOverlayType,
@@ -20,7 +21,7 @@ import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
 export interface InfoOverlayLayer {
   id: number;
   isClosing: boolean;
-  item: Place | Portal | Space;
+  item: Place | Portal | PlaceSummary | PortalSummary | Space | SpaceReference | SpaceSummary;
   onSelectItem?: SelectDestinationHandler;
   type: InfoOverlayType;
 }
@@ -58,7 +59,7 @@ export function useInfoOverlayStack() {
   }, []);
 
   const open = useCallback((
-    item: Place | Portal | Space,
+    item: Place | Portal | PlaceSummary | PortalSummary | Space | SpaceReference | SpaceSummary,
     type: InfoOverlayType,
     onSelectItem?: SelectDestinationHandler,
   ) => {

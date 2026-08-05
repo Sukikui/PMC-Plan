@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { UpdateSpaceSchema } from '@/lib/spaces/schemas';
 import {
   deleteSpace,
-  getSpace,
   updateSpace,
 } from '@/lib/spaces/service';
+import { loadSpaceDetail } from '@/lib/spaces/detail-server';
+import { invalidateSpacePublicData } from '@/lib/content/cache-tags';
 import {
   getSpaceActor,
   spaceErrorResponse,
@@ -16,7 +17,7 @@ interface RouteContext {
 
 export async function GET(_request: Request, context: RouteContext) {
   const { slug } = await context.params;
-  const space = await getSpace(slug);
+  const space = await loadSpaceDetail(slug);
   if (!space) {
     return NextResponse.json(
       { error: 'Espace introuvable.' },
@@ -38,7 +39,10 @@ export async function PUT(request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
     const input = UpdateSpaceSchema.parse(await request.json());
-    return NextResponse.json({ space: await updateSpace(slug, actor, input) });
+    const space = await updateSpace(slug, actor, input);
+    invalidateSpacePublicData(slug);
+    if (space.slug !== slug) invalidateSpacePublicData(space.slug);
+    return NextResponse.json({ space });
   } catch (error) {
     return spaceErrorResponse(error);
   }
@@ -56,6 +60,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   try {
     const { slug } = await context.params;
     await deleteSpace(slug, actor);
+    invalidateSpacePublicData(slug);
     return NextResponse.json({ message: 'Espace supprimé.' });
   } catch (error) {
     return spaceErrorResponse(error);

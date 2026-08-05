@@ -90,6 +90,7 @@ model MapEntry {
   @@index([primaryManagerId])
   @@index([lastEditorId])
   @@index([spaceId])
+  @@index([updatedAt])
   @@map("map_entries")
 }
 
@@ -139,6 +140,7 @@ model Space {
 
   @@index([primaryManagerId])
   @@index([lastEditorId])
+  @@index([updatedAt])
   @@map("spaces")
 }
 
@@ -174,6 +176,7 @@ model Place {
   mapEntry    MapEntry      @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
   tradeOffers TradeOffer[]
 
+  @@index([world])
   @@map("places")
 }
 
@@ -187,6 +190,7 @@ model TradeOffer {
   place       Place       @relation(fields: [placeUid], references: [uid], onDelete: Cascade)
   items       TradeItem[]
 
+  @@index([placeUid])
   @@map("trade_offers")
 }
 
@@ -208,6 +212,7 @@ model Portal {
 
   @@unique([slug, world])
   @@index([mapEntryId])
+  @@index([world])
   @@map("portals")
 }
 
@@ -227,6 +232,7 @@ model Service {
   updatedAt          DateTime           @updatedAt @map("updated_at")
   mapEntry           MapEntry           @relation(fields: [mapEntryId], references: [id], onDelete: Cascade)
 
+  @@index([contactType])
   @@map("services")
 }
 
@@ -272,6 +278,7 @@ model TradeItem {
   updatedAt  DateTime      @updatedAt @map("updated_at")
   offer      TradeOffer    @relation(fields: [offerUid], references: [uid], onDelete: Cascade)
 
+  @@index([offerUid, kind])
   @@map("trade_items")
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import DestinationPanel from '@/components/DestinationPanel';
 import PositionPanel from '@/components/PositionPanel';
@@ -24,12 +25,14 @@ import type { PlayerData } from '@/lib/playercoords-api';
 import type { DestinationType } from '@/lib/destination/selection';
 import type { RouteData } from '@/lib/route-planning';
 
-import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
+import { mapContentQueryOptions } from '@/lib/map-content/client';
 
 const GlobalTradeOverlay = dynamic(loadGlobalTradeOverlay);
 const SpaceExplorerOverlay = dynamic(loadSpaceExplorerOverlay);
 
 export default function Home() {
+  const queryClient = useQueryClient();
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string>('');
   const [selectedPlaceType, setSelectedPlaceType] = useState<DestinationType>('place');
@@ -57,7 +60,11 @@ export default function Home() {
     let cancelled = false;
     const minimumStartupDelay = new Promise((resolve) => setTimeout(resolve, 1000));
 
-    Promise.all([preloadStartupResources(), minimumStartupDelay]).finally(() => {
+    Promise.all([
+      preloadStartupResources(),
+      queryClient.prefetchQuery(mapContentQueryOptions),
+      minimumStartupDelay,
+    ]).finally(() => {
       if (!cancelled) {
         setStartupPreloadComplete(true);
       }
@@ -66,7 +73,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [queryClient]);
 
   const handlePlaceSelect = (id: string, type: DestinationType, world?: MapWorld) => {
     if (id !== selectedPlaceId) {
@@ -82,7 +89,7 @@ export default function Home() {
     setSelectedPlaceType(type);
   };
 
-  const handleInfoClick = (item: Place | Portal, type: 'place' | 'portal') => {
+  const handleInfoClick = (item: PlaceSummary | PortalSummary, type: 'place' | 'portal') => {
     openPlaceInfo(item, type, handlePlaceSelect);
   };
 

@@ -14,6 +14,7 @@ import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
 import { validateSpaceAssociation } from '@/lib/map-entry/space-association';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 import { invalidateRouteData } from '../route/service/route-data';
+import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
 
 export async function GET() {
   try {
@@ -87,6 +88,7 @@ export async function POST(request: NextRequest) {
       });
     });
     invalidateRouteData();
+    invalidateMapEntryPublicData('place', created.mapEntryId);
 
     return NextResponse.json(
       {

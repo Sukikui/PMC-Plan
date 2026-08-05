@@ -69,6 +69,16 @@ export interface Space extends SpaceReference {
   updatedAt: string;
 }
 
+export interface SpaceSummary extends SpaceReference {
+  description: string | null;
+  firstMember: MinecraftOwner | null;
+  memberCount: number;
+  offerCount: number;
+  placeCount: number;
+  portalCount: number;
+  previewImage: string | null;
+}
+
 export interface SpaceInput {
   name: string;
   slug: string;

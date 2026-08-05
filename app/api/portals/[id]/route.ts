@@ -17,6 +17,7 @@ import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 import { invalidateRouteData } from '../../route/service/route-data';
+import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
 
 import { UpdatePortalSchema } from '../../utils/schemas';
 
@@ -105,6 +106,7 @@ export async function PUT(request: NextRequest, context: any) {
         return updatedPortal;
       });
       invalidateRouteData();
+      invalidateMapEntryPublicData('portal', portal.mapEntryId);
 
       return NextResponse.json(
         {
@@ -177,6 +179,7 @@ export async function PUT(request: NextRequest, context: any) {
       return { overworldPortal, netherPortal };
     });
     invalidateRouteData();
+    invalidateMapEntryPublicData('portal', portal.mapEntryId);
 
     return NextResponse.json(
       {
@@ -248,14 +251,18 @@ export async function DELETE(request: NextRequest, context: any) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
+      const mapEntryIds = Array.from(new Set(
+        linkedPortals.map(({ mapEntryId }) => mapEntryId),
+      ));
       await prisma.mapEntry.deleteMany({
         where: {
-          id: {
-            in: Array.from(new Set(linkedPortals.map(({ mapEntryId }) => mapEntryId))),
-          },
+          id: { in: mapEntryIds },
         },
       });
       invalidateRouteData();
+      mapEntryIds.forEach((mapEntryId) => {
+        invalidateMapEntryPublicData('portal', mapEntryId);
+      });
 
       return NextResponse.json({ message: 'Portails liés supprimés avec succès.' }, { status: 200 });
 
@@ -296,6 +303,7 @@ export async function DELETE(request: NextRequest, context: any) {
         await prisma.portal.delete({ where: { uid: portal.uid } });
       }
       invalidateRouteData();
+      invalidateMapEntryPublicData('portal', portal.mapEntryId);
 
       return NextResponse.json({ message: 'Portail supprimé avec succès.' }, { status: 200 });
     }

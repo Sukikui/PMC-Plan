@@ -15,7 +15,7 @@ import MinecraftHeadImage from '@/components/ui/MinecraftHeadImage';
 import { listRowClassName } from '@/components/ui/ListRow';
 import UserAvatar from '@/components/ui/UserAvatar';
 import { getServiceContactHref } from '@/lib/services/contact';
-import type { Service } from '@/lib/services/types';
+import type { ServiceListItem } from '@/lib/services/types';
 import { themeColors } from '@/lib/theme-colors';
 
 const serviceLayoutClassName = 'flex min-w-0 items-center gap-4';
@@ -27,7 +27,7 @@ const detailsColumnsClassName =
 export default function GlobalServicesList({
   services,
 }: {
-  services: Service[];
+  services: ServiceListItem[];
 }) {
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(
     null,
@@ -76,7 +76,7 @@ function ServiceRow({
 }: {
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
-  service: Service;
+  service: ServiceListItem;
 }) {
   const provider = service.owners[0] ?? null;
   const additionalProviderCount = Math.max(0, service.owners.length - 1);
@@ -146,7 +146,7 @@ function ServiceRow({
   );
 }
 
-function ServiceContact({ service }: { service: Service }) {
+function ServiceContact({ service }: { service: ServiceListItem }) {
   const contactHref = getServiceContactHref(service);
   if (service.contactType === 'primary_manager' && contactHref) {
     const manager = service.primaryManager;

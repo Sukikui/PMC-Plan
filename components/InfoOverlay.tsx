@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
 import ContentOverlayFrame from '@/components/overlay/ContentOverlayFrame';
+import ProgressiveOverlayBody from '@/components/overlay/ProgressiveOverlayBody';
 import InfoOverlayContent from '@/components/info-overlay/InfoOverlayContent';
 import InfoOverlayHeader from '@/components/info-overlay/InfoOverlayHeader';
 import { useBottomScrollFade } from '@/components/info-overlay/useBottomScrollFade';
 import type { Place, Portal } from '@/lib/api/types';
+import { mapEntryDetailQueryOptions } from '@/lib/map-content/client';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import { generateFormId } from '@/components/form/common/form-utils';
 import {
   DEFAULT_PLACE_CATEGORY,
@@ -24,7 +28,7 @@ import { useAdminMode } from '@/components/admin/AdminModeProvider';
 
 interface InfoOverlayProps {
   onClose: () => void;
-  item: Place | Portal;
+  item: Place | Portal | PlaceSummary | PortalSummary;
   type: 'place' | 'portal';
   onSelectItem?: SelectDestinationHandler;
 }
@@ -37,7 +41,12 @@ export default function InfoOverlay({
 }: InfoOverlayProps) {
   const { data: session } = useSession();
   const { effectiveRole } = useAdminMode();
-  const { openFormOverlay, openSpaceInfoBySlug } = useOverlay();
+  const { openFormOverlay, openSpaceInfo } = useOverlay();
+  const detailQuery = useQuery({
+    ...mapEntryDetailQueryOptions(type, item.mapEntryId),
+    initialData: isMapEntryDetail(item) ? item : undefined,
+  });
+  const detail = detailQuery.data;
   const [showTradeView, setShowTradeView] = useState(false);
   const [tradeSearchQuery, setTradeSearchQuery] = useState('');
   const { contentRef, showBottomBlur } = useBottomScrollFade(
@@ -45,14 +54,15 @@ export default function InfoOverlay({
   );
 
   const handleEditClick = () => {
+    if (!detail) return;
     const canDelete = canAdministerContent(
       effectiveRole,
       session?.user?.id,
-      item.primaryManagerId,
+      detail.primaryManagerId,
     );
 
     if (type === 'place') {
-      const place = item as Place;
+      const place = detail as Place;
       openFormOverlay({
         mode: 'edit',
         initialData: {
@@ -94,7 +104,7 @@ export default function InfoOverlay({
       return;
     }
 
-    const portal = item as Portal;
+    const portal = detail as Portal;
     openFormOverlay({
       mode: 'edit',
       initialData: {
@@ -122,16 +132,19 @@ export default function InfoOverlay({
     setShowTradeView(false);
   }, [item.id]);
 
-  const canEdit = canManageContent(
+  const canEdit = detail ? canManageContent(
     effectiveRole,
     session?.user?.id,
-    item,
-  );
-  const itemNetherAddress = item.world === 'nether' ? item.address : null;
+    detail,
+  ) : false;
+  const displayItem = detail ?? item;
+  const itemNetherAddress = displayItem.world === 'nether'
+    ? displayItem.address
+    : null;
   const iconCategory: MapIconCategory = type === 'portal'
     ? 'portail'
-    : isPlaceCategory((item as Place).category)
-      ? (item as Place).category
+    : isPlaceCategory((item as Place | PlaceSummary).category)
+      ? (item as Place | PlaceSummary).category
       : DEFAULT_PLACE_CATEGORY;
   const typeShadow = type === 'place'
     ? themeColors.shadow.overlay.place
@@ -139,14 +152,14 @@ export default function InfoOverlay({
   const panel = (
     <ContentOverlayFrame
       ariaLabel={item.name}
-      editor={item.lastEditor}
+      editor={detail?.lastEditor}
       header={(
         <InfoOverlayHeader
           canEdit={canEdit}
           iconCategory={iconCategory}
-          item={item}
+          item={displayItem}
           itemNetherAddress={itemNetherAddress}
-          onOpenSpace={(slug) => void openSpaceInfoBySlug(slug)}
+          onOpenSpace={openSpaceInfo}
           type={type}
           onClose={onClose}
           onEdit={handleEditClick}
@@ -159,18 +172,32 @@ export default function InfoOverlay({
       shadowClass={typeShadow}
       showLastEditor={canEdit}
     >
-        <InfoOverlayContent
-          contentRef={contentRef}
-          item={item}
-          showBottomBlur={showBottomBlur}
-          showTradeView={showTradeView}
-          tradeSearchQuery={tradeSearchQuery}
-          type={type}
-          onShowTradeViewChange={setShowTradeView}
-          onTradeSearchQueryChange={setTradeSearchQuery}
-        />
+        <ProgressiveOverlayBody
+          error={detailQuery.error?.message}
+          loading={detailQuery.isPending}
+          onRetry={() => void detailQuery.refetch()}
+        >
+          {detail && (
+            <InfoOverlayContent
+              contentRef={contentRef}
+              item={detail}
+              showBottomBlur={showBottomBlur}
+              showTradeView={showTradeView}
+              tradeSearchQuery={tradeSearchQuery}
+              type={type}
+              onShowTradeViewChange={setShowTradeView}
+              onTradeSearchQueryChange={setTradeSearchQuery}
+            />
+          )}
+        </ProgressiveOverlayBody>
     </ContentOverlayFrame>
   );
 
   return panel;
+}
+
+function isMapEntryDetail(
+  item: Place | Portal | PlaceSummary | PortalSummary,
+): item is Place | Portal {
+  return 'owners' in item;
 }

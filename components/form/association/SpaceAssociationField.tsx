@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
 import FormFieldLabel from '@/components/form/common/FormFieldLabel';
 import SearchCombobox from '@/components/form/common/SearchCombobox';
 import { RemoveButton } from '@/components/form/management/ManagementUi';
 import SpaceLogo from '@/components/spaces/SpaceLogo';
 import { ListRow } from '@/components/ui/ListRow';
-import { canManageContent } from '@/lib/content-permissions';
-import { fetchSpaces } from '@/lib/spaces/client';
-import type { Space, SpaceReference } from '@/lib/spaces/types';
+import { spaceReferencesQueryOptions } from '@/lib/spaces/client';
+import type { SpaceReference } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
 
 interface SpaceAssociationFieldProps {
@@ -19,45 +18,29 @@ interface SpaceAssociationFieldProps {
   value: SpaceReference | null;
 }
 
+const EMPTY_SPACES: SpaceReference[] = [];
+
 export default function SpaceAssociationField({
   disabled = false,
   onChange,
   value,
 }: SpaceAssociationFieldProps) {
-  const { data: session } = useSession();
   const { effectiveRole } = useAdminMode();
-  const [spaces, setSpaces] = useState<Space[]>([]);
   const [query, setQuery] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchSpaces()
-      .then((loadedSpaces) => {
-        if (!cancelled) setSpaces(loadedSpaces);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError('Impossible de charger les espaces.');
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const spacesQuery = useQuery(spaceReferencesQueryOptions(effectiveRole));
+  const spaces = spacesQuery.data ?? EMPTY_SPACES;
 
   const availableSpaces = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase('fr-FR');
     return spaces.filter((space) => (
       space.id !== value?.id
-      && canManageContent(effectiveRole, session?.user?.id, space)
       && (
         !normalizedQuery
         || space.name.toLocaleLowerCase('fr-FR').includes(normalizedQuery)
         || space.slug.toLocaleLowerCase('fr-FR').includes(normalizedQuery)
       )
     ));
-  }, [effectiveRole, query, session?.user?.id, spaces, value?.id]);
+  }, [query, spaces, value?.id]);
 
   return (
     <div className="space-y-2">
@@ -89,9 +72,9 @@ export default function SpaceAssociationField({
           )}
         />
       )}
-      {error && (
+      {spacesQuery.error && (
         <p className={`text-xs ${themeColors.feedback.errorText}`}>
-          {error}
+          {spacesQuery.error.message}
         </p>
       )}
     </div>

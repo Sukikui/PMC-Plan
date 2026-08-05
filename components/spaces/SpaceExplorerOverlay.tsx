@@ -1,25 +1,23 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import SpaceLogo from '@/components/spaces/SpaceLogo';
 import EmptySearchResult from '@/components/ui/EmptySearchResult';
 import MinecraftHeadImage from '@/components/ui/MinecraftHeadImage';
 import OverlayHeader from '@/components/ui/OverlayHeader';
 import OverlaySearchInput from '@/components/ui/OverlaySearchInput';
 import OverlaySurface from '@/components/ui/OverlaySurface';
-import { useInvalidatedCollection } from '@/components/ui/useInvalidatedCollection';
-import {
-  fetchSpaces,
-  subscribeToSpacesInvalidation,
-} from '@/lib/spaces/client';
+import InfiniteLoadSentinel from '@/components/ui/InfiniteLoadSentinel';
+import { useDebouncedValue } from '@/components/ui/useDebouncedValue';
+import { spaceSummariesQueryOptions } from '@/lib/spaces/client';
 import { formatSpaceContentSummary } from '@/lib/spaces/summary';
-import type { Space } from '@/lib/spaces/types';
-import { filterSpaces } from '@/lib/spaces/search';
+import type { SpaceSummary } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
 
 interface SpaceExplorerOverlayProps {
   onClose: () => void;
-  onOpenSpace: (space: Space) => void;
+  onOpenSpace: (space: SpaceSummary) => void;
 }
 
 export default function SpaceExplorerOverlay({
@@ -27,27 +25,23 @@ export default function SpaceExplorerOverlay({
   onOpenSpace,
 }: SpaceExplorerOverlayProps) {
   const [query, setQuery] = useState('');
-  const {
-    error,
-    items: spaces,
-    loading,
-  } = useInvalidatedCollection({
-    errorMessage: 'Impossible de charger les espaces.',
-    loadItems: fetchSpaces,
-    subscribe: subscribeToSpacesInvalidation,
-  });
-  const filteredSpaces = useMemo(
-    () => filterSpaces(spaces, query),
-    [query, spaces],
+  const deferredQuery = useDebouncedValue(query.trim());
+  const spacesQuery = useInfiniteQuery(
+    spaceSummariesQueryOptions(deferredQuery),
   );
+  const spaces = useMemo(
+    () => spacesQuery.data?.pages.flatMap(({ items }) => items) ?? [],
+    [spacesQuery.data],
+  );
+  const total = spacesQuery.data?.pages[0]?.pagination.total ?? 0;
 
   return (
     <OverlaySurface ariaLabel="Explorer les espaces" size="large">
       <OverlayHeader
         onClose={onClose}
-        subtitle={loading
+        subtitle={spacesQuery.isPending
           ? 'Chargement...'
-          : `${filteredSpaces.length} espace${filteredSpaces.length === 1 ? '' : 's'}`}
+          : `${total} espace${total === 1 ? '' : 's'}`}
         title="Explorer les espaces"
       />
 
@@ -63,10 +57,15 @@ export default function SpaceExplorerOverlay({
         </div>
         <div className="h-full overflow-y-auto px-6 pb-6 pt-[4.5rem] [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
           <SpaceExplorerContent
-            error={error}
-            loading={loading}
+            error={spacesQuery.error?.message ?? null}
+            loading={spacesQuery.isPending}
             onOpenSpace={onOpenSpace}
-            spaces={filteredSpaces}
+            spaces={spaces}
+          />
+          <InfiniteLoadSentinel
+            hasNextPage={Boolean(spacesQuery.hasNextPage)}
+            loading={spacesQuery.isFetchingNextPage}
+            onLoadMore={() => void spacesQuery.fetchNextPage()}
           />
         </div>
         <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-2 ${themeColors.gradient.bottomSolid} ${themeColors.transition}`} />
@@ -84,8 +83,8 @@ function SpaceExplorerContent({
 }: {
   error: string | null;
   loading: boolean;
-  onOpenSpace: (space: Space) => void;
-  spaces: Space[];
+  onOpenSpace: (space: SpaceSummary) => void;
+  spaces: SpaceSummary[];
 }) {
   if (loading) {
     return (
@@ -123,10 +122,10 @@ function SpaceExplorerTile({
   space,
 }: {
   onOpen: () => void;
-  space: Space;
+  space: SpaceSummary;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const imageUrl = space.images[0]?.url ?? null;
+  const imageUrl = space.previewImage;
 
   useEffect(() => setImageFailed(false), [imageUrl]);
 
@@ -183,14 +182,14 @@ function SpaceExplorerTile({
   );
 }
 
-function SpaceTileSummary({ space }: { space: Space }) {
+function SpaceTileSummary({ space }: { space: SpaceSummary }) {
   const summary = formatSpaceContentSummary({
     offerCount: space.offerCount ?? 0,
-    placeCount: space.places.length,
-    portalCount: space.portals.length,
+    placeCount: space.placeCount,
+    portalCount: space.portalCount,
   });
-  const member = space.members[0] ?? null;
-  const additionalMemberCount = Math.max(0, space.members.length - 1);
+  const member = space.firstMember;
+  const additionalMemberCount = Math.max(0, space.memberCount - 1);
 
   return (
     <div className={`mt-4 flex min-h-11 min-w-0 items-center gap-3 border-t pt-3 ${themeColors.border.light}`}>

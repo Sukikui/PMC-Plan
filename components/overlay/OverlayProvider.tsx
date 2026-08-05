@@ -1,20 +1,24 @@
 'use client';
 
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import Overlay from '@/components/ui/Overlay';
 import type { OpenFormOverlayOptions } from '@/components/form/FormOverlay';
 import { useInfoOverlayStack } from '@/components/overlay/useInfoOverlayStack';
 import type { Place, Portal } from '@/lib/api/types';
-import type { Space } from '@/lib/spaces/types';
+import type { Space, SpaceReference, SpaceSummary } from '@/lib/spaces/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import type { Service } from '@/lib/services/types';
 import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import {
-  loadPlacesData,
-  loadPortalsData,
   subscribeToMapEntryManagementUpdates,
-} from '@/lib/preload/main-screen';
-import { fetchSpace } from '@/lib/spaces/client';
+} from '@/lib/map-entry/client-updates';
+import {
+  findMapEntrySummary,
+  mapContentQueryOptions,
+  mapEntryDetailQueryOptions,
+} from '@/lib/map-content/client';
 import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
 import {
   loadFormOverlay,
@@ -38,9 +42,8 @@ interface OverlayContextValue {
     type: MapEntryOverlayType,
     onSelectItem?: SelectDestinationHandler,
   ) => Promise<void>;
-  openPlaceInfo: (item: Place | Portal, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => void;
-  openSpaceInfo: (space: Space) => void;
-  openSpaceInfoBySlug: (slug: string) => Promise<void>;
+  openPlaceInfo: (item: Place | Portal | PlaceSummary | PortalSummary, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => void;
+  openSpaceInfo: (space: Space | SpaceReference | SpaceSummary) => void;
   openServiceEditor: (service: Service, canDelete: boolean) => void;
   closeOverlay: () => void;
   openFormOverlay: (options: OpenFormOverlayOptions) => void;
@@ -63,6 +66,7 @@ function clearScheduledClose(timeoutRef: TimeoutRef) {
 }
 
 export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const infoStack = useInfoOverlayStack();
   const { applyManagementUpdate } = infoStack;
   const [formOverlayState, setFormOverlayState] = useState<FormOverlayState>({
@@ -84,27 +88,20 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const openPlaceInfoById = async (placeId: string, onSelectItem?: SelectDestinationHandler) => {
     try {
-      const place = (await loadPlacesData()).find((item) => item.id === placeId);
+      const data = await queryClient.ensureQueryData(mapContentQueryOptions);
+      const place = data.places.find((item) => item.id === placeId);
       if (place) infoStack.open(place, 'place', onSelectItem);
     } catch {
       /* ignore */
     }
   };
 
-  const openPlaceInfo = (item: Place | Portal, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => {
+  const openPlaceInfo = (item: Place | Portal | PlaceSummary | PortalSummary, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => {
     infoStack.open(item, type, onSelectItem);
   };
 
-  const openSpaceInfo = (space: Space) => {
+  const openSpaceInfo = (space: Space | SpaceReference | SpaceSummary) => {
     infoStack.open(space, 'space');
-  };
-
-  const openSpaceInfoBySlug = async (slug: string) => {
-    try {
-      openSpaceInfo(await fetchSpace(slug));
-    } catch {
-      // The source overlay remains usable if the space cannot be loaded.
-    }
   };
 
   const openServiceEditor = (service: Service, canDelete: boolean) => {
@@ -123,10 +120,8 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     type: MapEntryOverlayType,
     onSelectItem?: SelectDestinationHandler,
   ) => {
-    const item = type === 'place'
-      ? (await loadPlacesData()).find((entry) => entry.mapEntryId === mapEntryId)
-      : (await loadPortalsData({ mergeNetherPortals: true }))
-        .find((entry) => entry.mapEntryId === mapEntryId);
+    const data = await queryClient.ensureQueryData(mapContentQueryOptions);
+    const item = findMapEntrySummary(data, mapEntryId, type);
     if (item) openPlaceInfo(item, type, onSelectItem);
   };
 
@@ -145,20 +140,17 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
       formOverlayState.options.mode !== 'edit'
       || !initialData
       || initialData.type !== entityType
+      || !initialData.mapEntryId
     ) {
       return;
     }
 
     try {
-      const updatedItem = entityType === 'place'
-        ? (await loadPlacesData()).find(
-          ({ mapEntryId }) => mapEntryId === initialData.mapEntryId,
-        )
-        : (await loadPortalsData({ mergeNetherPortals: true })).find(
-          ({ mapEntryId }) => mapEntryId === initialData.mapEntryId,
-        );
-      if (!updatedItem) return;
-
+      const detailOptions = mapEntryDetailQueryOptions(
+        entityType,
+        initialData.mapEntryId,
+      );
+      const updatedItem = await queryClient.fetchQuery(detailOptions);
       infoStack.updateMapEntry(updatedItem, entityType);
     } catch {
       // The save succeeded; other subscribers can retry the shared data refresh.
@@ -188,7 +180,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <OverlayContext.Provider value={{ openPlaceInfoById, openMapEntryInfoById, openPlaceInfo, openSpaceInfo, openSpaceInfoBySlug, openServiceEditor, closeOverlay, openFormOverlay }}>
+    <OverlayContext.Provider value={{ openPlaceInfoById, openMapEntryInfoById, openPlaceInfo, openSpaceInfo, openServiceEditor, closeOverlay, openFormOverlay }}>
       {children}
       {infoStack.layers.length > 0 && (
         <InfoOverlayStack

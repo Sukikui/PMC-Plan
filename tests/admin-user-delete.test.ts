@@ -7,6 +7,7 @@ import {
 } from '@/lib/admin/user-deletion';
 import { PRIMARY_MANAGEMENT_TRANSFER_REQUIRED } from '@/lib/admin/users';
 import { prisma } from '@/lib/prisma';
+import { invalidateAdministrativeTransferData } from '@/lib/content/cache-tags';
 
 jest.mock('@/lib/admin/user-deletion', () => {
   class MockAdminUserDeletionError extends Error {
@@ -36,6 +37,9 @@ jest.mock('@/lib/prisma', () => ({
     user: { findUnique: jest.fn() },
     mapEntry: { count: jest.fn() },
   },
+}));
+jest.mock('@/lib/content/cache-tags', () => ({
+  invalidateAdministrativeTransferData: jest.fn(),
 }));
 
 const mockedAuth = auth as jest.Mock;
@@ -68,6 +72,8 @@ describe('admin user deletion API', () => {
     });
     mockedPrisma.user.findUnique.mockResolvedValue({ role: 'user' });
     mockedDeleteUserAccount.mockResolvedValue({
+      affectedServiceSlugs: [],
+      affectedSpaceSlugs: [],
       managementUpdates: [],
       transferredEntryCount: 0,
       transferredSpaceCount: 0,
@@ -89,6 +95,11 @@ describe('admin user deletion API', () => {
       message: 'Compte supprimé.',
       transferredEntryCount: 0,
       transferredSpaceCount: 0,
+    });
+    expect(invalidateAdministrativeTransferData).toHaveBeenCalledWith({
+      mapEntryIds: [],
+      serviceSlugs: [],
+      spaceSlugs: [],
     });
   });
 
@@ -197,6 +208,8 @@ describe('admin user deletion API', () => {
 
   it('passes the selected transfer target to the deletion service', async () => {
     mockedDeleteUserAccount.mockResolvedValue({
+      affectedServiceSlugs: [],
+      affectedSpaceSlugs: [],
       managementUpdates: [],
       transferredEntryCount: 2,
       transferredSpaceCount: 1,

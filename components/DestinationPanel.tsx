@@ -8,7 +8,7 @@ import type { DestinationCardActions } from '@/components/destination/destinatio
 import { useDestinationPanelData } from '@/components/destination/useDestinationPanelData';
 import { useRoutePlan } from '@/components/route/useRoutePlan';
 import Panel from '@/components/ui/Panel';
-import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import { OVERWORLD_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
 import { themeColors } from '@/lib/theme-colors';
 import {
@@ -27,7 +27,7 @@ interface DestinationPanelProps {
   playerPosition?: PlayerRoutePosition | null;
   manualCoords?: ManualRouteCoordinates;
   onRouteChange?: (route: RouteData | null) => void;
-  onInfoClick: (item: Place | Portal, type: DestinationType) => void;
+  onInfoClick: (item: PlaceSummary | PortalSummary, type: DestinationType) => void;
 }
 
 const KEYBOARD_SCROLL_TOP_INSET_PX = 48;
@@ -130,7 +130,7 @@ export default function DestinationPanel({
     );
   }, [activeMapWorld, onPlaceSelect, resetSearchHighlight, selectedId]);
 
-  const handleInfoClick = useCallback((event: React.MouseEvent, item: Place | Portal, type: DestinationType) => {
+  const handleInfoClick = useCallback((event: React.MouseEvent, item: PlaceSummary | PortalSummary, type: DestinationType) => {
     event.stopPropagation();
     onInfoClick(item, type);
   }, [onInfoClick]);

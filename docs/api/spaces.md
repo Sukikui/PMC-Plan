@@ -147,6 +147,11 @@ characters.
 
 Returns every space ordered by name.
 
+The public application uses the lighter collection views documented in
+[Public Data Loading API](data-loading.md): `view=summary` for paginated space
+exploration and `view=reference` for authenticated form selectors. Omitting
+`view` keeps this complete collection contract available for compatibility.
+
 **Response:**
 
 ```json

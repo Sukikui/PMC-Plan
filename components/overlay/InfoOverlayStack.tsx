@@ -1,11 +1,12 @@
 import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import InfoOverlay from '@/components/InfoOverlay';
 import SpaceInfoOverlay from '@/components/spaces/SpaceInfoOverlay';
 import Overlay from '@/components/ui/Overlay';
 import type {
   InfoOverlayLayer,
 } from '@/components/overlay/useInfoOverlayStack';
-import type { Space } from '@/lib/spaces/types';
+import type { Space, SpaceReference, SpaceSummary } from '@/lib/spaces/types';
 
 interface InfoOverlayStackProps {
   layers: InfoOverlayLayer[];
@@ -30,11 +31,11 @@ export default function InfoOverlayStack({
             {layer.type === 'space' ? (
               <SpaceInfoOverlay
                 onClose={close}
-                space={layer.item as Space}
+                space={layer.item as Space | SpaceReference | SpaceSummary}
               />
             ) : (
               <InfoOverlay
-                item={layer.item as Place | Portal}
+                item={layer.item as Place | Portal | PlaceSummary | PortalSummary}
                 onClose={close}
                 onSelectItem={layer.onSelectItem}
                 type={layer.type}

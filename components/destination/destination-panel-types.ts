@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { Place, Portal } from '@/lib/api/types';
+import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import type { DestinationType } from '@/lib/destination/selection';
 
 export type TagFilterLogic = 'SINGLE' | 'OR' | 'AND';
@@ -24,7 +24,7 @@ export type DestinationCardActions = {
   ) => void;
   onInfoClick: (
     event: React.MouseEvent,
-    item: Place | Portal,
+    item: PlaceSummary | PortalSummary,
     type: DestinationType
   ) => void;
 };

@@ -15,14 +15,3 @@ export const loadSettingsOverlay = () => (
 export const loadSpaceExplorerOverlay = () => (
   import('@/components/spaces/SpaceExplorerOverlay')
 );
-
-export const preloadOverlayModules = async () => {
-  await Promise.all([
-    loadFormOverlay(),
-    loadGlobalTradeOverlay(),
-    loadInfoOverlayStack(),
-    loadMinecraftLinkOverlay(),
-    loadSettingsOverlay(),
-    loadSpaceExplorerOverlay(),
-  ]);
-};

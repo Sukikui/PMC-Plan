@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ServiceContactType } from '@prisma/client';
 import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { canContribute } from '@/lib/content-permissions';
@@ -9,9 +10,26 @@ import { createServiceSchema } from '@/lib/services/schemas';
 import { serviceInclude, toService } from '@/lib/services/serialization';
 import { getServiceWriteData } from '@/lib/services/write-data';
 import { handleServiceApiError } from './service-api';
+import { getPagination } from '@/lib/api/pagination';
+import { loadServiceList } from '@/lib/services/list-server';
+import { invalidateServicePublicData } from '@/lib/content/cache-tags';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    if (request.nextUrl.searchParams.get('view') === 'summary') {
+      const { page, pageSize } = getPagination(
+        request.nextUrl.searchParams,
+        30,
+      );
+      const query = request.nextUrl.searchParams.get('q')?.trim() ?? '';
+      const requestedContact = request.nextUrl.searchParams.get('contact');
+      const contactType = Object.values(ServiceContactType).includes(
+        requestedContact as ServiceContactType,
+      ) ? requestedContact as ServiceContactType : null;
+      return NextResponse.json(
+        await loadServiceList(contactType, page, pageSize, query),
+      );
+    }
     const services = await prisma.service.findMany({
       include: serviceInclude,
       orderBy: { name: 'asc' },
@@ -56,6 +74,7 @@ export async function POST(request: NextRequest) {
         include: serviceInclude,
       });
     });
+    invalidateServicePublicData(service.slug);
 
     return NextResponse.json(
       { service: toService(service) },

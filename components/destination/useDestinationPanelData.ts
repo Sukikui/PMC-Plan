@@ -1,57 +1,30 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import type { Place, Portal } from '@/lib/api/types';
-import {
-  loadPlacesData,
-  loadPortalsData,
-  subscribeToMainScreenDataInvalidation,
-} from '@/lib/preload/main-screen';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { mapContentQueryOptions } from '@/lib/map-content/client';
+import type { PlaceSummary } from '@/lib/map-content/types';
+import { indexLinkedPortalPairs, mergeLinkedPortalPair } from '@/lib/portal/linked-portals';
 import type { DestinationListItem, TagFilterLogic } from './destination-panel-types';
+
+const EMPTY_PLACES: PlaceSummary[] = [];
 
 export function useDestinationPanelData(
   enabledTags: Set<string>,
   tagFilterLogic: TagFilterLogic,
   searchQuery: string
 ) {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [portals, setPortals] = useState<Portal[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [placesData, portalsData] = await Promise.all([
-          loadPlacesData(),
-          loadPortalsData({ mergeNetherPortals: true }),
-        ]);
-
-        if (!cancelled) {
-          setPlaces(placesData);
-          setPortals(portalsData);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error('Network error loading data:', error);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadData();
-    const unsubscribe = subscribeToMainScreenDataInvalidation(loadData);
-
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, []);
+  const dataQuery = useQuery(mapContentQueryOptions);
+  const places = dataQuery.data?.places ?? EMPTY_PLACES;
+  const portals = useMemo(() => {
+    const rawPortals = dataQuery.data?.portals ?? [];
+    const pairs = indexLinkedPortalPairs(rawPortals);
+    return rawPortals.flatMap((portal) => {
+      const pair = pairs.get(portal.mapEntryId);
+      if (!pair) return [portal];
+      return portal.world === 'overworld' ? [mergeLinkedPortalPair(pair)] : [];
+    });
+  }, [dataQuery.data?.portals]);
 
   const allTags = useMemo(() => Array.from(new Set(places.flatMap((place) => place.tags))), [places]);
   const query = searchQuery.toLowerCase();
@@ -94,7 +67,7 @@ export function useDestinationPanelData(
     filteredDestinations,
     filteredPlaces,
     filteredPortals,
-    loading,
+    loading: dataQuery.isPending,
     places,
     portals,
   };

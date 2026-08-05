@@ -6,6 +6,7 @@ import {
 } from '@/lib/discord-user';
 import { prioritizePrimaryManagerOwner } from '@/lib/map-entry/owners';
 import type { Space } from './types';
+import { validTradeOfferWhere } from '@/lib/trade/query';
 
 const spaceUserSelect = {
   ...discordIdentitySelect,
@@ -38,7 +39,7 @@ export const spaceInclude = {
       place: {
         select: {
           _count: {
-            select: { tradeOffers: true },
+            select: { tradeOffers: { where: validTradeOfferWhere } },
           },
           uid: true,
           slug: true,
