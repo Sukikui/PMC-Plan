@@ -14,7 +14,7 @@ import {
 
 const COORDINATE_MATCH_TOLERANCE = 0.001;
 
-export const findRouteTargetPoint = (
+const findRouteTargetPoint = (
   segment: MapRouteSegment | undefined,
   points: ScreenMapPoint[]
 ) => {

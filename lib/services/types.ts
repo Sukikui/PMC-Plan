@@ -59,7 +59,3 @@ export type ServiceContactType = 'none' | 'primary_manager' | 'custom';
 export interface ServiceResponse {
   service: Service;
 }
-
-export interface ServicesResponse {
-  services: Service[];
-}

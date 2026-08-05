@@ -13,7 +13,7 @@ import {
 } from '@/lib/route-planning';
 
 export type MapRouteMarkerKind = 'start' | 'transition' | 'destination';
-export type MapRouteTargetKind = 'portal' | 'destination';
+type MapRouteTargetKind = 'portal' | 'destination';
 
 export interface MapRouteSegment {
   id: string;

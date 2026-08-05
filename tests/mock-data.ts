@@ -149,7 +149,7 @@ export const mockPlaces: Place[] = [
 export const getPortalsByWorld = (world: 'overworld' | 'nether'): Portal[] =>
   mockPortals.filter((portal) => portal.world === world);
 
-export const getPortalById = (id: string, world?: 'overworld' | 'nether'): Portal | undefined =>
+const getPortalById = (id: string, world?: 'overworld' | 'nether'): Portal | undefined =>
   mockPortals.find((portal) => portal.id === id && (!world || portal.world === world));
 
 export const getPortalPairs = (): Array<{ overworld: Portal; nether: Portal | undefined }> =>

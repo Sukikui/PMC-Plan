@@ -2,7 +2,7 @@ import type { MapTilesMetadata } from '@/lib/map/metadata';
 import type { MapDrawRect } from './map-geometry';
 import type { MapViewport } from './map-view';
 
-export interface MapTilePosition {
+interface MapTilePosition {
   column: number;
   row: number;
 }
@@ -71,7 +71,7 @@ export const getVisibleMapTiles = (
   return visibleTiles;
 };
 
-export const getMapTileSource = (
+const getMapTileSource = (
   tiles: MapTilesMetadata,
   column: number,
   row: number

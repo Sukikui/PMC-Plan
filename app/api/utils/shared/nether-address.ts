@@ -129,7 +129,7 @@ function determineDirection(
     : targetZ < mainAxisStop.z ? 'droite' : 'gauche';
 }
 
-export async function loadNetherData(): Promise<NetherData> {
+async function loadNetherData(): Promise<NetherData> {
   return netherAxesData;
 }
 

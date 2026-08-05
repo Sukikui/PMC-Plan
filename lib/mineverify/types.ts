@@ -4,7 +4,7 @@ export type MineVerifyRequestStatus =
   | 'validated'
   | 'expired';
 
-export type MinecraftLinkStatus =
+type MinecraftLinkStatus =
   | 'not_started'
   | 'pending'
   | 'code_created'

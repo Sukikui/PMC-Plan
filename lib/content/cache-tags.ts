@@ -21,7 +21,7 @@ export const serviceDetailCacheTag = (slug: string) => (
   `public-service:${slug}`
 );
 
-export function invalidateContentCache(tags: string[]) {
+function invalidateContentCache(tags: string[]) {
   new Set(tags).forEach((tag) => revalidateTag(tag));
 }
 

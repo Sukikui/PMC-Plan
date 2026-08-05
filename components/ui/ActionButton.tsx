@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { themeColors } from '@/lib/theme-colors';
 
-export type ActionButtonVariant =
+type ActionButtonVariant =
   | 'dangerFilled'
   | 'dangerOutline'
   | 'neutralOutline'

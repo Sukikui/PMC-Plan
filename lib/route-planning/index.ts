@@ -26,7 +26,7 @@ export type {
   RouteWorldCoordinates,
 } from './types';
 
-export const hasManualRouteCoordinates = (manualCoords?: ManualRouteCoordinates) =>
+const hasManualRouteCoordinates = (manualCoords?: ManualRouteCoordinates) =>
   Boolean(manualCoords?.x && manualCoords?.y && manualCoords?.z);
 
 export const resolveRouteOrigin = (
@@ -76,13 +76,13 @@ export const buildRouteFromParams = (
   }).toString();
 };
 
-export const getRouteTransportSteps = (route: RouteData) =>
+const getRouteTransportSteps = (route: RouteData) =>
   route.steps.filter((step) => step.type !== 'portal' && step.distance && step.distance > 0);
 
-export const isUnknownRouteLocation = (location: RouteLocation) =>
+const isUnknownRouteLocation = (location: RouteLocation) =>
   location.id !== undefined && location.id !== null && (!location.name || location.name === 'none');
 
-export const isPlayerRouteLocation = (location: RouteLocation, isFirstStep: boolean) =>
+const isPlayerRouteLocation = (location: RouteLocation, isFirstStep: boolean) =>
   isFirstStep && !location.id;
 
 export const formatRouteCoordinates = (coordinates: RouteCoordinates, withFloor = true) => {
@@ -93,7 +93,7 @@ export const formatRouteCoordinates = (coordinates: RouteCoordinates, withFloor 
   return `${Math.floor(coordinates.x)}, ${Math.floor(coordinates.y)}, ${Math.floor(coordinates.z)}`;
 };
 
-export const getRouteLocationDisplay = (location: RouteLocation) => {
+const getRouteLocationDisplay = (location: RouteLocation) => {
   if (location.name && location.name !== 'none') {
     return location.name;
   }
@@ -120,7 +120,7 @@ export const getRouteLocationText = (
   return getRouteLocationDisplay(location);
 };
 
-export const getRouteStepWorld = (step: RouteStep) =>
+const getRouteStepWorld = (step: RouteStep) =>
   step.type === 'nether_transport' ? 'nether' : 'overworld';
 
 const toBreadcrumbItem = ({

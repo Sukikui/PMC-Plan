@@ -20,9 +20,9 @@ export interface MapPan {
   y: number;
 }
 
-export const MIN_MAP_FIT_RATIO = 0.85;
+const MIN_MAP_FIT_RATIO = 0.85;
 export const MIN_ZOOM = MIN_MAP_FIT_RATIO;
-export const MAX_MAP_CELL_PIXEL_SIZE = 128;
+const MAX_MAP_CELL_PIXEL_SIZE = 128;
 
 export const clamp = (value: number, min: number, max: number) => (
   Math.min(Math.max(value, min), max)

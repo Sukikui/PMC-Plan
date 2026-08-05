@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import Discord from 'next-auth/providers/discord';
 import { authCallbacks } from '@/lib/auth/callbacks';
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, auth } = NextAuth({
   trustHost: true,
   session: {
     strategy: 'jwt',

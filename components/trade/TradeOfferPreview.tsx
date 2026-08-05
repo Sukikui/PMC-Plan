@@ -12,7 +12,7 @@ interface PreviewTradeItem {
   lore?: string[];
 }
 
-export interface PreviewTradeOffer {
+interface PreviewTradeOffer {
   gives: PreviewTradeItem;
   wants: PreviewTradeItem;
   negotiable?: boolean;
@@ -30,7 +30,7 @@ interface TradeOfferPreviewProps {
   variant?: 'framed' | 'list' | 'plain';
 }
 
-export const tradeOfferFrameClass = `${themeColors.infoOverlay.descriptionBg} border ${themeColors.border.primary} ${themeColors.util.roundedLg} ${themeColors.transition}`;
+const tradeOfferFrameClass = `${themeColors.infoOverlay.descriptionBg} border ${themeColors.border.primary} ${themeColors.util.roundedLg} ${themeColors.transition}`;
 export const tradeOfferListRowClass = `${listRowClassName} px-2`;
 const tradeLayoutClassName = 'flex items-center gap-4';
 const tradeExchangeBaseClassName = 'flex min-w-0 items-center gap-4';
