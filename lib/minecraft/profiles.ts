@@ -72,7 +72,7 @@ export async function upsertMinecraftProfile(
   });
 }
 
-export function formatMinecraftUuid(value: string) {
+function formatMinecraftUuid(value: string) {
   const compact = value.replaceAll('-', '').toLowerCase();
   if (!/^[0-9a-f]{32}$/.test(compact)) {
     throw new MinecraftProfileError('Cet UUID Minecraft est invalide.', 400);

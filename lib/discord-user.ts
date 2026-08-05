@@ -14,7 +14,7 @@ export type StoredDiscordIdentity = Prisma.UserGetPayload<{
   select: typeof discordIdentitySelect;
 }>;
 
-export const getDiscordImage = (profile: DiscordProfile) => {
+const getDiscordImage = (profile: DiscordProfile) => {
   if (profile.id && profile.avatar) {
     const format = profile.avatar.startsWith('a_') ? 'gif' : 'png';
     return `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.${format}`;

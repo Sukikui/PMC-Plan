@@ -5,7 +5,7 @@ import IconActionButton from '@/components/ui/IconActionButton';
 import { themeColors } from '@/lib/theme-colors';
 import { useImageCarousel } from './useImageCarousel';
 
-export interface InfoCarouselImage {
+interface InfoCarouselImage {
   alt: string;
   caption?: string;
   id: string;

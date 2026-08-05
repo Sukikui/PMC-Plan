@@ -21,7 +21,7 @@ const nullableText = (maxLength: number) => z
   .optional()
   .transform((value) => value || null);
 
-export const spaceColorSchema = z
+const spaceColorSchema = z
   .string()
   .regex(/^#[0-9A-F]{6}$/i, 'La couleur doit être au format hexadécimal.')
   .transform((value) => value.toUpperCase());

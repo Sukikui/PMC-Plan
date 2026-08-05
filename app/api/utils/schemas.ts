@@ -12,17 +12,17 @@ import { MAX_TRADE_OFFER_DESCRIPTION_LENGTH } from '@/lib/trade-offers';
 import { discordUrlSchema } from '@/lib/validation/discord-url';
 import { slugSchema } from '@/lib/validation/slug';
 
-export const coordinateSchema = z.object({
+const coordinateSchema = z.object({
   x: z.number(),
   y: z.number(),
   z: z.number(),
 });
 
-export const tagSchema = z.string().min(1).max(32);
-export const placeImageUrlSchema = z.string().trim().url().max(PLACE_IMAGE_URL_MAX_LENGTH);
-export const mapEntrySpaceIdSchema = z.string().min(1).nullable().optional();
+const tagSchema = z.string().min(1).max(32);
+const placeImageUrlSchema = z.string().trim().url().max(PLACE_IMAGE_URL_MAX_LENGTH);
+const mapEntrySpaceIdSchema = z.string().min(1).nullable().optional();
 
-export const tradeItemSchema = z.object({
+const tradeItemSchema = z.object({
   kind: z.enum(['gives', 'wants']),
   itemId: z.string().min(1).max(80),
   quantity: z.number().int().positive(),

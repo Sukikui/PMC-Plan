@@ -16,15 +16,6 @@ export const suggestionDropdownClass = `absolute left-0 right-0 z-20 mt-2 overfl
 
 export const suggestionOptionClass = `w-full text-left ${themeColors.transition} ${themeColors.interactive.hoverPanel}`;
 
-export const SubHeader: React.FC<{ title: string; description?: string }> = ({ title, description }) => (
-  <div className="space-y-0.5">
-    <h3 className={`text-sm font-semibold ${themeColors.text.secondary} ${themeColors.transition}`}>{title}</h3>
-    {description && (
-      <p className={`text-xs ${themeColors.text.quaternary}`}>{description}</p>
-    )}
-  </div>
-);
-
 export const renderCoordinateInputs = (
   coords: CoordinatesInput,
   setCoords: React.Dispatch<React.SetStateAction<CoordinatesInput>>,

@@ -17,13 +17,6 @@ export function convertOverworldToNether(x: number, z: number): { x: number; z: 
   };
 }
 
-export function convertNetherToOverworld(x: number, z: number): { x: number; z: number } {
-  return {
-    x: x * 8,
-    z: z * 8,
-  };
-}
-
 export async function findNearestPortals(
   x: number,
   y: number,

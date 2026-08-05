@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from 'crypto';
 
 const BEARER_PREFIX = 'Bearer ';
 
-export type MineVerifyAuthError =
+type MineVerifyAuthError =
   | 'missing-token-config'
   | 'missing-authorization-header'
   | 'invalid-authorization-scheme'

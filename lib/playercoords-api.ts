@@ -11,7 +11,7 @@ export interface PlayerData {
   username: string;
 }
 
-export interface PlayerCoordsApiOptions {
+interface PlayerCoordsApiOptions {
   /** Base URL for the PlayerCoordsAPI server (default: http://localhost:25565) */
   baseUrl?: string;
   /** Request timeout in milliseconds (default: 5000) */
@@ -54,7 +54,7 @@ export class PlayerCoordsApiError extends Error {
 /**
  * Client for PlayerCoordsAPI Minecraft mod
  */
-export class PlayerCoordsApi {
+class PlayerCoordsApi {
   private baseUrl: string;
   private timeout: number;
 

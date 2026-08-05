@@ -13,7 +13,7 @@ import OverlayTabs, {
 import { themeColors } from '@/lib/theme-colors';
 import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
 
-export interface OverlaySlide<T extends string> {
+interface OverlaySlide<T extends string> {
   className?: string;
   content: ReactNode;
   elementRef?: Ref<HTMLDivElement>;

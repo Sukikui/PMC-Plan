@@ -13,7 +13,7 @@ export const mapEntryCreationSchema = z.object({
     .default([]),
 });
 
-export const minecraftOwnerSchema = z.object({
+const minecraftOwnerSchema = z.object({
   uuid: z.string().uuid(),
   name: z.string().trim().min(3).max(16),
 });

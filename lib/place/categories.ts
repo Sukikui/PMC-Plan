@@ -31,7 +31,7 @@ export const placeCategoryOptions: Array<{
   },
 ];
 
-export const mapIconByCategory: Record<MapIconCategory, string> = {
+const mapIconByCategory: Record<MapIconCategory, string> = {
   construction: '/map/icons/construction_icon.png',
   commerce: '/map/icons/commerce_icon.png',
   zone_communautaire: '/map/icons/zone_communautaire_icon.png',

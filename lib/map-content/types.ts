@@ -34,5 +34,3 @@ export interface MapContentResponse {
   places: PlaceSummary[];
   portals: PortalSummary[];
 }
-
-export type MapEntrySummary = PlaceSummary | PortalSummary;

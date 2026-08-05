@@ -6,7 +6,7 @@ export interface MapCoordinate {
   z: number;
 }
 
-export interface MapOverviewMetadata {
+interface MapOverviewMetadata {
   image: string;
   width: number;
   height: number;
@@ -58,18 +58,7 @@ export const getMapWorldSize = (metadata: MapMetadata) => ({
   height: metadata.overview.height * metadata.overview.cellSize,
 });
 
-export const getMapWorldBounds = (metadata: MapMetadata) => {
-  const size = getMapWorldSize(metadata);
-
-  return {
-    minX: metadata.gridOrigin.x,
-    minZ: metadata.gridOrigin.z,
-    maxX: metadata.gridOrigin.x + size.width - 1,
-    maxZ: metadata.gridOrigin.z + size.height - 1,
-  };
-};
-
-export const clampPercent = (value: number) => Math.min(Math.max(value, 0), 100);
+const clampPercent = (value: number) => Math.min(Math.max(value, 0), 100);
 
 export const worldToMapPercent = (
   metadata: MapMetadata,

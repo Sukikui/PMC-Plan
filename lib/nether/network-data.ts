@@ -49,7 +49,7 @@ export type NetherAxisPoint = z.infer<typeof axisPointSchema>;
 export type NetherAxisStop = z.infer<typeof axisStopSchema>;
 export type NetherAxesData = z.infer<typeof netherAxesSchema>;
 
-export interface NetherAxisPolyline {
+interface NetherAxisPolyline {
   id: string;
   points: NetherAxisPoint[];
 }

@@ -30,10 +30,7 @@ import { useMapView } from '../hooks/useMapView';
 import { usePointRenderMode } from '../hooks/usePointRenderMode';
 import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
 import type { InteractiveMapPoint, ScreenMapPoint } from '../core/map-types';
-export type {
-  InteractiveMapPoint,
-  InteractiveMapPointKind,
-} from '../core/map-types';
+;
 interface InteractiveMapRendererProps {
   metadata: MapMetadata;
   points: InteractiveMapPoint[];

@@ -1,6 +1,5 @@
 import { getVisibleMapTiles } from '../components/map/core/map-tiles';
 import {
-  getMapWorldBounds,
   getMapWorldSize,
   mapMetadataByWorld,
 } from '../lib/map/metadata';
@@ -16,16 +15,10 @@ describe('tiled map metadata', () => {
     expect(mapMetadataByWorld.nether.tiles?.directory).toBe('/map/nether/tiles');
   });
 
-  it('uses the padded Nether raster bounds', () => {
+  it('uses the padded Nether raster size', () => {
     expect(getMapWorldSize(mapMetadataByWorld.nether)).toEqual({
       width: 20016,
       height: 20016,
-    });
-    expect(getMapWorldBounds(mapMetadataByWorld.nether)).toEqual({
-      minX: -10000,
-      minZ: -10000,
-      maxX: 10015,
-      maxZ: 10015,
     });
   });
 });

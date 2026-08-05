@@ -12,6 +12,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "check:unused": "knip && knip --production --config knip.production.json",
+    "check:quality": "npm run lint && npm run type-check && npm run check:unused && npm run test:coverage",
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:studio": "dotenv -e .env.local -- prisma studio"
@@ -28,7 +30,6 @@
     "zod": "^4.1.8"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.0",
     "@next/eslint-plugin-next": "^15.5.3",
     "@types/jest": "^30.0.0",
@@ -42,6 +43,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.4.0",
     "jest": "^30.4.2",
+    "knip": "^6.31.0",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.4.1",

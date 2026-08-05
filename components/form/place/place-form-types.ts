@@ -71,7 +71,7 @@ export interface PlaceFormPayload {
   }>;
 }
 
-export const createTradeItem = (): FormTradeItem => ({
+const createTradeItem = (): FormTradeItem => ({
   item_id: '',
   quantity: '',
   custom_name: null,

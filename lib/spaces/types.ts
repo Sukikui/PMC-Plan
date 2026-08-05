@@ -9,7 +9,7 @@ export type SpaceUser = Pick<
   'id' | 'name' | 'username' | 'image' | 'role'
 >;
 
-export interface SpaceEditor
+interface SpaceEditor
   extends Pick<SpaceUser, 'id' | 'name' | 'username' | 'image'> {
   editedAt: string;
 }
@@ -27,7 +27,7 @@ export interface SpaceReference {
   discordUrl: string | null;
 }
 
-export interface SpaceImage {
+interface SpaceImage {
   id: string;
   url: string;
   placeId: string;

@@ -21,7 +21,7 @@ interface ContentManagementBase {
   type: ContentManagementType;
 }
 
-export interface ContentManagementPlaceSummary extends ContentManagementBase {
+interface ContentManagementPlaceSummary extends ContentManagementBase {
   category: PlaceCategory;
   mapEntryId: string;
   space: SpaceReference | null;
@@ -29,7 +29,7 @@ export interface ContentManagementPlaceSummary extends ContentManagementBase {
   world: World;
 }
 
-export interface ContentManagementPortalSummary extends ContentManagementBase {
+interface ContentManagementPortalSummary extends ContentManagementBase {
   linked: boolean;
   mapEntryId: string;
   space: SpaceReference | null;
@@ -37,7 +37,7 @@ export interface ContentManagementPortalSummary extends ContentManagementBase {
   world: World;
 }
 
-export interface ContentManagementSpaceSummary extends ContentManagementBase {
+interface ContentManagementSpaceSummary extends ContentManagementBase {
   color: string;
   discordUrl: string | null;
   logoBackground: SpaceLogoBackground;
@@ -49,7 +49,7 @@ export interface ContentManagementSpaceSummary extends ContentManagementBase {
   type: 'space';
 }
 
-export interface ContentManagementServiceSummary extends ContentManagementBase {
+interface ContentManagementServiceSummary extends ContentManagementBase {
   contactType: ServiceContactType;
   illustrationItemId: string | null;
   mapEntryId: string;
