@@ -42,6 +42,7 @@ export const creditGroups: CreditGroup[] = [
     items: [
       { name: 'React', description: 'Composants et interface utilisateur.', visual: brand('react'), version: dependencyVersion('react'), href: 'https://react.dev' },
       { name: 'Tailwind CSS', description: 'Styles, thèmes clair et sombre.', visual: brand('tailwindcss'), version: dependencyVersion('tailwindcss'), href: 'https://tailwindcss.com' },
+      { name: 'TanStack Query', description: 'Chargement, cache et synchronisation des données côté client.', visual: brand('reactquery'), version: dependencyVersion('@tanstack/react-query'), href: 'https://tanstack.com/query/latest' },
       { name: 'Canvas 2D', description: 'Rendu natif des cartes et des itinéraires.', visual: emoji('🎨'), href: 'https://developer.mozilla.org/fr/docs/Web/API/Canvas_API' },
     ],
   },
@@ -98,6 +99,7 @@ export const creditGroups: CreditGroup[] = [
       { name: 'npm', description: 'Gestion des dépendances et exécution des scripts du projet.', visual: brand('npm'), href: 'https://www.npmjs.com' },
       { name: 'Jest', description: 'Tests unitaires et d’intégration.', visual: brand('jest'), version: dependencyVersion('jest'), href: 'https://jestjs.io' },
       { name: 'ESLint', description: 'Analyse statique et règles de qualité.', visual: brand('eslint'), version: dependencyVersion('eslint'), href: 'https://eslint.org' },
+      { name: 'Knip', description: 'Détection du code et des dépendances inutilisés.', visual: brand('knip'), version: dependencyVersion('knip'), href: 'https://knip.dev' },
     ],
   },
 ];
