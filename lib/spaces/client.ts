@@ -11,6 +11,7 @@ import type {
   SpaceInput,
   SpaceReference,
   SpaceSummary,
+  SpaceSummarySort,
   SpaceUpdateInput,
 } from './types';
 
@@ -49,13 +50,16 @@ export function spaceReferencesQueryOptions(role?: string) {
   });
 }
 
-export function spaceSummariesQueryOptions(query: string) {
+export function spaceSummariesQueryOptions(
+  query: string,
+  sort: SpaceSummarySort,
+) {
   return infiniteQueryOptions({
-    queryKey: queryKeys.spaceList(query),
+    queryKey: queryKeys.spaceList(query, sort),
     initialPageParam: 1,
     placeholderData: keepPreviousData,
     queryFn: ({ pageParam, signal }) => requestJson<PaginatedResponse<SpaceSummary>>(
-      `/api/spaces?view=summary&page=${pageParam}&q=${encodeURIComponent(query)}`,
+      `/api/spaces?view=summary&page=${pageParam}&q=${encodeURIComponent(query)}&sort=${sort}`,
       { signal },
       'Impossible de charger les espaces.',
     ),

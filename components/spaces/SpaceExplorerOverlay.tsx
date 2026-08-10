@@ -8,11 +8,12 @@ import MinecraftHeadImage from '@/components/ui/MinecraftHeadImage';
 import OverlayHeader from '@/components/ui/OverlayHeader';
 import OverlaySearchInput from '@/components/ui/OverlaySearchInput';
 import OverlaySurface from '@/components/ui/OverlaySurface';
+import PillTabs from '@/components/ui/PillTabs';
 import InfiniteLoadSentinel from '@/components/ui/InfiniteLoadSentinel';
 import { useDebouncedValue } from '@/components/ui/useDebouncedValue';
 import { spaceSummariesQueryOptions } from '@/lib/spaces/client';
 import { formatSpaceContentSummary } from '@/lib/spaces/summary';
-import type { SpaceSummary } from '@/lib/spaces/types';
+import type { SpaceSummary, SpaceSummarySort } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
 
 interface SpaceExplorerOverlayProps {
@@ -25,9 +26,10 @@ export default function SpaceExplorerOverlay({
   onOpenSpace,
 }: SpaceExplorerOverlayProps) {
   const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SpaceSummarySort>('name-asc');
   const deferredQuery = useDebouncedValue(query.trim());
   const spacesQuery = useInfiniteQuery(
-    spaceSummariesQueryOptions(deferredQuery),
+    spaceSummariesQueryOptions(deferredQuery, sort),
   );
   const spaces = useMemo(
     () => spacesQuery.data?.pages.flatMap(({ items }) => items) ?? [],
@@ -47,7 +49,13 @@ export default function SpaceExplorerOverlay({
 
       <div className={`relative min-h-0 flex-1 overflow-hidden ${themeColors.panel.primary} ${themeColors.transition}`}>
         <div className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-20 gradient-top-solid-blur ${themeColors.transition}`} />
-        <div className="absolute inset-x-0 top-0 z-20 flex items-center px-6 pb-2 pt-4">
+        <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-3 px-6 pb-2 pt-4">
+          <PillTabs
+            activeValue={sort}
+            ariaLabel="Trier les espaces"
+            onChange={setSort}
+            options={spaceSortOptions}
+          />
           <OverlaySearchInput
             ariaLabel="Rechercher un espace"
             onChange={setQuery}
@@ -74,6 +82,21 @@ export default function SpaceExplorerOverlay({
     </OverlaySurface>
   );
 }
+
+const spaceSortOptions = [
+  { value: 'name-asc', label: 'A ↑' },
+  { value: 'name-desc', label: 'Z ↓' },
+  {
+    value: 'content-desc',
+    label: 'Contenu ↑',
+    title: 'Espaces avec le plus de lieux et de portails en premier',
+  },
+  {
+    value: 'content-asc',
+    label: 'Contenu ↓',
+    title: 'Espaces avec le moins de lieux et de portails en premier',
+  },
+] as const;
 
 function SpaceExplorerContent({
   error,

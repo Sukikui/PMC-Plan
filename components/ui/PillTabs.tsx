@@ -4,11 +4,13 @@ import { themeColors } from '@/lib/theme-colors';
 
 export interface PillTabOption<T extends string> {
   label: string;
+  title?: string;
   value: T;
 }
 
 interface PillTabsProps<T extends string> {
   activeValue: T;
+  ariaLabel?: string;
   className?: string;
   onChange: (value: T) => void;
   options: readonly PillTabOption<T>[];
@@ -16,12 +18,14 @@ interface PillTabsProps<T extends string> {
 
 export default function PillTabs<T extends string>({
   activeValue,
+  ariaLabel,
   className = '',
   onChange,
   options,
 }: PillTabsProps<T>) {
   return (
     <div
+      aria-label={ariaLabel}
       className={`flex items-center gap-2 ${className}`}
       role="tablist"
     >
@@ -36,6 +40,7 @@ export default function PillTabs<T extends string>({
             key={option.value}
             onClick={() => onChange(option.value)}
             role="tab"
+            title={option.title}
             type="button"
           >
             {option.label}

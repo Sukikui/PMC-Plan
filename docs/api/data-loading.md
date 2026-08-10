@@ -75,7 +75,10 @@ Parameters:
 `GET /api/spaces?view=summary` returns paginated explorer tiles. Each item
 contains the public space identity, preview image, first member, distinct member
 count, and place, portal, and offer counts. It accepts `page`, `pageSize`, and
-`q`; search covers the name, description, and Minecraft members.
+`q`; search covers the name, description, and Minecraft members. The optional
+`sort` parameter accepts `name-asc` (default), `name-desc`, `content-asc`, or
+`content-desc`. Content ordering uses the combined place and portal count, then
+the space name.
 
 `GET /api/spaces?view=reference` returns only the spaces manageable by the
 authenticated effective role. It is used by content forms and contains the

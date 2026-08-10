@@ -17,7 +17,8 @@ Domain-specific endpoint documentation:
 Space responses include dynamically derived place and portal summaries and an
 aggregate trade-offer count for their associated map entries. These summaries
 expose ordered Minecraft owners without duplicating ownership, association, or
-offer-count data in the database.
+offer-count data in the database. The paginated explorer can order spaces by
+name or by their combined place and portal count.
 
 Services are autonomous managed content. They reuse map-entry management and
 Minecraft ownership without being associated with a place, world, coordinate,

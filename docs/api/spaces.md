@@ -151,6 +151,9 @@ The public application uses the lighter collection views documented in
 [Public Data Loading API](data-loading.md): `view=summary` for paginated space
 exploration and `view=reference` for authenticated form selectors. Omitting
 `view` keeps this complete collection contract available for compatibility.
+The summary view supports ascending or descending ordering by name or by the
+combined place and portal count. See the data-loading documentation for the
+accepted `sort` values.
 
 **Response:**
 

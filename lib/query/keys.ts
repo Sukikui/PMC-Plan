@@ -9,6 +9,8 @@ export const queryKeys = {
     ['service-list', query, contact] as const
   ),
   spaceDetail: (slug: string) => ['space-detail', slug] as const,
-  spaceList: (query: string) => ['space-list', query] as const,
+  spaceList: (query: string, sort = 'name-asc') => (
+    ['space-list', query, sort] as const
+  ),
   spaceReferences: (role?: string) => ['space-references', role] as const,
 };

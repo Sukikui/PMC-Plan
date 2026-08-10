@@ -9,6 +9,7 @@ import { createSpace, listSpaces } from '@/lib/spaces/service';
 import {
   listManageableSpaceReferences,
   loadSpaceSummaries,
+  parseSpaceSummarySort,
 } from '@/lib/spaces/summary-server';
 import { getSpaceActor, spaceErrorResponse } from './route-utils';
 
@@ -17,8 +18,11 @@ export async function GET(request: NextRequest) {
   if (view === 'summary') {
     const { page, pageSize } = getPagination(request.nextUrl.searchParams);
     const query = request.nextUrl.searchParams.get('q')?.trim() ?? '';
+    const sort = parseSpaceSummarySort(
+      request.nextUrl.searchParams.get('sort'),
+    );
     return NextResponse.json(
-      await loadSpaceSummaries(page, pageSize, query),
+      await loadSpaceSummaries(page, pageSize, query, sort),
     );
   }
   if (view === 'reference') {
