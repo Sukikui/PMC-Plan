@@ -1,7 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from 'react';
-import type React from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FocusEvent,
+  type MouseEvent,
+} from 'react';
 import DestinationPanelContent from '@/components/destination/DestinationPanelContent';
 import DestinationPanelHeader from '@/components/destination/DestinationPanelHeader';
 import type { DestinationCardActions } from '@/components/destination/destination-panel-types';
@@ -17,7 +24,13 @@ import {
   panelScrollFadeStyle,
 } from '@/lib/ui/panel';
 import type { ManualRouteCoordinates, PlayerRoutePosition, RouteData } from '@/lib/route-planning';
-import { toMapWorld, type DestinationType, type SelectDestinationHandler } from '@/lib/destination/selection';
+import {
+  resolveDestinationActivation,
+  toMapWorld,
+  type DestinationInputSource,
+  type DestinationType,
+  type SelectDestinationHandler,
+} from '@/lib/destination/selection';
 
 interface DestinationPanelProps {
   activeMapWorld?: MapWorld;
@@ -44,7 +57,7 @@ export default function DestinationPanel({
   playerPosition,
   manualCoords,
   onRouteChange,
-  onInfoClick
+  onInfoClick,
 }: DestinationPanelProps) {
   const [enabledTags, setEnabledTags] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,20 +124,10 @@ export default function DestinationPanel({
   }, []);
 
 
-  const handleInfoClick = useCallback((event: React.MouseEvent, item: PlaceSummary | PortalSummary, type: DestinationType) => {
+  const handleInfoClick = useCallback((event: MouseEvent, item: PlaceSummary | PortalSummary, type: DestinationType) => {
     event.stopPropagation();
     onInfoClick(item, type);
   }, [onInfoClick]);
-
-  const handleCloseClick = useCallback((event: React.MouseEvent) => {
-      event.stopPropagation();
-      resetSearchHighlight();
-      onPlaceSelect(
-      '',
-      'place',
-      'overworld'
-    );
-  }, [resetSearchHighlight, onPlaceSelect]);
 
   const handlePanelBlur = (event: FocusEvent<HTMLDivElement>) => {
     const nextFocusedElement = event.relatedTarget;
@@ -139,6 +142,7 @@ export default function DestinationPanel({
   const selectedPortal = selectedType === 'portal' && selectedId
     ? portals.find((portal) => portal.id === selectedId)
     : undefined;
+  const selectedDestination = selectedPlace ?? selectedPortal;
   const hasSelectedDestination = Boolean(selectedPlace || selectedPortal);
   const highlightedDestination = filteredDestinations[highlightedDestinationIndex] ?? filteredDestinations[0] ?? null;
   const selectedMatchesHighlightedDestination = Boolean(
@@ -150,11 +154,17 @@ export default function DestinationPanel({
   const isPanelExpanded = isPanelHovered || hasPanelFocus || hasSelectedDestination;
   const contentHeight = `calc(100vh - 2rem - ${MAP_CONTROL_PANEL_COLLAPSED_HEIGHT_PX}px)`;
 
-    const handleDestinationClick = useCallback((
+  const handleCloseClick = useCallback((event: MouseEvent) => {
+    event.stopPropagation();
+    resetSearchHighlight();
+    onPlaceSelect('', selectedType, activeMapWorld);
+  }, [activeMapWorld, onPlaceSelect, resetSearchHighlight, selectedType]);
+
+  const handleDestinationClick = useCallback((
     id: string,
     type: DestinationType,
     world: string,
-    source: 'keyboard' | 'mouse' = 'mouse',
+    source: DestinationInputSource = 'mouse',
   ) => {
     if (source === 'mouse') {
       resetSearchHighlight();
@@ -162,20 +172,20 @@ export default function DestinationPanel({
       setIsSearchHighlightActive(true);
     }
 
-    if (!selectedId) {
-      const destinationWorld = toMapWorld(world);
-      onPlaceSelect(
-        selectedId === id && activeMapWorld === destinationWorld ? '' : id,
-        type,
-        destinationWorld
-      );
-    } else {
-      const item = selectedPlace || selectedPortal;
-      if(item)
-      onInfoClick(item, type)
+    const destinationWorld = toMapWorld(world);
+    const activation = resolveDestinationActivation(source, selectedId, id);
+
+    if (activation === 'open-info') {
+      if (selectedDestination) {
+        onInfoClick(selectedDestination, selectedType);
+      } else {
+        onPlaceSelect('', type, destinationWorld);
+      }
+      return;
     }
 
-  }, [selectedId, resetSearchHighlight, onPlaceSelect, activeMapWorld, selectedPlace, selectedPortal, onInfoClick]);
+    onPlaceSelect(activation === 'clear-selection' ? '' : id, type, destinationWorld);
+  }, [onInfoClick, onPlaceSelect, resetSearchHighlight, selectedDestination, selectedId, selectedType]);
 
   useEffect(() => {
     setHighlightedDestinationIndex(0);
@@ -212,7 +222,7 @@ export default function DestinationPanel({
     onDestinationClick: handleDestinationClick,
     onInfoClick: handleInfoClick,
     onCloseClick: handleCloseClick,
-  }), [handleDestinationClick, handleInfoClick, highlightedDestination, resetSearchHighlight, selectedId, shouldHighlightDestination, handleCloseClick]);
+  }), [handleCloseClick, handleDestinationClick, handleInfoClick, highlightedDestination, resetSearchHighlight, selectedId, shouldHighlightDestination]);
 
   return (
     <Panel

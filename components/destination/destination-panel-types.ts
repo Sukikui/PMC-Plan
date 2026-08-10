@@ -1,6 +1,9 @@
 import type React from 'react';
 import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
-import type { DestinationType } from '@/lib/destination/selection';
+import type {
+  DestinationInputSource,
+  DestinationType,
+} from '@/lib/destination/selection';
 
 export type TagFilterLogic = 'SINGLE' | 'OR' | 'AND';
 
@@ -20,7 +23,7 @@ export type DestinationCardActions = {
     id: string,
     type: DestinationType,
     world: string,
-    source?: 'keyboard' | 'mouse'
+    source?: DestinationInputSource
   ) => void;
   onInfoClick: (
     event: React.MouseEvent,

@@ -1,6 +1,7 @@
 'use client';
 
 import PlusIcon from '@/components/icons/PlusIcon';
+import CrossIcon from '@/components/icons/CrossIcon';
 import IconActionButton from '@/components/ui/IconActionButton';
 import WorldBadge from '@/components/ui/WorldBadge';
 import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
@@ -12,7 +13,6 @@ import {
   type MapIconCategory,
 } from '@/lib/place/categories';
 import type { DestinationCardActions } from './destination-panel-types';
-import CrossIcon from '../icons/CrossIcon';
 
 const DESCRIPTION_PREVIEW_MAX_LENGTH = 180;
 const DESCRIPTION_PREVIEW_MIN_SENTENCE_LENGTH = 40;
@@ -115,6 +115,42 @@ function DestinationCoordinates({
   );
 }
 
+function DestinationCardButtons({
+  actions,
+  isSelected,
+  item,
+  type,
+}: {
+  actions: DestinationCardActions;
+  isSelected: boolean;
+  item: PlaceSummary | PortalSummary;
+  type: 'place' | 'portal';
+}) {
+  return (
+    <>
+      {isSelected ? (
+        <IconActionButton
+          onClick={actions.onCloseClick}
+          className="ml-2 mt-1 flex-shrink-0"
+          borderTone="secondary"
+          aria-label="Fermer"
+        >
+          <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
+        </IconActionButton>
+      ) : (
+        <IconActionButton
+          onClick={(event) => actions.onInfoClick(event, item, type)}
+          className="ml-2 mt-1 flex-shrink-0"
+          borderTone="secondary"
+          aria-label="Plus d'informations"
+        >
+          <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
+        </IconActionButton>
+      )}
+    </>
+  );
+}
+
 export function PlaceDestinationCard({ place, actions }: { place: PlaceSummary; actions: DestinationCardActions }) {
   const isSelected = actions.selectedId === place.id;
   const isHighlighted = actions.shouldHighlightDestination &&
@@ -137,26 +173,12 @@ export function PlaceDestinationCard({ place, actions }: { place: PlaceSummary; 
           <DestinationIcon category={category} />
           <DestinationName name={place.name} space={place.space} />
         </div>
-        <IconActionButton
-          onClick={(event) => actions.onInfoClick(event, place, 'place')}
-          className="ml-2 mt-1 flex-shrink-0"
-          borderTone="secondary"
-          aria-label="Plus d'informations"
-        >
-          <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-        </IconActionButton>
-        {
-          isSelected ? 
-          <IconActionButton
-          onClick={(event) => actions.onCloseClick(event)}
-          className="ml-2 mt-1 flex-shrink-0"
-          borderTone="secondary"
-          aria-label="Fermer"
-          >
-            <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-        </IconActionButton>
-        : null
-        }
+        <DestinationCardButtons
+          actions={actions}
+          isSelected={isSelected}
+          item={place}
+          type="place"
+        />
       </div>
       {isSelected && <DestinationDescription description={place.description} />}
       <DestinationCoordinates world={place.world} coordinates={place.coordinates} address={place.address} />
@@ -200,26 +222,12 @@ export function PortalDestinationCard({ portal, actions }: { portal: PortalSumma
           <DestinationIcon category="portail" />
           <DestinationName name={portal.name} space={portal.space} />
         </div>
-        <IconActionButton
-          onClick={(event) => actions.onInfoClick(event, portal, 'portal')}
-          className="ml-2 mt-1 flex-shrink-0"
-          borderTone="secondary"
-          aria-label="Plus d'informations"
-        >
-          <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-        </IconActionButton>
-        {
-          isSelected ? 
-          <IconActionButton
-          onClick={(event) => actions.onCloseClick(event)}
-          className="ml-2 mt-1 flex-shrink-0"
-          borderTone="secondary"
-          aria-label="Fermer"
-          >
-            <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
-        </IconActionButton>
-        : null
-        }
+        <DestinationCardButtons
+          actions={actions}
+          isSelected={isSelected}
+          item={portal}
+          type="portal"
+        />
       </div>
       {isSelected && <DestinationDescription description={displayDescription} />}
       <DestinationCoordinates world={portal.world} coordinates={portal.coordinates} address={portal.address} />
