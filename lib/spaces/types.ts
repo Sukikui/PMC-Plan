@@ -15,6 +15,11 @@ interface SpaceEditor
 }
 
 export type SpaceLogoBackground = 'color' | 'transparent';
+export type SpaceSummarySort =
+  | 'name-asc'
+  | 'name-desc'
+  | 'content-asc'
+  | 'content-desc';
 
 export interface SpaceReference {
   id: string;

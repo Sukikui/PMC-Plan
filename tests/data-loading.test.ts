@@ -3,7 +3,10 @@ import { loadMapContentUncached } from '@/lib/map-content/server';
 import { listMarketOffers } from '@/lib/market/server';
 import { prisma } from '@/lib/prisma';
 import { listServices } from '@/lib/services/list-server';
-import { listSpaceSummaries } from '@/lib/spaces/summary-server';
+import {
+  listSpaceSummaries,
+  parseSpaceSummarySort,
+} from '@/lib/spaces/summary-server';
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -98,15 +101,33 @@ describe('data-loading projections', () => {
     spaceCount.mockResolvedValue(0);
 
     await listMarketOffers({ page: 2, pageSize: 12, query: 'diamant' });
-    await listSpaceSummaries({ page: 2, pageSize: 8, query: 'suki' });
+    await listSpaceSummaries({
+      page: 2,
+      pageSize: 8,
+      query: 'suki',
+      sort: 'content-desc',
+    });
 
     expect(offerFindMany).toHaveBeenCalledWith(expect.objectContaining({
       skip: 12,
       take: 12,
     }));
     expect(spaceFindMany).toHaveBeenCalledWith(expect.objectContaining({
+      orderBy: [
+        { entries: { _count: 'desc' } },
+        { name: 'asc' },
+        { id: 'asc' },
+      ],
       skip: 8,
       take: 8,
     }));
+  });
+
+  it('normalizes space explorer sort values', () => {
+    expect(parseSpaceSummarySort('name-desc')).toBe('name-desc');
+    expect(parseSpaceSummarySort('content-asc')).toBe('content-asc');
+    expect(parseSpaceSummarySort('content-desc')).toBe('content-desc');
+    expect(parseSpaceSummarySort('unsupported')).toBe('name-asc');
+    expect(parseSpaceSummarySort(null)).toBe('name-asc');
   });
 });

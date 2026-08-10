@@ -4,7 +4,11 @@ import { prisma } from '@/lib/prisma';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
 import { contentCacheTags } from '@/lib/content/cache-tags';
-import type { SpaceReference, SpaceSummary } from './types';
+import type {
+  SpaceReference,
+  SpaceSummary,
+  SpaceSummarySort,
+} from './types';
 import { isAdministrationRole } from '@/lib/admin/roles';
 import { validTradeOfferWhere } from '@/lib/trade/query';
 
@@ -46,17 +50,19 @@ export async function listSpaceSummaries({
   page,
   pageSize,
   query,
+  sort,
 }: {
   page: number;
   pageSize: number;
   query: string;
+  sort: SpaceSummarySort;
 }): Promise<PaginatedResponse<SpaceSummary>> {
   const where = getSummaryWhere(query);
   const [records, total] = await prisma.$transaction([
     prisma.space.findMany({
       where,
       select: summarySelect,
-      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      orderBy: getSummaryOrderBy(sort),
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
@@ -70,12 +76,18 @@ export async function listSpaceSummaries({
 }
 
 const loadCachedSummaries = unstable_cache(
-  (page: number, pageSize: number, query: string) => listSpaceSummaries({
+  (
+    page: number,
+    pageSize: number,
+    query: string,
+    sort: SpaceSummarySort,
+  ) => listSpaceSummaries({
     page,
     pageSize,
     query,
+    sort,
   }),
-  ['space-summaries-v1'],
+  ['space-summaries-v2'],
   { revalidate: 300, tags: [contentCacheTags.spaces] },
 );
 
@@ -83,7 +95,19 @@ export const loadSpaceSummaries = (
   page: number,
   pageSize: number,
   query: string,
-) => loadCachedSummaries(page, pageSize, query);
+  sort: SpaceSummarySort,
+) => loadCachedSummaries(page, pageSize, query, sort);
+
+export function parseSpaceSummarySort(value: string | null): SpaceSummarySort {
+  if (
+    value === 'name-desc'
+    || value === 'content-asc'
+    || value === 'content-desc'
+  ) {
+    return value;
+  }
+  return 'name-asc';
+}
 
 export async function listManageableSpaceReferences(
   userId: string,
@@ -129,6 +153,20 @@ function getSummaryWhere(query: string): Prisma.SpaceWhereInput {
       },
     ],
   };
+}
+
+function getSummaryOrderBy(
+  sort: SpaceSummarySort,
+): Prisma.SpaceOrderByWithRelationInput[] {
+  const orderBy: Prisma.SpaceOrderByWithRelationInput[] = [];
+  if (sort === 'content-asc') {
+    orderBy.push({ entries: { _count: 'asc' } });
+  } else if (sort === 'content-desc') {
+    orderBy.push({ entries: { _count: 'desc' } });
+  }
+  const nameDirection = sort === 'name-desc' ? 'desc' : 'asc';
+  orderBy.push({ name: nameDirection }, { id: 'asc' });
+  return orderBy;
 }
 
 function toSpaceSummary(record: SummaryRecord): SpaceSummary {
