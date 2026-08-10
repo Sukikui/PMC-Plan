@@ -12,6 +12,7 @@ import {
   type MapIconCategory,
 } from '@/lib/place/categories';
 import type { DestinationCardActions } from './destination-panel-types';
+import CrossIcon from '../icons/CrossIcon';
 
 const DESCRIPTION_PREVIEW_MAX_LENGTH = 180;
 const DESCRIPTION_PREVIEW_MIN_SENTENCE_LENGTH = 40;
@@ -144,6 +145,18 @@ export function PlaceDestinationCard({ place, actions }: { place: PlaceSummary; 
         >
           <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
         </IconActionButton>
+        {
+          isSelected ? 
+          <IconActionButton
+          onClick={(event) => actions.onCloseClick(event)}
+          className="ml-2 mt-1 flex-shrink-0"
+          borderTone="secondary"
+          aria-label="Fermer"
+          >
+            <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
+        </IconActionButton>
+        : null
+        }
       </div>
       {isSelected && <DestinationDescription description={place.description} />}
       <DestinationCoordinates world={place.world} coordinates={place.coordinates} address={place.address} />
@@ -195,6 +208,18 @@ export function PortalDestinationCard({ portal, actions }: { portal: PortalSumma
         >
           <PlusIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
         </IconActionButton>
+        {
+          isSelected ? 
+          <IconActionButton
+          onClick={(event) => actions.onCloseClick(event)}
+          className="ml-2 mt-1 flex-shrink-0"
+          borderTone="secondary"
+          aria-label="Fermer"
+          >
+            <CrossIcon className={`w-4 h-4 ${themeColors.text.secondary}`} />
+        </IconActionButton>
+        : null
+        }
       </div>
       {isSelected && <DestinationDescription description={displayDescription} />}
       <DestinationCoordinates world={portal.world} coordinates={portal.coordinates} address={portal.address} />

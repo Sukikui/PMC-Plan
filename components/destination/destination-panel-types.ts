@@ -27,4 +27,5 @@ export type DestinationCardActions = {
     item: PlaceSummary | PortalSummary,
     type: DestinationType
   ) => void;
+  onCloseClick: (event: React.MouseEvent) => void;
 };

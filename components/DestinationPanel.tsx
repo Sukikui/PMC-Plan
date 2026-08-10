@@ -44,7 +44,7 @@ export default function DestinationPanel({
   playerPosition,
   manualCoords,
   onRouteChange,
-  onInfoClick,
+  onInfoClick
 }: DestinationPanelProps) {
   const [enabledTags, setEnabledTags] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -110,30 +110,21 @@ export default function DestinationPanel({
     setHighlightedDestinationIndex(0);
   }, []);
 
-  const handleDestinationClick = useCallback((
-    id: string,
-    type: DestinationType,
-    world: string,
-    source: 'keyboard' | 'mouse' = 'mouse'
-  ) => {
-    if (source === 'mouse') {
-      resetSearchHighlight();
-    } else {
-      setIsSearchHighlightActive(true);
-    }
-
-    const destinationWorld = toMapWorld(world);
-    onPlaceSelect(
-      selectedId === id && activeMapWorld === destinationWorld ? '' : id,
-      type,
-      destinationWorld
-    );
-  }, [activeMapWorld, onPlaceSelect, resetSearchHighlight, selectedId]);
 
   const handleInfoClick = useCallback((event: React.MouseEvent, item: PlaceSummary | PortalSummary, type: DestinationType) => {
     event.stopPropagation();
     onInfoClick(item, type);
   }, [onInfoClick]);
+
+  const handleCloseClick = useCallback((event: React.MouseEvent) => {
+      event.stopPropagation();
+      resetSearchHighlight();
+      onPlaceSelect(
+      '',
+      'place',
+      'overworld'
+    );
+  }, [resetSearchHighlight, onPlaceSelect]);
 
   const handlePanelBlur = (event: FocusEvent<HTMLDivElement>) => {
     const nextFocusedElement = event.relatedTarget;
@@ -158,6 +149,33 @@ export default function DestinationPanel({
   const shouldHighlightDestination = isSearchHighlightActive && hasSearchFocus && !hasSelectedDestination && !loading;
   const isPanelExpanded = isPanelHovered || hasPanelFocus || hasSelectedDestination;
   const contentHeight = `calc(100vh - 2rem - ${MAP_CONTROL_PANEL_COLLAPSED_HEIGHT_PX}px)`;
+
+    const handleDestinationClick = useCallback((
+    id: string,
+    type: DestinationType,
+    world: string,
+    source: 'keyboard' | 'mouse' = 'mouse',
+  ) => {
+    if (source === 'mouse') {
+      resetSearchHighlight();
+    } else {
+      setIsSearchHighlightActive(true);
+    }
+
+    if (!selectedId) {
+      const destinationWorld = toMapWorld(world);
+      onPlaceSelect(
+        selectedId === id && activeMapWorld === destinationWorld ? '' : id,
+        type,
+        destinationWorld
+      );
+    } else {
+      const item = selectedPlace || selectedPortal;
+      if(item)
+      onInfoClick(item, type)
+    }
+
+  }, [selectedId, resetSearchHighlight, onPlaceSelect, activeMapWorld, selectedPlace, selectedPortal, onInfoClick]);
 
   useEffect(() => {
     setHighlightedDestinationIndex(0);
@@ -193,7 +211,8 @@ export default function DestinationPanel({
     onMouseEnter: resetSearchHighlight,
     onDestinationClick: handleDestinationClick,
     onInfoClick: handleInfoClick,
-  }), [handleDestinationClick, handleInfoClick, highlightedDestination, resetSearchHighlight, selectedId, shouldHighlightDestination]);
+    onCloseClick: handleCloseClick,
+  }), [handleDestinationClick, handleInfoClick, highlightedDestination, resetSearchHighlight, selectedId, shouldHighlightDestination, handleCloseClick]);
 
   return (
     <Panel
