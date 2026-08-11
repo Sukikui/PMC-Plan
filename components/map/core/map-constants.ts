@@ -24,7 +24,7 @@ export const MAP_REVEAL_END_BUFFER_MS = 80;
 export const MAP_POINT_BASE_Z_INDEX = 20;
 export const MAP_POINT_HOVER_Z_INDEX = 1000;
 export const MAP_POINT_RENDER_OVERSCAN_PX = 160;
-export const MAP_TILE_MIN_OVERVIEW_PIXEL_SIZE = 2;
+export const MAP_TILE_MIN_OVERVIEW_PIXEL_SIZE = 1.0;
 export const MAP_TILE_FADE_DURATION_MS = 160;
 
 export const getStableRevealDelay = (id: string) => {

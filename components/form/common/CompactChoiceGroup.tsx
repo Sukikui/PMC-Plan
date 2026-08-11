@@ -16,6 +16,11 @@ interface CompactChoiceGroupProps<T extends string> {
   value: T;
 }
 
+export const automaticModeOptions = [
+  { label: 'Automatique', value: 'automatic' },
+  { label: 'Manuel', value: 'manual' },
+] as const;
+
 export default function CompactChoiceGroup<T extends string>({
   ariaLabel,
   className = '',

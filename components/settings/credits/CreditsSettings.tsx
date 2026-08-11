@@ -1,12 +1,22 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { PillActionLink } from '@/components/ui/PillAction';
 import SectionSeparator from '@/components/ui/SectionSeparator';
+import UserAvatar from '@/components/ui/UserAvatar';
+import { queryKeys } from '@/lib/query/keys';
 import { themeColors } from '@/lib/theme-colors';
 import CreditVisual, { BrandMark } from './CreditVisual';
 import { creditGroups, type CreditItem } from './credits-data';
 
-export default function CreditsSettings() {
+export default function CreditsSettings({ active }: { active: boolean }) {
+  const contributorsQuery = useQuery({
+    enabled: active,
+    queryKey: queryKeys.githubContributors,
+    queryFn: fetchGitHubContributors,
+    staleTime: 60 * 60_000,
+  });
+
   return (
     <div>
       {creditGroups.map((group, index) => (
@@ -20,6 +30,28 @@ export default function CreditsSettings() {
           </div>
         </section>
       ))}
+
+      <SectionSeparator className="my-6" />
+      <section>
+        <h3 className={`mb-4 text-sm font-semibold ${themeColors.text.primary}`}>
+          Contributeurs
+        </h3>
+        {contributorsQuery.isPending ? (
+          <p className={`py-3 text-xs ${themeColors.text.tertiary}`}>
+            Chargement...
+          </p>
+        ) : contributorsQuery.isError ? (
+          <p className={`py-3 text-xs ${themeColors.text.tertiary}`}>
+            Contributeurs indisponibles.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-x-8 gap-y-3 py-1">
+            {contributorsQuery.data.map((contributor) => (
+              <ContributorLink key={contributor.login} contributor={contributor} />
+            ))}
+          </div>
+        )}
+      </section>
 
       <SectionSeparator className="my-6" />
       <div className="flex justify-center">
@@ -61,4 +93,45 @@ function CreditRow({ item }: { item: CreditItem }) {
       )}
     </div>
   );
+}
+
+interface GitHubContributor {
+  avatar_url: string;
+  html_url: string;
+  login: string;
+  type: string;
+}
+
+function ContributorLink({ contributor }: { contributor: GitHubContributor }) {
+  return (
+    <a
+      href={contributor.html_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`group inline-flex items-center gap-2 ${themeColors.interactive.focusRing}`}
+    >
+      <UserAvatar
+        src={contributor.avatar_url}
+        alt={`Avatar GitHub de ${contributor.login}`}
+        className="h-8 w-8"
+      />
+      <span className={`text-sm ${themeColors.text.primary} ${themeColors.interactive.groupHoverAccentText}`}>
+        {contributor.login}
+      </span>
+    </a>
+  );
+}
+
+async function fetchGitHubContributors(): Promise<GitHubContributor[]> {
+  const response = await fetch(
+    'https://api.github.com/repos/Sukikui/PMC-Plan/contributors?per_page=100',
+  );
+  if (!response.ok) {
+    throw new Error('Unable to load GitHub contributors.');
+  }
+
+  const contributors = await response.json() as GitHubContributor[];
+  return contributors.filter((contributor) => (
+    contributor.type === 'User' && !contributor.login.endsWith('[bot]')
+  ));
 }

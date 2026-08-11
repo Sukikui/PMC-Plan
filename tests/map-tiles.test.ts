@@ -2,20 +2,32 @@ import { getVisibleMapTiles } from '../components/map/core/map-tiles';
 import {
   getMapWorldSize,
   mapMetadataByWorld,
+  type MapWorld,
 } from '../lib/map/metadata';
 
 describe('tiled map metadata', () => {
-  it('normalizes overview-only and tiled asset paths', () => {
-    expect(mapMetadataByWorld.overworld.overview.image).toBe(
-      '/map/overworld/biomes-16-light.png'
-    );
-    expect(mapMetadataByWorld.nether.overview.image).toBe(
-      '/map/nether/overview.png'
-    );
-    expect(mapMetadataByWorld.nether.tiles?.directory).toBe('/map/nether/tiles');
-  });
+  it.each(['overworld', 'nether'] satisfies MapWorld[])(
+    'normalizes and aligns %s overview and tile assets',
+    (world) => {
+      const metadata = mapMetadataByWorld[world];
+      const tiles = metadata.tiles;
 
-  it('uses the padded Nether raster size', () => {
+      expect(metadata.overview.image).toBe(`/map/${world}/overview.png`);
+      expect(tiles.directory).toBe(`/map/${world}/tiles`);
+      expect(getMapWorldSize(metadata)).toEqual({
+        width: tiles.width * tiles.cellSize,
+        height: tiles.height * tiles.cellSize,
+      });
+      expect(tiles.columns).toBe(Math.ceil(tiles.width / tiles.tileSize));
+      expect(tiles.rows).toBe(Math.ceil(tiles.height / tiles.tileSize));
+    }
+  );
+
+  it('uses the expected padded raster sizes', () => {
+    expect(getMapWorldSize(mapMetadataByWorld.overworld)).toEqual({
+      width: 28672,
+      height: 14336,
+    });
     expect(getMapWorldSize(mapMetadataByWorld.nether)).toEqual({
       width: 20016,
       height: 20016,
@@ -24,7 +36,7 @@ describe('tiled map metadata', () => {
 });
 
 describe('visible map tiles', () => {
-  const tiles = mapMetadataByWorld.nether.tiles!;
+  const tiles = mapMetadataByWorld.nether.tiles;
 
   it('loads the visible area with one tile of overscan', () => {
     const visibleTiles = getVisibleMapTiles(
@@ -38,21 +50,48 @@ describe('visible map tiles', () => {
     expect(visibleTiles[8]).toMatchObject({ column: 2, row: 2 });
   });
 
-  it('returns the real dimensions of partial edge tiles', () => {
+  it.each([
+    {
+      world: 'overworld' as const,
+      finalColumn: 13,
+      finalRow: 6,
+      finalWidth: 512,
+      finalHeight: 512,
+      tileCount: 98,
+    },
+    {
+      world: 'nether' as const,
+      finalColumn: 9,
+      finalRow: 9,
+      finalWidth: 396,
+      finalHeight: 396,
+      tileCount: 100,
+    },
+  ])('returns the real dimensions of $world edge tiles', ({
+    world,
+    finalColumn,
+    finalRow,
+    finalWidth,
+    finalHeight,
+    tileCount,
+  }) => {
+    const worldTiles = mapMetadataByWorld[world].tiles;
     const visibleTiles = getVisibleMapTiles(
-      tiles,
-      { width: 5004, height: 5004 },
-      { left: 0, top: 0, width: 5004, height: 5004 }
+      worldTiles,
+      { width: worldTiles.width, height: worldTiles.height },
+      { left: 0, top: 0, width: worldTiles.width, height: worldTiles.height }
     );
-    const finalTile = visibleTiles.find((tile) => tile.column === 9 && tile.row === 9);
+    const finalTile = visibleTiles.find((tile) => (
+      tile.column === finalColumn && tile.row === finalRow
+    ));
 
-    expect(visibleTiles).toHaveLength(100);
+    expect(visibleTiles).toHaveLength(tileCount);
     expect(finalTile).toEqual({
-      column: 9,
-      row: 9,
-      src: '/map/nether/tiles/9-9.png',
-      width: 396,
-      height: 396,
+      column: finalColumn,
+      row: finalRow,
+      src: `/map/${world}/tiles/${finalColumn}-${finalRow}.png`,
+      width: finalWidth,
+      height: finalHeight,
     });
   });
 

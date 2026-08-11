@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import type { Session } from 'next-auth';
-import InformationCircleIcon from '@/components/icons/InformationCircleIcon';
 import CommonFields from '@/components/form/common/CommonFields';
 import DiscordUrlField from '@/components/form/common/DiscordUrlField';
 import FormActions from '@/components/form/common/FormActions';
 import FormField from '@/components/form/common/FormField';
+import FormHint from '@/components/form/common/FormHint';
 import FormSection from '@/components/form/common/FormSection';
 import { imageUrlPlaceholder } from '@/components/form/common/form-placeholders';
 import { formInputClassName } from '@/components/form/common/form-styles';
@@ -34,7 +34,6 @@ import type {
   SpaceLogoBackground,
   SpaceUser,
 } from '@/lib/spaces/types';
-import { themeColors } from '@/lib/theme-colors';
 import SpaceColorPicker from './SpaceColorPicker';
 import SpaceLogo from './SpaceLogo';
 import SpaceLogoBackgroundSelector from './SpaceLogoBackgroundSelector';
@@ -207,14 +206,11 @@ export default function SpaceForm({
             : undefined}
           primaryManager={primaryManager}
         />
-        <div className={`mt-3 flex items-start gap-2 border-t pt-3 ${themeColors.border.light} ${themeColors.text.tertiary}`}>
-          <InformationCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
-          <p className="text-xs leading-relaxed">
-            Les membres affichés par leur pseudo Minecraft seront
-            automatiquement déterminés à partir des propriétaires des lieux
-            et des portails rattachés à l’espace.
-          </p>
-        </div>
+        <FormHint className="mt-3" separated>
+          Les membres affichés par leur pseudo Minecraft seront automatiquement
+          déterminés à partir des propriétaires des lieux et des portails
+          rattachés à l’espace.
+        </FormHint>
       </FormSection>
 
       <FormActions

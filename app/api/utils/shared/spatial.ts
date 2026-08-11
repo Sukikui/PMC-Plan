@@ -1,4 +1,5 @@
 import type { Portal, PortalWithDistance } from '@/lib/api/types';
+export { convertOverworldToNether } from '@/lib/nether-coordinates';
 
 export function calculateEuclideanDistance(
   x1: number, y1: number, z1: number,
@@ -8,13 +9,6 @@ export function calculateEuclideanDistance(
   const dy = y2 - y1;
   const dz = z2 - z1;
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-export function convertOverworldToNether(x: number, z: number): { x: number; z: number } {
-  return {
-    x: Math.floor(x / 8),
-    z: Math.floor(z / 8),
-  };
 }
 
 export async function findNearestPortals(

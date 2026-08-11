@@ -19,6 +19,7 @@ import type { InteractiveMapPoint, PointRenderMode, ScreenMapPoint } from '../co
 interface MapPointsLayerProps {
   points: ScreenMapPoint[];
   pointRenderMode: PointRenderMode;
+  iconPointIds: ReadonlySet<string>;
   iconScale: number;
   animatePointTransitions: boolean;
   focusedPointId?: string;
@@ -37,6 +38,7 @@ interface MapPointsLayerProps {
 export default function MapPointsLayer({
   points,
   pointRenderMode,
+  iconPointIds,
   iconScale,
   animatePointTransitions,
   focusedPointId,
@@ -54,17 +56,18 @@ export default function MapPointsLayer({
   return (
     <>
       {points.map((point) => {
+        const pointMode = iconPointIds.has(point.id) ? pointRenderMode : 'points';
         const pointShape = isPortalPoint(point) ? 'diamond' : 'circle';
         const isSelectedPoint = focusedPointId === point.id;
         const isRoutePoint = routePointIds?.has(point.id) ?? false;
-        const iconSrc = point.iconSrc && (isSelectedPoint || isRoutePoint || pointRenderMode !== 'points')
+        const iconSrc = point.iconSrc && (isSelectedPoint || isRoutePoint || pointMode !== 'points')
           ? point.iconSrc
           : undefined;
-        const isIconReveal = (isSelectedPoint || isRoutePoint || pointRenderMode === 'icons') && !!iconSrc;
+        const isIconReveal = (isSelectedPoint || isRoutePoint || pointMode === 'icons') && !!iconSrc;
         const isIconExit = !isSelectedPoint && !isRoutePoint &&
-          pointRenderMode === 'icons-to-points' && !!iconSrc;
+          pointMode === 'icons-to-points' && !!iconSrc;
         const isPointRaised = raisedPointId === point.id || isSelectedPoint;
-        const isDimmedRouteIcon = pointRenderMode === 'icons' &&
+        const isDimmedRouteIcon = pointMode === 'icons' &&
           !!routePointIds &&
           !routePointIds.has(point.id);
         const revealDelay = getStableRevealDelay(point.id);

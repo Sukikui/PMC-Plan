@@ -1,8 +1,12 @@
 import { getMapSafeArea } from '../components/map/core/map-panels';
 import { getRouteView } from '../components/map/core/map-route-view';
-import type { MapMetadata } from '../lib/map/metadata';
+import {
+  mapMetadataByWorld,
+  type MapMetadata,
+} from '../lib/map/metadata';
 
 const metadata: MapMetadata = {
+  ...mapMetadataByWorld.nether,
   selectionMin: { x: 0, z: 0 },
   selectionMax: { x: 100, z: 100 },
   gridOrigin: { x: 0, z: 0 },

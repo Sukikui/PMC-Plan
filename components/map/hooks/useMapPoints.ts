@@ -39,17 +39,31 @@ export const useMapPoints = ({
     () => new Map(screenPoints.map((point) => [point.id, point])),
     [screenPoints]
   );
-  const renderedScreenPoints = useMemo(() => screenPoints.filter(({ screen }) => (
-    screen.left >= -MAP_POINT_RENDER_OVERSCAN_PX
-    && screen.left <= viewport.width + MAP_POINT_RENDER_OVERSCAN_PX
-    && screen.top >= -MAP_POINT_RENDER_OVERSCAN_PX
-    && screen.top <= viewport.height + MAP_POINT_RENDER_OVERSCAN_PX
-  )), [screenPoints, viewport.height, viewport.width]);
+  const renderedScreenPoints = useMemo(() => screenPoints.filter((point) => (
+    isPointWithinViewport(point, viewport, MAP_POINT_RENDER_OVERSCAN_PX)
+  )), [screenPoints, viewport]);
+  const visiblePointIds = useMemo(() => new Set(
+    screenPoints
+      .filter((point) => isPointWithinViewport(point, viewport))
+      .map((point) => point.id)
+  ), [screenPoints, viewport]);
 
   return {
     positionedPoints,
     screenPoints,
     renderedScreenPoints,
     screenPointById,
+    visiblePointIds,
   };
 };
+
+const isPointWithinViewport = (
+  point: ScreenMapPoint,
+  viewport: MapViewport,
+  overscan = 0
+) => (
+  point.screen.left >= -overscan
+  && point.screen.left <= viewport.width + overscan
+  && point.screen.top >= -overscan
+  && point.screen.top <= viewport.height + overscan
+);

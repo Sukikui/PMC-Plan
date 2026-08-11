@@ -43,7 +43,7 @@ export const useMapTiles = ({
     typeof performance === 'undefined' ? 0 : performance.now()
   ));
   const visibleTiles = useMemo(() => {
-    if (!enabled || !metadata.tiles) {
+    if (!enabled) {
       return [];
     }
 

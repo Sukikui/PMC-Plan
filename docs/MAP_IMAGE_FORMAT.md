@@ -9,9 +9,7 @@ The complete format has two image levels:
 - one `overview.png` image representing the entire map at low resolution;
 - one `tiles/` directory containing the high-resolution map split into tiles.
 
-The overview is always required. The tile level may be omitted while a world's
-high-resolution assets are not yet available; the metadata structure remains
-the same and the application renders the overview alone.
+Both the overview and tile level are required for every world.
 
 The complete high-resolution image is only an intermediate generation asset. It is replaced by the tiles in the final map assets.
 
@@ -171,8 +169,7 @@ public/map/
 ```
 
 All worlds follow this same convention regardless of their coordinates,
-dimensions, or total tile count. The `tiles/` directory is absent for an
-overview-only world.
+dimensions, or total tile count.
 
 ## World Metadata
 
@@ -224,7 +221,7 @@ The metadata fields have the following meaning:
 - `overview.image`: overview path relative to the world directory;
 - `overview.width` and `overview.height`: overview dimensions in pixels;
 - `overview.cellSize`: overview resolution in Minecraft blocks per pixel;
-- `tiles`: optional high-resolution tile configuration;
+- `tiles`: required high-resolution tile configuration;
 - `tiles.directory`: tile directory relative to the world directory;
 - `tiles.filePattern`: tile naming convention;
 - `tiles.width` and `tiles.height`: complete high-resolution raster dimensions in pixels;
