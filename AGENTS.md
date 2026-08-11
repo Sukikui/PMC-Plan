@@ -50,6 +50,7 @@
 ## Commit & Pull Request Guidelines
 - Commit style: Conventional Commits (`feat:`, `fix:`, `chore:`, optional scope like `fix(ui): ...`).
 - PRs: Include clear description, linked issues, and screenshots/GIFs for UI changes. Note data model or place/portal ID changes.
+- PR descriptions must cover only the actual content changes. Do not add sections or bullet points about builds, tests, quality checks, validation, or executed commands unless the user explicitly requests them.
 - Checks: Ensure `npm run check:quality` and `npm run build` pass. Coverage baselines must never decrease.
 
 ## Security & Configuration Tips
