@@ -12,10 +12,21 @@
     "x": -7168,
     "z": -7168
   },
+  "fallbackBackground": "#27242a",
   "overview": {
-    "image": "biomes-16-light.png",
+    "image": "overview.png",
     "width": 1792,
     "height": 896,
     "cellSize": 16
+  },
+  "tiles": {
+    "directory": "tiles",
+    "filePattern": "{column}-{row}.png",
+    "width": 7168,
+    "height": 3584,
+    "cellSize": 4,
+    "tileSize": 512,
+    "columns": 14,
+    "rows": 7
   }
 }

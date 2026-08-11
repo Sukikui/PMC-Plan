@@ -35,7 +35,7 @@ export const drawMapRaster = (
     return false;
   }
 
-  if (!metadata.tiles || mapTiles.length === 0) {
+  if (mapTiles.length === 0) {
     return true;
   }
 

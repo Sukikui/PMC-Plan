@@ -1,4 +1,5 @@
 export const queryKeys = {
+  githubContributors: ['github-contributors'] as const,
   mapContent: ['map-content'] as const,
   mapEntryDetail: (type: 'place' | 'portal', mapEntryId: string) => (
     ['map-entry-detail', type, mapEntryId] as const

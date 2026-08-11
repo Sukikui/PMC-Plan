@@ -15,6 +15,10 @@ import CommonFields from '../common/CommonFields';
 import FormSection from '../common/FormSection';
 import SpaceAssociationField from '../association/SpaceAssociationField';
 import { NetherAddressField, useNetherAddress } from '../nether/NetherAddressField';
+import {
+  NetherCoordinatesField,
+  useNetherCoordinates,
+} from '../nether/NetherCoordinatesField';
 import MapEntryManagementFields from '../management/MapEntryManagementFields';
 import {
   emptyMapEntryDraft,
@@ -107,7 +111,11 @@ export default function PortalForm({
   const [singleCoords, setSingleCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
 
   const [overworldCoords, setOverworldCoords] = useState<CoordinatesInput>(initialData?.overworldCoordinates ? { x: String(initialData.overworldCoordinates.x), y: String(initialData.overworldCoordinates.y), z: String(initialData.overworldCoordinates.z) } : blankCoords);
-  const [netherCoords, setNetherCoords] = useState<CoordinatesInput>(initialData?.netherCoordinates ? { x: String(initialData.netherCoordinates.x), y: String(initialData.netherCoordinates.y), z: String(initialData.netherCoordinates.z) } : blankCoords);
+  const netherCoordinates = useNetherCoordinates({
+    initialValue: initialData?.netherCoordinates,
+    overworldCoordinates: overworldCoords,
+  });
+  const netherCoords = netherCoordinates.value;
 
   const [managementDraft, setManagementDraft] = useState(emptyMapEntryDraft);
   const [managementReady, setManagementReady] = useState(mode === 'add');
@@ -235,11 +243,7 @@ export default function PortalForm({
         'Coordonnées overworld',
       )}
       <div className="space-y-3">
-        {renderCoordinateInputs(
-          netherCoords,
-          setNetherCoords,
-          'Coordonnées nether',
-        )}
+        <NetherCoordinatesField coordinates={netherCoordinates} />
         <NetherAddressField
           address={netherAddress}
           label={NETHER_ADDRESS_LABEL}

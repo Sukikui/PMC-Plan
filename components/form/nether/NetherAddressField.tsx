@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import CompactChoiceGroup, { automaticModeOptions } from '../common/CompactChoiceGroup';
 import { themeColors } from '@/lib/theme-colors';
 import { CoordinatesInput, parseCoordinateTriplet } from '../common/form-utils';
 import {
@@ -31,6 +38,11 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
+  const { x, y, z } = coords;
+  const parsedCoords = useMemo(
+    () => parseCoordinateTriplet({ x, y, z }),
+    [x, y, z],
+  );
 
   const requestAddress = useCallback(async (parsedCoords: { x: number; y: number; z: number }) => {
     requestId.current += 1;
@@ -70,7 +82,6 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
       return;
     }
 
-    const parsedCoords = parseCoordinateTriplet(coords);
     if (!parsedCoords) {
       setError('Coordonnées invalides');
       return;
@@ -78,7 +89,7 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
 
     setManual(false);
     requestAddress(parsedCoords);
-  }, [coords, enabled, requestAddress]);
+  }, [enabled, parsedCoords, requestAddress]);
 
   useEffect(() => {
     if (!enabled) {
@@ -94,7 +105,6 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
       return;
     }
 
-    const parsedCoords = parseCoordinateTriplet(coords);
     if (!parsedCoords) {
       requestId.current += 1;
       setLoading(false);
@@ -103,7 +113,7 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
     }
 
     requestAddress(parsedCoords);
-  }, [coords, enabled, manual, requestAddress]);
+  }, [enabled, manual, parsedCoords, requestAddress]);
 
   return {
     value,
@@ -132,35 +142,16 @@ export function NetherAddressField({ label, address }: NetherAddressFieldProps) 
         onChange={(event) => address.setValue(event.target.value)}
         disabled={!address.manual}
       />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            if (address.manual) {
-              address.setManual(false);
-            }
-            address.recompute();
-          }}
-          className={`${themeColors.toggle.compactBase} ${
-            !address.manual
-              ? themeColors.toggle.activeBlue
-              : themeColors.toggle.inactive
-          }`}
-        >
-          Automatique
-        </button>
-        <button
-          type="button"
-          onClick={() => address.setManual(true)}
-          className={`${themeColors.toggle.compactBase} ${
-            address.manual
-              ? themeColors.toggle.activeBlue
-              : themeColors.toggle.inactive
-          }`}
-        >
-          Manuel
-        </button>
-      </div>
+      <CompactChoiceGroup
+        ariaLabel="Mode de saisie de l’adresse Nether"
+        onChange={(value) => {
+          const manual = value === 'manual';
+          address.setManual(manual);
+          if (!manual) address.recompute();
+        }}
+        options={automaticModeOptions}
+        value={address.manual ? 'manual' : 'automatic'}
+      />
       <div className="flex items-center gap-2 text-xs">
         {address.loading && <span className={themeColors.text.tertiary}>Calcul de l&#39;adresse…</span>}
         {address.error && <span className={themeColors.feedback.errorText}>{address.error}</span>}

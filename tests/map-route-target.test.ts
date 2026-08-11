@@ -3,7 +3,10 @@ import {
   getRouteLabelPoints,
 } from '../components/map/core/map-route-target';
 import type { ScreenMapPoint } from '../components/map/core/map-types';
-import type { MapMetadata } from '../lib/map/metadata';
+import {
+  mapMetadataByWorld,
+  type MapMetadata,
+} from '../lib/map/metadata';
 import type { MapRouteMarker, MapRouteSegment } from '../lib/map/route-path';
 
 describe('active map route points', () => {
@@ -52,6 +55,7 @@ describe('active map route points', () => {
 });
 
 const metadata: MapMetadata = {
+  ...mapMetadataByWorld.nether,
   selectionMin: { x: 0, z: 0 },
   selectionMax: { x: 100, z: 100 },
   gridOrigin: { x: 0, z: 0 },

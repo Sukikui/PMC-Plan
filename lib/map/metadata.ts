@@ -29,14 +29,14 @@ export interface MapMetadata {
   selectionMax: MapCoordinate;
   gridOrigin: MapCoordinate;
   overview: MapOverviewMetadata;
-  tiles?: MapTilesMetadata;
+  tiles: MapTilesMetadata;
   fallbackBackground?: string;
 }
 
 interface StoredMapMetadata extends Omit<MapMetadata, 'overview' | 'tiles'> {
   formatVersion: number;
   overview: MapOverviewMetadata;
-  tiles?: MapTilesMetadata;
+  tiles: MapTilesMetadata;
 }
 
 export const OVERWORLD_MAP_WORLD = 'overworld';
@@ -88,12 +88,10 @@ function normalizeMapMetadata(
       ...rawMetadata.overview,
       image: resolveMapAssetPath(world, rawMetadata.overview.image),
     },
-    tiles: rawMetadata.tiles
-      ? {
-          ...rawMetadata.tiles,
-          directory: resolveMapAssetPath(world, rawMetadata.tiles.directory),
-        }
-      : undefined,
+    tiles: {
+      ...rawMetadata.tiles,
+      directory: resolveMapAssetPath(world, rawMetadata.tiles.directory),
+    },
   };
 }
 

@@ -9,6 +9,8 @@ import {
 import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
 import type { InteractiveMapPoint, ScreenMapPoint } from '../core/map-types';
 
+type MapZoomDirection = 'in' | 'out' | null;
+
 interface UseMapInteractionsParams {
   isBlocked: boolean;
   viewportRef: React.RefObject<HTMLDivElement | null>;
@@ -39,7 +41,7 @@ export const useMapInteractions = ({
   onPointSelect,
 }: UseMapInteractionsParams) => {
   const [isPanning, setIsPanning] = useState(false);
-  const [isZooming, setIsZooming] = useState(false);
+  const [zoomDirection, setZoomDirection] = useState<MapZoomDirection>(null);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
   const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
   const pendingPointSelectRef = useRef<InteractiveMapPoint | null>(null);
@@ -79,11 +81,11 @@ export const useMapInteractions = ({
     if (nextZoom === currentZoom) return;
 
     startMapInteraction();
-    setIsZooming(true);
+    setZoomDirection(nextZoom > currentZoom ? 'in' : 'out');
     if (zoomEndTimeoutRef.current) clearTimeout(zoomEndTimeoutRef.current);
     zoomEndTimeoutRef.current = setTimeout(() => {
       zoomEndTimeoutRef.current = null;
-      setIsZooming(false);
+      setZoomDirection(null);
     }, WHEEL_ZOOM_IDLE_DELAY_MS);
 
     const rect = viewportRef.current.getBoundingClientRect();
@@ -159,7 +161,8 @@ export const useMapInteractions = ({
 
   return {
     isPanning,
-    isZooming,
+    isZooming: zoomDirection !== null,
+    zoomDirection,
     handleWheel,
     handlePointerDown,
     handlePointerMove,

@@ -19,7 +19,8 @@ export const suggestionOptionClass = `w-full text-left ${themeColors.transition}
 export const renderCoordinateInputs = (
   coords: CoordinatesInput,
   setCoords: React.Dispatch<React.SetStateAction<CoordinatesInput>>,
-  label?: string
+  label?: string,
+  disabled = false,
 ) => (
   <div className="space-y-1">
     {label && <label className={formFieldLabelClassName}>{label}</label>}
@@ -29,10 +30,11 @@ export const renderCoordinateInputs = (
           key={axis}
           type="number"
           inputMode="numeric"
-          className={formInputClassName}
+          className={`${formInputClassName} ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
           placeholder={axis.toUpperCase()}
           value={coords[axis]}
           onChange={(event) => setCoords((prev) => ({ ...prev, [axis]: event.target.value }))}
+          disabled={disabled}
         />
       ))}
     </div>

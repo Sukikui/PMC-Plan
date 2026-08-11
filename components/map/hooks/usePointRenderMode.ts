@@ -6,6 +6,21 @@ import {
 } from '../core/map-constants';
 import type { PointRenderMode } from '../core/map-types';
 
+interface ViewportIconState {
+  pointIds: ReadonlySet<string>;
+  zoom: number;
+  resetKey: string;
+}
+
+interface ViewportIconUpdate {
+  visiblePointIds: ReadonlySet<string>;
+  zoom: number;
+  zoomDirection: 'in' | 'out' | null;
+  showPointIcons: boolean;
+  pointRenderMode: PointRenderMode;
+  resetKey: string;
+}
+
 export const usePointRenderMode = (showPointIcons: boolean, resetKey: string) => {
   const [pointRenderMode, setPointRenderMode] = useState<PointRenderMode>(
     showPointIcons ? 'icons' : 'points'
@@ -70,4 +85,36 @@ export const usePointRenderMode = (showPointIcons: boolean, resetKey: string) =>
     pointRenderMode,
     animatePointTransitions,
   };
+};
+
+export const useViewportPointIcons = (update: ViewportIconUpdate) => {
+  const stateRef = useRef<ViewportIconState>({
+    pointIds: update.showPointIcons ? update.visiblePointIds : new Set(),
+    zoom: update.zoom,
+    resetKey: update.resetKey,
+  });
+
+  stateRef.current = getNextViewportIconState(stateRef.current, update);
+  return stateRef.current.pointIds;
+};
+
+export const getNextViewportIconState = (
+  previous: ViewportIconState,
+  update: ViewportIconUpdate
+): ViewportIconState => {
+  const reset = previous.resetKey !== update.resetKey;
+  const isZoomingOut = !reset && (
+    update.zoomDirection === 'out' || update.zoom < previous.zoom
+  );
+  let pointIds = previous.pointIds;
+
+  if (reset) {
+    pointIds = update.showPointIcons ? update.visiblePointIds : new Set();
+  } else if (update.showPointIcons && !isZoomingOut) {
+    pointIds = update.visiblePointIds;
+  } else if (update.pointRenderMode === 'points') {
+    pointIds = new Set();
+  }
+
+  return { pointIds, zoom: update.zoom, resetKey: update.resetKey };
 };

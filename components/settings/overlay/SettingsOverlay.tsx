@@ -82,7 +82,7 @@ export default function SettingsOverlay({
     () => [
       { id: 'account' as const, label: 'Compte' },
       { id: 'appearance' as const, label: 'Apparence' },
-      { id: 'credits' as const, label: 'Tech Stack' },
+      { id: 'credits' as const, label: 'Crédits' },
       ...(hasAdminAccess
         ? [{ id: 'admin' as const, label: 'Administration' }]
         : []),
@@ -130,7 +130,9 @@ export default function SettingsOverlay({
                 {tab.id === 'appearance' && (
                   <AppearanceSettings theme={theme} onThemeChange={onThemeChange} />
                 )}
-                {tab.id === 'credits' && <CreditsSettings />}
+                {tab.id === 'credits' && (
+                  <CreditsSettings active={activeTab === 'credits'} />
+                )}
                 {tab.id === 'admin' && (
                   <AdminSettings
                     onTransferRequired={openTransfer}

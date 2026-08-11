@@ -27,10 +27,9 @@ import { useMapRoutePoints } from '../hooks/useMapRoutePoints';
 import { useMapTiles } from '../hooks/useMapTiles';
 import { useMapTooltip } from '../hooks/useMapTooltip';
 import { useMapView } from '../hooks/useMapView';
-import { usePointRenderMode } from '../hooks/usePointRenderMode';
+import { usePointRenderMode, useViewportPointIcons } from '../hooks/usePointRenderMode';
 import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
 import type { InteractiveMapPoint, ScreenMapPoint } from '../core/map-types';
-;
 interface InteractiveMapRendererProps {
   metadata: MapMetadata;
   points: InteractiveMapPoint[];
@@ -46,7 +45,6 @@ interface InteractiveMapRendererProps {
   linkedMinecraftUuid?: string | null;
   onPointSelect?: (point: InteractiveMapPoint) => void;
 }
-
 type MapViewSnapshot = {
   zoom: number;
   pan: MapPan;
@@ -80,10 +78,7 @@ export default function InteractiveMapRenderer({
     enabled: view.mapCellPixelSize >= MAP_TILE_MIN_OVERVIEW_PIXEL_SIZE,
   });
   const showPointIcons = view.mapCellPixelSize >= ICON_MIN_MAP_CELL_PIXEL_SIZE;
-  const {
-    pointRenderMode,
-    animatePointTransitions,
-  } = usePointRenderMode(showPointIcons, world);
+  const { pointRenderMode, animatePointTransitions } = usePointRenderMode(showPointIcons, world);
   const isWorldSwitching = previousWorldRef.current !== world;
   const effectivePointRenderMode = isWorldSwitching
     ? (showPointIcons ? 'icons' : 'points')
@@ -173,7 +168,14 @@ export default function InteractiveMapRenderer({
     onMapMoveStart: handleMapMoveStart,
     onPointSelect,
   });
-
+  const iconPointIds = useViewportPointIcons({
+    visiblePointIds: pointsState.visiblePointIds,
+    zoom: view.zoom,
+    zoomDirection: interactions.zoomDirection,
+    showPointIcons,
+    pointRenderMode: effectivePointRenderMode,
+    resetKey: world,
+  });
   useLayoutEffect(() => {
     const previousWorld = previousWorldRef.current;
     if (previousWorld === world) {
@@ -319,6 +321,7 @@ export default function InteractiveMapRenderer({
           <MapPointsLayer
             points={pointsState.renderedScreenPoints}
             pointRenderMode={effectivePointRenderMode}
+            iconPointIds={iconPointIds}
             iconScale={iconScale}
             animatePointTransitions={animatePointTransitions && !isWorldSwitching}
             focusedPointId={effectiveFocusedPointId}
