@@ -25,6 +25,7 @@
     "db:stop": "docker compose stop database",
     "db:generate": "dotenv -e .env.local -e .env.development.local -o -- node scripts/database/run-local-prisma.mjs generate",
     "db:apply": "dotenv -e .env.local -e .env.development.local -o -- node scripts/database/run-local-prisma.mjs migrate deploy",
+    "db:check": "dotenv -e .env.local -e .env.development.local -o -- node scripts/database/run-local-prisma.mjs migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
     "db:migrate": "dotenv -e .env.local -e .env.development.local -o -- node scripts/database/run-local-prisma.mjs migrate dev",
     "db:pull": "dotenv -e .env.local -e .env.development.local -o -- node scripts/database/snapshot.mjs pull && npm run db:reset",
     "db:reset": "dotenv -e .env.local -e .env.development.local -o -- node scripts/database/snapshot.mjs restore && npm run db:apply && npm run db:bootstrap && npm run db:verify",

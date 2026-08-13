@@ -138,6 +138,7 @@ overlay, authorization, or map behavior.
 | `npm run check:quality` | Run linting, types, dead-code analysis, tests, and coverage thresholds. |
 | `npm run build` | Create the production build. |
 | `npm run db:migrate -- --name <name>` | Create and apply a local schema migration. |
+| `npm run db:check` | Verify that the local database matches the Prisma schema. |
 | `npm run db:pull` | Download the latest private snapshot and restore it locally. |
 | `npm run db:reset` | Restore the last downloaded snapshot without network access. |
 | `npm run db:studio` | Open Prisma Studio against the local database. |

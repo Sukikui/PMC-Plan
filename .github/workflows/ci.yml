@@ -112,10 +112,7 @@ jobs:
     - name: 🔎 Verify schema and development identity
       run: |
         npm run db:verify
-        npx prisma migrate diff \
-          --from-schema-datasource prisma/schema.prisma \
-          --to-schema-datamodel prisma/schema.prisma \
-          --exit-code
+        npm run db:check
 
   build:
     name: Build

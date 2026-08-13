@@ -34,7 +34,7 @@
 - `npm run check:unused`: Detect unused code and dependencies in both repository and production graphs.
 - `npm run check:security`: Audit all dependencies for high or critical vulnerabilities.
 - `npm run check:quality`: Run linting, type checking, dead-code analysis, tests, and coverage thresholds.
-- Database: `npm run db:start`, `npm run db:stop`, `npm run db:pull`, `npm run db:reset`, `npm run db:migrate`, and `npm run db:studio`.
+- Database: `npm run db:start`, `npm run db:stop`, `npm run db:pull`, `npm run db:reset`, `npm run db:migrate`, `npm run db:check`, and `npm run db:studio`.
 
 ## Coding Style & Naming Conventions
 - Node.js 24 LTS; TypeScript strict mode; React 19; Next.js 16 App Router.

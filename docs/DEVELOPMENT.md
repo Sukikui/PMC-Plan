@@ -148,13 +148,15 @@ npm run db:stop
 npm run db:pull
 npm run db:apply
 npm run db:migrate -- --name describe_the_change
+npm run db:check
 npm run db:reset
 npm run db:verify
 npm run db:studio
 ```
 
 `db:migrate` creates and applies migrations after editing `schema.prisma`.
-Commit the complete generated migration directory with the schema change.
+`db:check` verifies that the local database matches that schema. Commit the
+complete generated migration directory with the schema change.
 
 `db:pull` downloads the latest shared baseline and immediately restores it.
 `db:reset` restores the last downloaded archive without network access. Both
