@@ -13,16 +13,9 @@
   <a href="https://www.prisma.io/"><img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&amp;logoColor=white" alt="Prisma 7"></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 17"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&amp;logoColor=white" alt="Tailwind CSS 4"></a>
-  <a href="https://authjs.dev/"><img src="https://img.shields.io/badge/Auth.js-5_beta-7C3AED" alt="Auth.js 5 beta"></a>
-  <a href="https://tanstack.com/query/latest"><img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&amp;logoColor=white" alt="TanStack Query 5"></a>
-  <a href="https://zod.dev/"><img src="https://img.shields.io/badge/Zod-4-3E67B1?logo=zod&amp;logoColor=white" alt="Zod 4"></a>
 </p>
 
 <p>
-  <a href="https://www.npmjs.com/"><img src="https://img.shields.io/badge/npm-package_manager-CB3837?logo=npm&amp;logoColor=white" alt="npm package manager"></a>
-  <a href="https://jestjs.io/"><img src="https://img.shields.io/badge/Jest-30-C21325?logo=jest&amp;logoColor=white" alt="Jest 30"></a>
-  <a href="https://eslint.org/"><img src="https://img.shields.io/badge/ESLint-9-4B32C3?logo=eslint&amp;logoColor=white" alt="ESLint 9"></a>
-  <a href="https://knip.dev/"><img src="https://img.shields.io/badge/Knip-6-F7B93E" alt="Knip 6"></a>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-local_development-2496ED?logo=docker&amp;logoColor=white" alt="Docker development environment"></a>
   <a href="https://supabase.com/"><img src="https://img.shields.io/badge/Database-Supabase-3FCF8E?logo=supabase&amp;logoColor=white" alt="Database hosted on Supabase"></a>
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Deployed_on-Vercel-000000?logo=vercel&amp;logoColor=white" alt="Deployed on Vercel"></a>
@@ -34,7 +27,6 @@
   <a href="https://modrinth.com/plugin/mineverify"><img src="https://img.shields.io/badge/Plugin-MineVerify-1BD96A?logo=modrinth&amp;logoColor=white" alt="MineVerify plugin"></a>
   <a href="https://modrinth.com/plugin/biomemap"><img src="https://img.shields.io/badge/Plugin-BiomeMap-1BD96A?logo=modrinth&amp;logoColor=white" alt="BiomeMap plugin"></a>
   <a href="https://mcheads.org/"><img src="https://img.shields.io/badge/API-MC_Heads-8B5CF6" alt="MC Heads API"></a>
-  <a href="https://mcasset.cloud/"><img src="https://img.shields.io/badge/Assets-mcasset.cloud-EF8E21" alt="Minecraft assets from mcasset.cloud"></a>
 </p>
 
 Web application integrating interactive map, itinerary planner, and community directory for the French
