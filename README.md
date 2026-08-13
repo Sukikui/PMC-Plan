@@ -23,7 +23,7 @@
   <a href="https://mcheads.org/"><img src="https://img.shields.io/badge/API-MC_Heads-8B5CF6" alt="MC Heads API"></a>
 </p>
 
-Web application integrating interactive map, itinerary planner, and community directory for the French
+Collaborative and open-source web application integrating interactive map, itinerary planner, and community directory for the French
 Minecraft server [Play-MC.fr](https://play-mc.fr).
 
 </div>
