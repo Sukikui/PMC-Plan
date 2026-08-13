@@ -1,4 +1,4 @@
-import type { Role } from '@prisma/client';
+import type { Role } from '@/generated/prisma/client';
 import type { MapEntryManagement } from '@/lib/map-entry/types';
 
 export const PRIMARY_MANAGEMENT_TRANSFER_REQUIRED =

@@ -1,4 +1,3 @@
-import { unstable_cache } from 'next/cache';
 import {
   loadPlaceByMapEntryId,
   loadPortalByMapEntryId,
@@ -7,13 +6,15 @@ import {
   contentCacheTags,
   mapEntryDetailCacheTag,
 } from '@/lib/content/cache-tags';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
+import type { Place, Portal } from '@/lib/api/types';
 
 export function loadMapEntryDetail(
   type: 'place' | 'portal',
   mapEntryId: string,
 ) {
-  return unstable_cache(
-    () => type === 'place'
+  return cacheDatabaseQuery(
+    (): Promise<Place | Portal | null> => type === 'place'
       ? loadPlaceByMapEntryId(mapEntryId)
       : loadPortalByMapEntryId(mapEntryId),
     ['map-entry-detail-v1', type, mapEntryId],

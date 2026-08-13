@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { canContribute } from '@/lib/content-permissions';
 import { createMapEntry, MapEntryError } from '@/lib/map-entry/service';
 import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(portals);
 
   } catch (error) {
-    return handleError(error, 'Unexpected server error');
+    return handleError(error, 'Impossible de charger les portails.');
   }
 }
 

@@ -1,5 +1,4 @@
-import type { Prisma, ServiceContactType } from '@prisma/client';
-import { unstable_cache } from 'next/cache';
+import type { Prisma, ServiceContactType } from '@/generated/prisma/client';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
 import { contentCacheTags } from '@/lib/content/cache-tags';
@@ -7,6 +6,7 @@ import { discordIdentitySelect, toPublicDiscordIdentity } from '@/lib/discord-us
 import { prioritizePrimaryManagerOwner } from '@/lib/map-entry/owners';
 import { prisma } from '@/lib/prisma';
 import type { ServiceListItem } from './types';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 
 const listInclude = {
   mapEntry: {
@@ -57,7 +57,7 @@ export async function listServices({
   };
 }
 
-const loadCachedServices = unstable_cache(
+const loadCachedServices = cacheDatabaseQuery(
   (
     contactType: ServiceContactType | null,
     page: number,

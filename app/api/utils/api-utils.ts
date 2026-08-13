@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 export function handleError(error: unknown, message: string) {
+  if (error instanceof z.ZodError) {
+    return NextResponse.json(
+      { error: error.issues[0]?.message ?? 'Requête invalide.' },
+      { status: 400 },
+    );
+  }
+
   console.error(message, error);
   return NextResponse.json(
     { error: message },

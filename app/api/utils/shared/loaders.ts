@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_PLACE_CATEGORY, isPlaceCategory } from '@/lib/place/categories';
 import { normalizePlaceImages } from '@/lib/place/images';

@@ -40,20 +40,20 @@ describe('API Endpoints', () => {
       expect(typeof data.nearestStop.distance).toBe('number');
     });
 
-    it('should return 500 for missing coordinates', async () => {
+    it('should return 400 for missing coordinates', async () => {
       const url = new URL('http://localhost:3000/api/nether-address?x=100');
       const request = new NextRequest(url);
       
       const response = await GET(request);
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
     });
 
-    it('should return 500 for invalid coordinates', async () => {
+    it('should return 400 for invalid coordinates', async () => {
       const url = new URL('http://localhost:3000/api/nether-address?x=invalid&y=70&z=100');
       const request = new NextRequest(url);
       
       const response = await GET(request);
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
     });
   });
 
@@ -112,12 +112,12 @@ describe('API Endpoints', () => {
       });
     });
 
-    it('should return 500 for invalid world', async () => {
+    it('should return 400 for invalid world', async () => {
       const url = new URL('http://localhost:3000/api/nearest-portals?x=0&y=70&z=0&world=invalid');
       const request = new NextRequest(url);
       
       const response = await getNearestPortals(request);
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
     });
   });
 

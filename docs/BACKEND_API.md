@@ -36,6 +36,9 @@ Calculates the nether address for a portal location based on X, Y, and Z coordin
 - `y` (number) - Y coordinate in the nether
 - `z` (number) - Z coordinate in the nether
 
+Missing or invalid query parameters return HTTP `400`. Unexpected server
+failures return HTTP `500`.
+
 #### Key Functions Used
 - `parseQueryParams()` in `app/api/utils/api-utils.ts`
 - `handleError()` in `app/api/utils/api-utils.ts`
@@ -107,6 +110,9 @@ Finds nearest portals from a location, ordered by distance.
 - `max_distance` (number, optional) - Maximum distance filter in blocks
 - `world` (string, optional) - World to search in (`overworld` or `nether`, default: `overworld`)
 
+Missing or invalid query parameters return HTTP `400`. Unexpected server
+failures return HTTP `500`.
+
 #### Key Functions Used
 - `parseQueryParams()` in `app/api/utils/api-utils.ts`
 - `handleError()` in `app/api/utils/api-utils.ts`
@@ -157,6 +163,9 @@ Finds the linked portal in the opposite dimension using Minecraft's 8:1 conversi
 - `from_y` (number) - Y coordinate of source portal
 - `from_z` (number) - Z coordinate of source portal
 - `from_world` (string) - World of the source portal (`overworld` or `nether`)
+
+Missing or invalid query parameters return HTTP `400`. Unexpected server
+failures return HTTP `500`.
 
 #### Key Functions Used
 - `parseQueryParams()` in `app/api/utils/api-utils.ts`

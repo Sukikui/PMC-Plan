@@ -14,7 +14,6 @@ export default tseslint.config(
       "coverage/**",
       "jest.config.cjs",
       "postcss.config.cjs",
-      "tailwind.config.cjs",
       "tests/**",
       ".github/**",
     ],
@@ -43,7 +42,8 @@ export default tseslint.config(
     },
     rules: {
       ...reactPlugin.configs.recommended.rules,
-      ...reactHooksPlugin.configs.recommended.rules,
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       "react/no-unknown-property": ["error", { "ignore": ["jsx"] }]
@@ -56,6 +56,17 @@ export default tseslint.config(
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,
       "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
+    files: [
+      "scripts/**/*.{js,mjs,cjs}",
+      "prisma/**/*.{js,mjs,cjs,ts}",
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
     },
   },
   {

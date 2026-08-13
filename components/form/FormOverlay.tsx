@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ContentOverlayFrame from '@/components/overlay/ContentOverlayFrame';
 import OverlayHeader from '@/components/ui/OverlayHeader';

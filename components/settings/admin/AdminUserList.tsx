@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Role } from '@prisma/client';
+import type { Role } from '@/generated/prisma/client';
 import {
   PRIMARY_MANAGEMENT_TRANSFER_REQUIRED,
   type AdminUserRoleFilter,

@@ -1,4 +1,4 @@
-import { revalidateTag } from 'next/cache';
+import { revalidateDatabaseCacheTag } from '@/lib/cache/database-cache';
 
 export const contentCacheTags = {
   map: 'public-map-content',
@@ -22,7 +22,7 @@ export const serviceDetailCacheTag = (slug: string) => (
 );
 
 function invalidateContentCache(tags: string[]) {
-  new Set(tags).forEach((tag) => revalidateTag(tag));
+  new Set(tags).forEach(revalidateDatabaseCacheTag);
 }
 
 export function invalidateMapEntryPublicData(

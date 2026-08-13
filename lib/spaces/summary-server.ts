@@ -1,5 +1,4 @@
-import type { Prisma } from '@prisma/client';
-import { unstable_cache } from 'next/cache';
+import type { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
@@ -11,6 +10,7 @@ import type {
 } from './types';
 import { isAdministrationRole } from '@/lib/admin/roles';
 import { validTradeOfferWhere } from '@/lib/trade/query';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 
 const summarySelect = {
   id: true,
@@ -75,7 +75,7 @@ export async function listSpaceSummaries({
   };
 }
 
-const loadCachedSummaries = unstable_cache(
+const loadCachedSummaries = cacheDatabaseQuery(
   (
     page: number,
     pageSize: number,

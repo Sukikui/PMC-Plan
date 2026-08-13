@@ -142,3 +142,9 @@ and potentially several application instances:
 
 The durable account identity is stored in `MinecraftProfile`. The optional unique
 relation to `User` represents the active PMC Plan account link.
+
+## Local Testing
+
+The Paper installation, per-developer token, plugin configuration, connectivity
+check, and complete in-game verification flow are documented in
+[Local Development](../DEVELOPMENT.md#testing-mineverify-locally).

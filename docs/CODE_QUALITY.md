@@ -28,6 +28,13 @@ TypeScript additionally rejects unused locals, parameters, labels, and
 syntactically unreachable code, so dead implementation details cannot remain
 hidden inside otherwise referenced modules.
 
+## Dependency security
+
+`npm run check:security` audits production and development dependencies and
+fails on high or critical vulnerabilities. GitHub Actions runs this check for
+every pull request. Dependency updates must be reviewed and committed with the
+resulting lockfile rather than applied through a forced major upgrade.
+
 ## Complete local check
 
 Run the complete quality gate with:
@@ -36,9 +43,10 @@ Run the complete quality gate with:
 npm run check:quality
 ```
 
-GitHub Actions runs linting, type checking, static usage analysis, and full Jest
-coverage for every pull request targeting the maintained branches. The generated
-coverage report is retained as a workflow artifact for inspection.
+GitHub Actions runs dependency security, linting, type checking, static usage
+analysis, and full Jest coverage for every pull request targeting the maintained
+branches. The generated coverage report is retained as a workflow artifact for
+inspection.
 
 Static analysis proves that code is reachable from a recognized entry point; it
 does not prove that every runtime path is exercised. Coverage measures test

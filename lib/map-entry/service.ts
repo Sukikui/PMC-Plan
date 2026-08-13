@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { canContribute } from '@/lib/content-permissions';
 import { prisma } from '@/lib/prisma';
 import { upsertMinecraftProfile } from '@/lib/minecraft/profiles';

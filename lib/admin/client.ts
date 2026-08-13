@@ -5,7 +5,7 @@ import type {
   AdminUsersResponse,
 } from './users';
 import type { AssignableRole } from './roles';
-import type { Role } from '@prisma/client';
+import type { Role } from '@/generated/prisma/client';
 import type { AdminApplicationSettings } from './application-settings';
 
 const ADMIN_USERS_CHANGED_EVENT = 'pmc-plan:admin-users-changed';

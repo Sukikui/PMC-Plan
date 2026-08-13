@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import { getInitialUserRole } from '@/lib/admin/application-settings-service';
 import { prisma } from '@/lib/prisma';
 import type { DiscordProfile } from '@/types/discord-profile';

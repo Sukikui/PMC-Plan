@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { resolveNetherAddressForWorld } from '../../utils/shared';
 import { normalizePlaceImages } from '@/lib/place/images';
 import {
@@ -24,15 +24,18 @@ import { UpdatePlaceSchema } from '../../utils/schemas';
 
 import { sanitizeTags } from '../../utils/api-utils';
 
-export async function PUT(request: NextRequest, context: any) {
-  const { params } = context as { params: { id: string } };
+type PlaceRouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PUT(request: NextRequest, context: PlaceRouteContext) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
 
-    const { id: placeId } = await params;
+    const { id: placeId } = await context.params;
     const place = await prisma.place.findUnique({
       where: { slug: placeId },
       include: {
@@ -148,15 +151,17 @@ export async function PUT(request: NextRequest, context: any) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: any) {
-  const { params } = context as { params: { id: string } };
+export async function DELETE(
+  request: NextRequest,
+  context: PlaceRouteContext,
+) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
 
-    const { id: placeId } = await params;
+    const { id: placeId } = await context.params;
     const place = await prisma.place.findUnique({
       where: { slug: placeId },
       include: {

@@ -107,6 +107,11 @@ deletion mutations immediately revalidate every affected list and detail tag.
 The browser keeps the same data in React Query for one minute, shares in-flight
 requests, and invalidates only the impacted query families after a mutation.
 
+Persistent server cache keys and tags are scoped with an opaque fingerprint of
+the configured database identity, so separate deployments cannot reuse each
+other's cached projections. `next dev` bypasses this persistent layer entirely
+so a local snapshot restoration or database switch is reflected immediately.
+
 The database indexes the fields used by collection ordering and filtering,
 including content update timestamps, worlds, trade-offer relations, and service
 contact types. Public browsing never loads all complete places, portals,
