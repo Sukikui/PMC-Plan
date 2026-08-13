@@ -13,15 +13,9 @@
   <a href="https://www.prisma.io/"><img src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&amp;logoColor=white" alt="Prisma 7"></a>
   <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&amp;logoColor=white" alt="PostgreSQL 17"></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&amp;logoColor=white" alt="Tailwind CSS 4"></a>
-</p>
-
-<p>
   <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-local_development-2496ED?logo=docker&amp;logoColor=white" alt="Docker development environment"></a>
   <a href="https://supabase.com/"><img src="https://img.shields.io/badge/Database-Supabase-3FCF8E?logo=supabase&amp;logoColor=white" alt="Database hosted on Supabase"></a>
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Deployed_on-Vercel-000000?logo=vercel&amp;logoColor=white" alt="Deployed on Vercel"></a>
-</p>
-
-<p>
   <a href="https://discord.com/"><img src="https://img.shields.io/badge/OAuth-Discord-5865F2?logo=discord&amp;logoColor=white" alt="Discord OAuth"></a>
   <a href="https://modrinth.com/mod/playercoordsapi"><img src="https://img.shields.io/badge/Mod-PlayerCoordsAPI-1BD96A?logo=modrinth&amp;logoColor=white" alt="PlayerCoordsAPI mod"></a>
   <a href="https://modrinth.com/plugin/mineverify"><img src="https://img.shields.io/badge/Plugin-MineVerify-1BD96A?logo=modrinth&amp;logoColor=white" alt="MineVerify plugin"></a>
