@@ -16,9 +16,7 @@
   <a href="https://authjs.dev/"><img src="https://img.shields.io/badge/Auth.js-5_beta-7C3AED" alt="Auth.js 5 beta"></a>
   <a href="https://tanstack.com/query/latest"><img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&amp;logoColor=white" alt="TanStack Query 5"></a>
   <a href="https://zod.dev/"><img src="https://img.shields.io/badge/Zod-4-3E67B1?logo=zod&amp;logoColor=white" alt="Zod 4"></a>
-</p>
 
-<p>
   <a href="https://www.npmjs.com/"><img src="https://img.shields.io/badge/npm-package_manager-CB3837?logo=npm&amp;logoColor=white" alt="npm package manager"></a>
   <a href="https://jestjs.io/"><img src="https://img.shields.io/badge/Jest-30-C21325?logo=jest&amp;logoColor=white" alt="Jest 30"></a>
   <a href="https://eslint.org/"><img src="https://img.shields.io/badge/ESLint-9-4B32C3?logo=eslint&amp;logoColor=white" alt="ESLint 9"></a>
@@ -30,7 +28,6 @@
 
 <p>
   <a href="https://discord.com/"><img src="https://img.shields.io/badge/OAuth-Discord-5865F2?logo=discord&amp;logoColor=white" alt="Discord OAuth"></a>
-  <a href="https://www.minecraft.net/"><img src="https://img.shields.io/badge/Platform-Minecraft-62B47A?logo=minecraft&amp;logoColor=white" alt="Minecraft integration"></a>
   <a href="https://modrinth.com/mod/playercoordsapi"><img src="https://img.shields.io/badge/Mod-PlayerCoordsAPI-1BD96A?logo=modrinth&amp;logoColor=white" alt="PlayerCoordsAPI mod"></a>
   <a href="https://modrinth.com/plugin/mineverify"><img src="https://img.shields.io/badge/Plugin-MineVerify-1BD96A?logo=modrinth&amp;logoColor=white" alt="MineVerify plugin"></a>
   <a href="https://modrinth.com/plugin/biomemap"><img src="https://img.shields.io/badge/Plugin-BiomeMap-1BD96A?logo=modrinth&amp;logoColor=white" alt="BiomeMap plugin"></a>
