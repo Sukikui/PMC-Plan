@@ -7,18 +7,17 @@
 3. [Repository Installation](#-repository-installation)
 4. [Required Access and Secrets](#-required-access-and-secrets)
 5. [Environment Configuration](#️-environment-configuration)
-6. [Discord OAuth Setup](#-discord-oauth-setup)
-7. [Local Database Setup](#️-local-database-setup)
-8. [Starting the Application](#-starting-the-application)
-9. [Daily Development Workflow](#-daily-development-workflow)
-10. [Database Schema Changes](#-database-schema-changes)
-11. [PlayerCoordsAPI Setup](#-playercoordsapi-setup)
-12. [MineVerify Setup](#-mineverify-setup)
-13. [Quality Checks](#-quality-checks)
-14. [Updating the Local Environment](#️-updating-the-local-environment)
-15. [Troubleshooting](#-troubleshooting)
-16. [Security and Safety Rules](#️-security-and-safety-rules)
-17. [First Contribution Checklist](#-first-contribution-checklist)
+6. [Local Database Setup](#️-local-database-setup)
+7. [Starting the Application](#-starting-the-application)
+8. [Daily Development Workflow](#-daily-development-workflow)
+9. [Database Schema Changes](#-database-schema-changes)
+10. [PlayerCoordsAPI Setup](#-playercoordsapi-setup)
+11. [MineVerify Setup](#-mineverify-setup)
+12. [Quality Checks](#-quality-checks)
+13. [Updating the Local Environment](#️-updating-the-local-environment)
+14. [Troubleshooting](#-troubleshooting)
+15. [Security and Safety Rules](#️-security-and-safety-rules)
+16. [First Contribution Checklist](#-first-contribution-checklist)
 
 ## 🧭 Development Environment Overview
 
@@ -218,6 +217,25 @@ Collect the following values before configuring the environment:
 | `DEV_DISCORD_ID`            | Your Discord numeric user ID       | Yes      |
 | `MINEVERIFY_TOKEN`          | Generated locally by the developer | Optional |
 
+### Discord OAuth2 Application
+
+Production and local development use the same OAuth2 application. It
+already allows both PMC Plan callback URLs:
+
+```text
+https://pmc-plan.vercel.app/api/auth/callback/discord
+http://localhost:3000/api/auth/callback/discord
+```
+
+The maintainer provides this application's `DISCORD_CLIENT_ID` and
+`DISCORD_CLIENT_SECRET`. Contributors use them locally and do not need to create
+or configure another Discord application.
+To retrieve `DEV_DISCORD_ID`, enable **Developer Mode** under
+**User Settings > Advanced** in Discord, open your account's context menu, and
+select **Copy User ID**.
+
+### Generated Secrets
+
 Generate `AUTH_SECRET` locally with either method:
 
 <table>
@@ -264,29 +282,94 @@ for the complete integration contract.
 
 Create `.env.development.local` from `.env.development.local.example`. This is
 the only environment file contributors need. Fill in the values collected in
-the section [🔑 Required Access and Secrets](#-required-access-and-secrets).
-
-Leave `MINEVERIFY_TOKEN` empty when the integration is not
-being tested, and keep the provided `AUTH_URL`, `DATABASE_URL`, and
+the previous section, leave `MINEVERIFY_TOKEN` empty when the integration is
+not being tested, and keep the provided `AUTH_URL`, `DATABASE_URL`, and
 `POSTGRES_URL_NON_POOLING` values unchanged.
-
-The PostgreSQL URLs target the isolated `pmc_plan_dev` database managed by
-Docker. Local database commands reject remote hosts and other database names.
 
 `.env.local.example` documents the maintainer and deployment configuration. An
 actual `.env.local` file is only used for controlled maintainer workflows such
-as publishing a development snapshot, contributors must not create one. Both
-local environment files are ignored by Git and must never be committed.
+as publishing a development snapshot. Contributors must not create one. Local
+environment files are ignored by Git and must never be committed.
 
 <br>
 
-## 🎮 Discord OAuth2 Setup
-
 ## 🗄️ Local Database Setup
+
+Make sure Docker Desktop or Docker Engine is running, then initialize the local
+database:
+
+```bash
+npm run dev:setup
+```
+
+This command:
+
+1. starts PostgreSQL 17 in Docker
+2. generates Prisma Client
+3. downloads the development snapshot
+4. restores it into the local `pmc_plan_dev` database
+5. applies all committed Prisma migrations
+6. creates or promotes the account identified by `DEV_DISCORD_ID` to **Super Admin**
+7. removes temporary MineVerify requests
+8. verifies the database, migration history, and development account
+
+The PostgreSQL container stores its data in a Docker volume, so stopping Docker
+does not erase the database. All changes remain local and cannot affect the
+production database.
+
+<br>
 
 ## 🚀 Starting the Application
 
+Start the Next.js development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000), then confirm that the map
+and the content restored from the snapshot are available. Sign in with Discord
+and verify that the Administration tab is accessible. The first login also
+synchronizes the current Discord profile with the local user created for
+`DEV_DISCORD_ID`.
+
+Docker must remain running while the application uses PostgreSQL. Pressing
+`Ctrl+C` stops only the Next.js server; it does not stop or erase the local
+database. The Super Admin role assigned during setup remains limited to this
+local database.
+
+<br>
+
 ## 🔄 Daily Development Workflow
+
+After the initial setup, a normal development session only requires starting
+Docker, the existing database, and Next.js:
+
+```bash
+npm run db:start
+npm run dev
+```
+
+Next.js reloads application changes automatically. Data created, edited, or
+deleted through the application remains in the local database between sessions.
+To inspect it directly, open Prisma Studio in another terminal:
+
+```bash
+npm run db:studio
+```
+
+Press `Ctrl+C` to stop Next.js. The PostgreSQL container can remain running, or
+it can be stopped separately without deleting its data:
+
+```bash
+npm run db:stop
+```
+
+Do not run `npm run dev:setup` at the beginning of every session. Updating or
+restoring the development database is covered in the section
+[⬆️ Updating the Local Environment](#-updating-the-local-environment).
+
+<br>
 
 ## 🧱 Database Schema Changes
 
