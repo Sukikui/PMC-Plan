@@ -282,7 +282,9 @@ for the complete integration contract.
 
 Create `.env.development.local` from `.env.development.local.example`. This is
 the only environment file contributors need. Fill in the values collected in
-the previous section, leave `MINEVERIFY_TOKEN` empty when the integration is
+the section [🔑 Required Access and Secrets](#-required-access-and-secrets).
+
+Leave `MINEVERIFY_TOKEN` empty when the integration is
 not being tested, and keep the provided `AUTH_URL`, `DATABASE_URL`, and
 `POSTGRES_URL_NON_POOLING` values unchanged.
 
