@@ -48,6 +48,8 @@ PlayerCoordsAPI and MineVerify provide optional connections to a local
 Minecraft client and server, while external Minecraft APIs supply player and
 item assets.
 
+<br>
+
 ## 🛠️ Prerequisites
 
 PMC Plan requires Node.js 24 and a running Docker environment. PostgreSQL and
@@ -183,6 +185,7 @@ Confirm that the Docker engine and Docker Compose are available:
 docker version
 docker compose version
 ```
+<br>
 
 ## 📦 Repository Installation
 
@@ -199,6 +202,8 @@ installed globally.
 
 Do not start the application yet. Its local environment and isolated database
 must be configured first.
+
+<br>
 
 ## 🔑 Required Access and Secrets
 
@@ -253,6 +258,8 @@ local MineVerify plugin. See the
 [MineVerify application integration guide](https://github.com/Sukikui/MineVerify/blob/main/docs/APP_INTEGRATION.md)
 for the complete integration contract.
 
+<br>
+
 ## ⚙️ Environment Configuration
 
 Create `.env.development.local` from `.env.development.local.example`. This is
@@ -270,6 +277,8 @@ Docker. Local database commands reject remote hosts and other database names.
 actual `.env.local` file is only used for controlled maintainer workflows such
 as publishing a development snapshot, contributors must not create one. Both
 local environment files are ignored by Git and must never be committed.
+
+<br>
 
 ## 🎮 Discord OAuth2 Setup
 
