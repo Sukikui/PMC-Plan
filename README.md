@@ -663,6 +663,8 @@ operations remain restricted to the local database and never modify production.
 - [ ] `npm run check:quality` and `npm run build` pass.
 - [ ] The final diff contains only the intended files and no local credentials.
 
+<br>
+
 ## 📖 Documentation
 
 The repository documentation is split by responsibility. This list covers every
