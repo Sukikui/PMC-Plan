@@ -44,8 +44,8 @@ Minecraft server [Play-MC.fr](https://play-mc.fr).
 13. [Quality Checks](#-quality-checks)
 14. [Updating the Local Environment](#️-updating-the-local-environment)
 15. [Troubleshooting](#-troubleshooting)
-16. [First Contribution Checklist](#-first-contribution-checklist)
-17. [Documentation](#-documentation)
+16. [Documentation](#-documentation)
+17. [First Contribution Checklist](#-first-contribution-checklist)
 
 ## 🧭 Development Environment Overview
 
@@ -647,24 +647,6 @@ operations remain restricted to the local database and never modify production.
 
 <br>
 
-## 🎯 First Contribution Checklist
-
-- [ ] Node.js 24, npm, Docker, and Docker Compose are available.
-- [ ] Dependencies are installed with `npm install`.
-- [ ] `.env.development.local` contains every required value.
-- [ ] `npm run dev:setup` completes successfully.
-- [ ] PMC Plan opens on `http://localhost:3000`.
-- [ ] Discord authentication works and the Administration tab is available.
-- [ ] `AGENTS.md`, [Application Architecture](docs/ARCHITECTURE.md), the
-      [documentation index](docs/README.md), and the references relevant to the
-      change have been read.
-- [ ] Existing components and helpers have been checked before adding new code.
-- [ ] Tests, migrations, and documentation have been updated when required.
-- [ ] `npm run check:quality` and `npm run build` pass.
-- [ ] The final diff contains only the intended files and no local credentials.
-
-<br>
-
 ## 📖 Documentation
 
 The repository documentation is split by responsibility. This list covers every
@@ -711,3 +693,21 @@ maintained guide and reference currently available.
   high-resolution tiles, coordinate origins, naming, directories, and metadata.
 - [Minecraft Player Renders](docs/MINECRAFT_HEADS.md): MC Heads endpoints,
   rendering usage, cache behavior, and local fallbacks.
+
+<br>
+
+## 🎯 First Contribution Checklist
+
+- [ ] Node.js 24, npm, Docker, and Docker Compose are available.
+- [ ] Dependencies are installed with `npm install`.
+- [ ] `.env.development.local` contains every required value.
+- [ ] `npm run dev:setup` completes successfully.
+- [ ] PMC Plan opens on `http://localhost:3000`.
+- [ ] Discord authentication works and the Administration tab is available.
+- [ ] `AGENTS.md`, [Application Architecture](docs/ARCHITECTURE.md), the
+      [documentation index](docs/README.md), and the references relevant to the
+      change have been read.
+- [ ] Existing components and helpers have been checked before adding new code.
+- [ ] Tests, migrations, and documentation have been updated when required.
+- [ ] `npm run check:quality` and `npm run build` pass.
+- [ ] The final diff contains only the intended files and no local credentials.
