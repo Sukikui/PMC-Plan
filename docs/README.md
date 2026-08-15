@@ -6,8 +6,9 @@ architecture, operational procedures, and API contracts remain separate.
 
 ## Start Here
 
-- [Development Setup](../DEVELOPMENT.md): install the prerequisites, configure
-  the local environment, restore the development database, and run the app.
+- [Development Setup](../README.md#developer-setup-guide): install the
+  prerequisites, configure the local environment, restore the development
+  database, and run the app.
 - [Application Architecture](ARCHITECTURE.md): understand runtime layers,
   domain boundaries, data loading, authorization, maps, and routing.
 
