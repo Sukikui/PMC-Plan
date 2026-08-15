@@ -87,6 +87,6 @@ export async function GET(request: NextRequest) {
     );
 
   } catch (error) {
-    return handleError(error, 'Failed to calculate route');
+    return handleError(error, 'Impossible de calculer l\'itinéraire.');
   }
 }

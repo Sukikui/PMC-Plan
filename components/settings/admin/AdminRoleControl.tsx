@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Role } from '@prisma/client';
+import type { Role } from '@/generated/prisma/client';
 import type { AssignableRole } from '@/lib/admin/roles';
 import { themeColors } from '@/lib/theme-colors';
 import { updateAdminUserRole } from '@/lib/admin/client';

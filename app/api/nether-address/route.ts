@@ -25,6 +25,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(netherAddress);
 
   } catch (error) {
-    return handleError(error, 'Failed to calculate nether address');
+    return handleError(error, 'Impossible de calculer l\'adresse Nether.');
   }
 }

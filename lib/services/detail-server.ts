@@ -1,12 +1,12 @@
-import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import {
   serviceDetailCacheTag,
 } from '@/lib/content/cache-tags';
 import { serviceInclude, toService } from './serialization';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 
 export function loadServiceDetail(slug: string) {
-  return unstable_cache(
+  return cacheDatabaseQuery(
     async () => {
       const service = await prisma.service.findUnique({
         where: { slug },

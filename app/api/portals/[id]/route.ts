@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { z } from 'zod';
-import { Prisma, World } from '@prisma/client';
+import { Prisma, World } from '@/generated/prisma/client';
 import { resolveNetherAddressForWorld } from '../../utils/shared';
 import { handleError } from '../../utils/api-utils';
 import {
@@ -21,17 +21,18 @@ import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
 
 import { UpdatePortalSchema } from '../../utils/schemas';
 
+type PortalRouteContext = {
+  params: Promise<{ id: string }>;
+};
 
-
-export async function PUT(request: NextRequest, context: any) {
-  const { params } = context;
+export async function PUT(request: NextRequest, context: PortalRouteContext) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
 
-    const portalId = params.id;
+    const { id: portalId } = await context.params;
     const worldParam = request.nextUrl.searchParams.get('world');
 
     if (!worldParam || !(worldParam === 'overworld' || worldParam === 'nether')) {
@@ -212,15 +213,17 @@ export async function PUT(request: NextRequest, context: any) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: any) {
-  const { params } = context as { params: { id: string } };
+export async function DELETE(
+  request: NextRequest,
+  context: PortalRouteContext,
+) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
 
-    const { id: portalSlug } = await params;
+    const { id: portalSlug } = await context.params;
     const worldParam = request.nextUrl.searchParams.get('world');
 
     // If worldParam is not provided, assume it's a linked portal deletion attempt

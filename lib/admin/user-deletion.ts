@@ -1,4 +1,4 @@
-import type { Prisma, Role } from '@prisma/client';
+import type { Prisma, Role } from '@/generated/prisma/client';
 import { canContribute } from '@/lib/content-permissions';
 import { addLinkedMinecraftOwner } from '@/lib/map-entry/owners';
 import {

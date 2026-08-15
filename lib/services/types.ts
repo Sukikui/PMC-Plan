@@ -15,6 +15,7 @@ export interface Service extends MapEntryAccess {
   description: string;
   contactType: ServiceContactType;
   contactDiscordUrl: string | null;
+  contactHref: string | null;
   illustrationItemId: string | null;
   paymentItemId: string | null;
   paymentDescription: string | null;
@@ -28,6 +29,7 @@ export interface Service extends MapEntryAccess {
 export type ServiceListItem = Pick<
   Service,
   | 'contactDiscordUrl'
+  | 'contactHref'
   | 'contactType'
   | 'description'
   | 'id'

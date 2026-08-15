@@ -1,4 +1,4 @@
-import type { ServiceContactType, World } from '@prisma/client';
+import type { ServiceContactType, World } from '@/generated/prisma/client';
 import type { MapEntryIdentity } from '@/lib/map-entry/types';
 import type { PlaceCategory } from '@/lib/place/categories';
 import type { SpaceLogoBackground, SpaceReference } from '@/lib/spaces/types';

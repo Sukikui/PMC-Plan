@@ -21,6 +21,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(nearestPortals);
     
   } catch (error) {
-    return handleError(error, 'Failed to find nearest portals');
+    return handleError(error, 'Impossible de trouver les portails les plus proches.');
   }
 }

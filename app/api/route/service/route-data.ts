@@ -1,5 +1,8 @@
-import { revalidateTag, unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import {
+  cacheDatabaseQuery,
+  revalidateDatabaseCacheTag,
+} from '@/lib/cache/database-cache';
 import { normalizeLinkedPortalIdentities } from '@/lib/portal/linked-portals';
 import type { RouteDataSet, RouteEntity, RoutePortal } from '../route-types';
 
@@ -58,7 +61,7 @@ const queryRouteData = async (): Promise<RouteDataSet> => {
   };
 };
 
-const loadCachedRouteData = unstable_cache(
+const loadCachedRouteData = cacheDatabaseQuery(
   queryRouteData,
   ['route-data-v1'],
   { revalidate: 60, tags: [ROUTE_DATA_CACHE_TAG] },
@@ -66,4 +69,6 @@ const loadCachedRouteData = unstable_cache(
 
 export const loadRouteData = () => loadCachedRouteData();
 
-export const invalidateRouteData = () => revalidateTag(ROUTE_DATA_CACHE_TAG);
+export const invalidateRouteData = () => (
+  revalidateDatabaseCacheTag(ROUTE_DATA_CACHE_TAG)
+);

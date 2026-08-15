@@ -1,5 +1,4 @@
-import type { Prisma } from '@prisma/client';
-import { unstable_cache } from 'next/cache';
+import type { Prisma } from '@/generated/prisma/client';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
 import { contentCacheTags } from '@/lib/content/cache-tags';
@@ -9,6 +8,7 @@ import { prioritizePrimaryManagerOwner } from '@/lib/map-entry/owners';
 import { toTradeOffer } from '@/app/api/utils/shared/trade';
 import type { GlobalOffer } from '@/lib/trade/global-offers';
 import { validTradeOfferWhere } from '@/lib/trade/query';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 
 const offerInclude = {
   items: true,
@@ -59,7 +59,7 @@ export async function listMarketOffers({
   };
 }
 
-const loadCachedOffers = unstable_cache(
+const loadCachedOffers = cacheDatabaseQuery(
   (page: number, pageSize: number, query: string) => listMarketOffers({
     page,
     pageSize,

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { normalizePlaceImages } from '@/lib/place/images';
 import { canContribute } from '@/lib/content-permissions';
 import { buildTradeOffersCreateData } from '../utils/trade-offers';
@@ -21,7 +21,7 @@ export async function GET() {
     const places = await loadPlaces();
     return NextResponse.json(places);
   } catch (error) {
-    return handleError(error, 'Failed to load places');
+    return handleError(error, 'Impossible de charger les lieux.');
   }
 }
 

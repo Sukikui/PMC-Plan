@@ -1,16 +1,15 @@
-import type { Service } from './types';
+import type { ServiceContactType } from './types';
 
 export function getServiceContactHref(
-  service: Pick<
-    Service,
-    'contactDiscordUrl' | 'contactType' | 'primaryManager'
-  >,
+  contactType: ServiceContactType,
+  contactDiscordUrl: string | null,
+  primaryManagerDiscordId: string,
 ) {
-  if (service.contactType === 'primary_manager') {
-    return `https://discord.com/users/${service.primaryManager.id}`;
+  if (contactType === 'primary_manager') {
+    return `https://discord.com/users/${primaryManagerDiscordId}`;
   }
-  if (service.contactType === 'custom') {
-    return service.contactDiscordUrl;
+  if (contactType === 'custom') {
+    return contactDiscordUrl;
   }
   return null;
 }

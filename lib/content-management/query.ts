@@ -1,4 +1,4 @@
-import { Prisma, type World } from '@prisma/client';
+import { Prisma, type World } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import {
   type ContentManagementFilter,

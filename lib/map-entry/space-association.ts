@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import { canManageContent } from '@/lib/content-permissions';
 import { MapEntryError, type MapEntryActor } from './service';
 

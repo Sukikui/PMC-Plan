@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 
 const MINECRAFT_NAME_PATTERN = /^[A-Za-z0-9_]{3,16}$/;
 const MOJANG_PROFILE_URL = 'https://api.mojang.com/profiles/minecraft';

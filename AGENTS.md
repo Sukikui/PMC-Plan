@@ -11,6 +11,7 @@
 - Features: When I'm asking you to implement or refactor features, always check for existing helpers, utilities, or components that can be reused. Avoid creating new files unless necessary.
 - Don't hesitate to propose codebase refactoring or improvements if two or more modules should share common frontend or backend logic but currently implement it differently.
 - Verification: After substantial code changes, run `npm run check:quality`. Also run `npm run build` whenever production behavior, dependencies, configuration, routing, or bundling may be affected.
+- Database safety: Local development and Prisma commands must target only `pmc_plan_dev` on localhost. Production-derived data may enter development only through the private snapshot workflow; never commit snapshots, use them in CI, weaken the local guard, or run remote migration commands without explicit user approval.
 - No source files with more than 350 lines; split into focused modules if needed. This limit does not apply to docs, data files, generated files, lockfiles, or binary assets.
 - No need to run `npm run dev` because I already have a dev server running. You can run tests and linting without starting the dev server.
 
@@ -25,16 +26,18 @@
 - `.github/`: CI and repository automation.
 
 ## Build, Test, and Development Commands
-- `npm run dev`: Start Next.js dev server on `http://localhost:3000`.
+- `npm run dev`: Start Next.js dev server on `http://localhost:3000` after validating the local database.
+- `npm run dev:setup`: Start local PostgreSQL, generate Prisma Client, and restore the private development snapshot.
 - `npm run build` / `npm start`: Build and run production server.
 - `npm run lint` / `npm run type-check`: ESLint and TypeScript checks.
 - `npm test` | `npm run test:watch` | `npm run test:coverage`: Run unit/integration tests and coverage.
 - `npm run check:unused`: Detect unused code and dependencies in both repository and production graphs.
+- `npm run check:security`: Audit all dependencies for high or critical vulnerabilities.
 - `npm run check:quality`: Run linting, type checking, dead-code analysis, tests, and coverage thresholds.
-- Database (requires `.env.local`): `npm run db:generate`, `npm run db:push`, `npm run db:studio`.
+- Database: `npm run db:start`, `npm run db:stop`, `npm run db:pull`, `npm run db:reset`, `npm run db:migrate`, `npm run db:check`, and `npm run db:studio`.
 
 ## Coding Style & Naming Conventions
-- TypeScript, strict mode; React 19; Next.js 15 App Router.
+- Node.js 24 LTS; TypeScript strict mode; React 19; Next.js 16 App Router.
 - Indentation: 2 spaces; prefer named exports; keep modules focused.
 - Components: PascalCase (`components/PositionPanel.tsx`). Utilities: kebab-case (`lib/theme-colors.ts`) unless an established domain convention differs.
 - API routes: folder per route with `route.ts` (e.g., `app/api/nearest-portals/route.ts`).
@@ -45,7 +48,7 @@
 - Framework: Jest + ts-jest. Test files in `tests/` named `*.test.ts`.
 - Coverage: Jest collects coverage across `app/`, `components/`, `lib/`, and root application entry points. The measured global baseline in `jest.config.cjs` is enforced in CI and must never decrease. Use `npm run test:coverage`.
 - Dead code: `npm run check:unused` must pass for both the complete repository and the production-only graph. TypeScript rejects unused locals, parameters, labels, and unreachable code, while Knip rejects unused files, exports, dependencies, and unresolved imports.
-- API integration: CI builds and starts the app, then runs `tests/api.test.ts` and `tests/integration.test.ts`. Locally, target files via `npm test -- tests/api.test.ts`.
+- API behavior: `tests/api.test.ts` and `tests/integration.test.ts` exercise route handlers with deterministic fixtures as part of the complete Jest suite. Locally, target them via `npm test -- tests/api.test.ts tests/integration.test.ts`.
 
 ## Commit & Pull Request Guidelines
 - Commit style: Conventional Commits (`feat:`, `fix:`, `chore:`, optional scope like `fix(ui): ...`).
@@ -54,5 +57,5 @@
 - Checks: Ensure `npm run check:quality` and `npm run build` pass. Coverage baselines must never decrease.
 
 ## Security & Configuration Tips
-- Copy `.env.local.example` to `.env.local`. Key vars: `DATABASE_URL`, `POSTGRES_URL_NON_POOLING`, `AUTH_SECRET`, `AUTH_URL`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `MINEVERIFY_TOKEN`.
-- Do not commit secrets. Use `npm run db:*` only with a safe database.
+- Contributors use only `.env.development.local`, created from `.env.development.local.example`, for the complete local application configuration. `.env.local` is reserved for maintainer-only workflows such as publishing database snapshots.
+- Do not commit secrets. Production credentials must remain limited to Vercel Production and the project owner's secure storage. Vercel Preview deployments must not receive production database credentials.

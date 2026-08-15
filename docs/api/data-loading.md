@@ -93,7 +93,9 @@ public browsing.
 `GET /api/services?view=summary` returns the paginated marketplace service
 projection. It accepts `page`, `pageSize`, `q`, and an optional `contact` value
 of `none`, `primary_manager`, or `custom`. Search covers the visible service
-text, payment terms, and Minecraft providers.
+text, payment terms, and Minecraft providers. Each summary exposes the resolved
+`contactHref` used by the interface without exposing the manager's Discord
+platform identifier as an identity field.
 
 Omitting `view` preserves the complete collection endpoint for API
 compatibility. Editors load one complete service through
@@ -104,8 +106,13 @@ compatibility. Editors load one complete service through
 Public projections use the Next.js data cache for five minutes and are tagged
 by domain. Successful place, portal, space, service, transfer, and account
 deletion mutations immediately revalidate every affected list and detail tag.
-The browser keeps the same data in React Query for one minute, shares in-flight
+The browser keeps the same data in TanStack Query for one minute, shares in-flight
 requests, and invalidates only the impacted query families after a mutation.
+
+Persistent server cache keys and tags are scoped with an opaque fingerprint of
+the configured database identity, so separate deployments cannot reuse each
+other's cached projections. `next dev` bypasses this persistent layer entirely
+so a local snapshot restoration or database switch is reflected immediately.
 
 The database indexes the fields used by collection ordering and filtering,
 including content update timestamps, worlds, trade-offer relations, and service

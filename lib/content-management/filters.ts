@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { normalizeDiscordUserQuery } from '@/lib/discord/user-search';
 import type {
   ContentManagementFilter,

@@ -21,6 +21,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(linkedPortal);
 
   } catch (error) {
-    return handleError(error, 'Failed to find linked portal');
+    return handleError(error, 'Impossible de trouver le portail lié.');
   }
 }

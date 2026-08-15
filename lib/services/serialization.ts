@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import {
   publicMapEntryInclude,
   toMapEntryAccess,
@@ -6,11 +6,20 @@ import {
   toMapEntryPrimaryManager,
   toMinecraftOwners,
 } from '@/lib/map-entry/serialization';
+import { getServiceContactHref } from './contact';
 import type { Service } from './types';
 
 export const serviceInclude = {
   mapEntry: {
-    include: publicMapEntryInclude,
+    include: {
+      ...publicMapEntryInclude,
+      primaryManager: {
+        select: {
+          ...publicMapEntryInclude.primaryManager.select,
+          discordId: true,
+        },
+      },
+    },
   },
 } satisfies Prisma.ServiceInclude;
 
@@ -27,6 +36,11 @@ export function toService(record: ServiceRecord): Service {
     description: record.description,
     contactType: record.contactType,
     contactDiscordUrl: record.contactDiscordUrl,
+    contactHref: getServiceContactHref(
+      record.contactType,
+      record.contactDiscordUrl,
+      record.mapEntry.primaryManager.discordId,
+    ),
     illustrationItemId: record.illustrationItemId,
     paymentItemId: record.paymentItemId,
     paymentDescription: record.paymentDescription,

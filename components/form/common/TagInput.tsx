@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import ClearIcon from '@/components/icons/ClearIcon';
 import { themeColors } from '@/lib/theme-colors';
 import {

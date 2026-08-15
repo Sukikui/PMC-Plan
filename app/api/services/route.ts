@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ServiceContactType } from '@prisma/client';
+import { ServiceContactType } from '@/generated/prisma/client';
 import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { canContribute } from '@/lib/content-permissions';

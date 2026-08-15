@@ -1,0 +1,19 @@
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pmc_plan_dev
+      POSTGRES_PASSWORD: pmc_plan
+      POSTGRES_USER: pmc_plan
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pmc_plan -d pmc_plan_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pmc_plan_database:/var/lib/postgresql/data
+
+volumes:
+  pmc_plan_database:

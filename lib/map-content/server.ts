@@ -1,5 +1,5 @@
-import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 import { contentCacheTags } from '@/lib/content/cache-tags';
 import { publicMapEntryInclude } from '@/lib/map-entry/serialization';
 import {
@@ -87,7 +87,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
   return { places, portals };
 };
 
-const loadCachedMapContent = unstable_cache(
+const loadCachedMapContent = cacheDatabaseQuery(
   loadMapContentUncached,
   ['public-map-content-v1'],
   { revalidate: 300, tags: [contentCacheTags.map] },
