@@ -54,8 +54,8 @@ mutations, and client helpers. Important cross-cutting areas include:
 - `lib/query/` for query keys and targeted invalidation;
 - `lib/map/`, `lib/nether/`, and `lib/route-planning/` for map metadata and
   itinerary calculation;
-- `lib/content-management/` and `lib/management/` for shared ownership and
-  management behavior;
+- `lib/content-management/` and `lib/map-entry/` for shared ownership,
+  management, and content-list behavior;
 - `lib/mineverify/` and Minecraft-related modules for external integrations;
 - `lib/prisma.ts` and `lib/prisma/` for the server database boundary.
 
@@ -99,8 +99,8 @@ second complete client-side copy of public content.
 Database-backed server caches use the shared helper in `lib/cache/`. It bypasses
 persistent caching in development and scopes production keys and invalidation
 tags to an opaque database identity. Mutation invalidations expire matching
-entries immediately so the next read cannot serve stale content. Database queries must not call
-`unstable_cache` or `revalidateTag` directly.
+entries immediately so the next read cannot serve stale content. Database
+queries must not call `unstable_cache` or `revalidateTag` directly.
 
 See [Public Data Loading](api/data-loading.md) for request contracts, cache
 durations, and invalidation rules.

@@ -94,6 +94,44 @@ describe('data-loading projections', () => {
     }));
   });
 
+  it('resolves primary manager service contacts from the Discord platform ID', async () => {
+    serviceFindMany.mockResolvedValue([{
+      contactDiscordUrl: null,
+      contactType: 'primary_manager',
+      description: 'Systèmes sur mesure.',
+      illustrationItemId: 'minecraft:repeater',
+      mapEntry: {
+        owners: [],
+        primaryManager: {
+          discordAvatarUrl: null,
+          discordDisplayName: 'Suki',
+          discordId: '374562243779493889',
+          discordUsername: 'sukikui',
+          id: 'internal-user-id',
+          minecraftProfile: null,
+        },
+      },
+      name: 'SukSukRedstone',
+      paymentDescription: null,
+      paymentItemId: null,
+      slug: 'suksukredstone',
+      subtitle: 'Création de systèmes redstone',
+    }]);
+    serviceCount.mockResolvedValue(1);
+
+    await expect(listServices({
+      contactType: null,
+      page: 1,
+      pageSize: 10,
+      query: '',
+    })).resolves.toMatchObject({
+      items: [{
+        contactHref: 'https://discord.com/users/374562243779493889',
+        primaryManager: { id: 'internal-user-id' },
+      }],
+    });
+  });
+
   it('paginates marketplace and space explorer queries on the server', async () => {
     offerFindMany.mockResolvedValue([]);
     offerCount.mockResolvedValue(0);

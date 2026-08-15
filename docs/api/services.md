@@ -9,7 +9,7 @@ Services tab of the marketplace.
 A service stores:
 
 - A unique slug.
-- A title.
+- A name.
 - A required subtitle describing the service activity.
 - One required long description.
 - A contact mode: none, primary manager, or custom Discord URL.
@@ -36,9 +36,11 @@ presentation metadata and do not introduce a payment title or transaction
 system.
 
 The primary-manager contact mode derives the public Discord profile URL from
-the canonical map-entry manager. It does not duplicate a URL in the service.
-Only the custom mode persists `contactDiscordUrl`; the other modes normalize it
-to `null`.
+the canonical map-entry manager's Discord account. It does not duplicate a URL
+in the service. Only the custom mode persists `contactDiscordUrl`; the other
+modes normalize it to `null`. Public responses expose the resulting target as
+`contactHref` without adding the Discord platform identifier to the public
+manager identity.
 
 ## Permissions
 
@@ -62,6 +64,7 @@ to `null`.
   "description": "Conception et installation de systèmes sur mesure.",
   "contactType": "primary_manager",
   "contactDiscordUrl": null,
+  "contactHref": "https://discord.com/users/374562243779493889",
   "illustrationItemId": "minecraft:repeater",
   "paymentItemId": "minecraft:emerald",
   "paymentDescription": "Tarif selon la complexité du projet.",
@@ -93,11 +96,13 @@ to `null`.
 ```
 
 `id` currently mirrors the slug to remain consistent with other public content
-shapes. `mapEntryId` is the stable management identifier.
+shapes. `mapEntryId` is the stable management identifier. `contactHref` is
+`null` when contact is disabled, a Discord profile URL in `primary_manager`
+mode, and the normalized custom URL in `custom` mode.
 
 ## GET `/api/services`
 
-Returns every service ordered by title.
+Returns every service ordered by name.
 
 The marketplace uses the paginated `view=summary` projection documented in
 [Public Data Loading API](data-loading.md). Omitting `view` keeps this complete

@@ -16,8 +16,7 @@
 12. [Quality Checks](#-quality-checks)
 13. [Updating the Local Environment](#️-updating-the-local-environment)
 14. [Troubleshooting](#-troubleshooting)
-15. [Security and Safety Rules](#️-security-and-safety-rules)
-16. [First Contribution Checklist](#-first-contribution-checklist)
+15. [First Contribution Checklist](#-first-contribution-checklist)
 
 ## 🧭 Development Environment Overview
 
@@ -236,7 +235,9 @@ select **Copy User ID**.
 
 ### Generated Secrets
 
-Generate `AUTH_SECRET` locally with either method:
+Generate `AUTH_SECRET` locally with either method.
+When MineVerify testing is required, run either command again to generate a
+separate `MINEVERIFY_TOKEN`.
 
 <table>
   <thead>
@@ -268,13 +269,6 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
     </tr>
   </tbody>
 </table>
-
-`MINEVERIFY_TOKEN` is also generated locally by the developer when MineVerify
-testing is required. Run either command again to create a separate value.
-The token must later match the one configured in the
-local MineVerify plugin. See the
-[MineVerify application integration guide](https://github.com/Sukikui/MineVerify/blob/main/docs/APP_INTEGRATION.md)
-for the complete integration contract.
 
 <br>
 
@@ -375,16 +369,244 @@ restoring the development database is covered in the section
 
 ## 🧱 Database Schema Changes
 
+Update `prisma/schema.prisma`, then create and apply a migration against the
+local database:
+
+```bash
+npm run db:migrate -- --name descriptive_migration_name
+```
+
+Review the generated SQL under `prisma/migrations/` before adapting the affected
+application code, tests, and documentation.
+
+Before opening a pull request, verify that the migration can be applied over
+the populated development snapshot. The following command erases current local
+data, restores the snapshot, and applies every committed migration:
+
+```bash
+npm run db:reset
+```
+
+Then confirm that the restored database matches the Prisma schema:
+
+```bash
+npm run db:check
+```
+
+This reset catches migrations that succeed on an empty database but fail when
+rows already exist. New required fields must therefore include an appropriate
+default or data backfill when existing records cannot satisfy them directly.
+
+Every schema change must include its generated migration. Migrations are created
+and tested only against the local `pmc_plan_dev` database, and a migration that
+has already been shared must not be edited retroactively. `prisma db push` is
+not part of the project workflow.
+
+Contributors never apply migrations directly to production. The maintainer
+procedure is documented in
+[Database Deployment](docs/DATABASE_DEPLOYMENT.md).
+
+<br>
+
 ## 📍 PlayerCoordsAPI Setup
+
+PlayerCoordsAPI is optional and does not require an environment variable. To
+test live position synchronization, install
+[Fabric Loader](https://fabricmc.net/use/) and download a PlayerCoordsAPI version
+compatible with the project's Minecraft version from
+[Modrinth](https://modrinth.com/mod/playercoordsapi).
+
+Open the mod configuration through Mod Menu, then:
+
+1. enable the API;
+2. keep the API port set to `25565`;
+3. set requests with an `Origin` header to `Whitelist`;
+4. allow the local origin `http://localhost:3000`.
+
+Launch Minecraft and join a world, then verify the local endpoint:
+
+```bash
+curl http://localhost:25565/api/coords
+```
+
+The response should contain the current world, coordinates, UUID, and username.
+In PMC Plan, click **Synchroniser** and confirm that the displayed world,
+coordinates, and player render follow the Minecraft client.
+
+The API is read-only and accepts only loopback connections from the local
+machine. It returns `404` while the player is not in a world. PMC Plan always
+uses port `25565`, so changing it in the mod prevents synchronization.
+
+> [!NOTE]
+> Safari supports synchronization from the local HTTP application but blocks the
+> loopback request from the deployed HTTPS application. Chrome and Firefox support
+> both environments.
+
+<br>
 
 ## 🔗 MineVerify Setup
 
+MineVerify testing is optional. It requires a local
+[PaperMC](https://papermc.io/downloads/paper) server running on Java 25 or later.
+Download MineVerify from [Modrinth](https://modrinth.com/plugin/mineverify),
+place the plugin JAR in the server's `plugins/` directory, and start the server
+once to generate its configuration.
+
+Edit `plugins/MineVerify/config.yml`:
+
+```yaml
+language: "fr_fr"
+
+apps:
+  pmc-plan:
+    name: "PMC Plan"
+    base-url: "http://127.0.0.1:3000"
+    token: "same-token-as-MINEVERIFY_TOKEN"
+    poll-interval-seconds: 3
+
+linking:
+  code-ttl-seconds: 60
+```
+
+The configured token must exactly match `MINEVERIFY_TOKEN` in
+`.env.development.local`. `base-url` points to the application root and must not
+include `/api`. MineVerify makes outbound requests to PMC Plan, the application
+does not connect to the Minecraft server.
+
+To test the complete account-linking flow:
+
+1. start PMC Plan and the local Minecraft server;
+2. sign in with Discord and open the Minecraft account-linking window;
+3. join the server and run `/mineverify`;
+4. wait for PMC Plan to display the generated command;
+5. run `/mineverify <code>` in Minecraft;
+6. confirm that the Minecraft account appears as linked in PMC Plan.
+
+Administrators can inspect the plugin from the Minecraft server console with:
+
+```text
+/mineverify status
+/mineverify status requests
+```
+
+The endpoint contract and callback payloads are documented in the
+[MineVerify application integration guide](https://github.com/Sukikui/MineVerify/blob/main/docs/APP_INTEGRATION.md).
+
+<br>
+
 ## ✅ Quality Checks
+
+During development, run a focused Jest file when the affected behavior has a
+dedicated test. For example:
+
+```bash
+npm test -- tests/playercoords-api.test.ts
+```
+
+Replace the path with the test file relevant to the current change.
+
+Use watch mode when iterating repeatedly on tests:
+
+```bash
+npm run test:watch
+```
+
+Before opening a pull request, run the complete local quality gate and the
+production build:
+
+```bash
+npm run check:quality
+npm run build
+```
+
+`check:quality` runs ESLint, TypeScript checking, Knip dead-code and dependency
+analysis, the complete Jest suite, and the enforced coverage thresholds. The
+HTML coverage report is generated under `coverage/`; the repository baseline
+must not decrease.
+
+When dependencies change, also audit them locally:
+
+```bash
+npm run check:security
+```
+
+GitHub Actions repeats these checks, validates migrations against PostgreSQL,
+and builds the application for every pull request. See
+[Code Quality](docs/CODE_QUALITY.md) for the individual commands and guidance on
+interpreting their results.
+
+<br>
 
 ## ⬆️ Updating the Local Environment
 
+After updating the repository, synchronize dependencies and apply any newly
+committed migrations without replacing local data:
+
+```bash
+npm install
+npm run db:start
+npm run db:apply
+```
+
+If `.env.development.local.example` changed, manually add or update the matching
+values in `.env.development.local`.
+
+To discard local database changes and restore the snapshot that is already
+stored on the machine, run:
+
+```bash
+npm run db:reset
+```
+
+To download the latest shared snapshot before restoring it, run:
+
+```bash
+npm run db:pull
+```
+
+Both commands erase the current contents of `pmc_plan_dev`, apply all committed
+migrations, and recreate the local Super Admin account. `db:pull` first replaces
+`.local/database/development-baseline.dump` using
+`DEV_DATABASE_SNAPSHOT_URL`, while `db:reset` works without network access from
+the previously downloaded file.
+
+The local snapshot is ignored by Git and is not updated automatically. If its
+signed URL expires or changes, request a new value from a maintainer. These
+operations remain restricted to the local database and never modify production.
+
+<br>
+
 ## 🩺 Troubleshooting
 
-## 🛡️ Security and Safety Rules
+| Problem | Check and resolution |
+| --- | --- |
+| Docker is unavailable or the database is stopped | Confirm that `docker version` succeeds, then run `npm run db:start`. |
+| PostgreSQL cannot bind to port `5432` | Stop the other PostgreSQL instance or container already using the port. |
+| A database command is rejected by the safety guard | Confirm that both database URLs target `pmc_plan_dev` on `localhost`, exactly as provided in the example. |
+| No local snapshot is available | Run `npm run db:pull` before attempting another reset. |
+| Snapshot download returns `401` or `403` | Request a new signed snapshot URL from a maintainer. |
+| `DEV_DATABASE_SNAPSHOT_URL` is parsed incorrectly | Keep the complete signed URL between double quotes in `.env.development.local`. |
+| Port `3000` is already occupied | Stop the process using it. Do not let Next.js switch to `3001`, because the local Discord callback targets port `3000`. |
+| Discord rejects the connection | Check `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `AUTH_URL`, and the registered localhost callback. |
+| The Administration tab is missing | Check `DEV_DISCORD_ID`, run `npm run db:bootstrap`, then sign out and sign in again. |
+| Prisma Client does not match the schema | Run `npm run db:generate`, followed by `npm run db:apply`. |
+| PlayerCoordsAPI cannot synchronize | Confirm that Minecraft is running in a world and check the mod state, port `25565`, and localhost origin whitelist. |
+| MineVerify reports a network error or `401` | Compare the two tokens, check the configured `base-url`, then inspect `/mineverify status`. |
+
+<br>
 
 ## 🎯 First Contribution Checklist
+
+- [ ] Node.js 24, npm, Docker, and Docker Compose are available.
+- [ ] Dependencies are installed with `npm install`.
+- [ ] `.env.development.local` contains every required value.
+- [ ] `npm run dev:setup` completes successfully.
+- [ ] PMC Plan opens on `http://localhost:3000`.
+- [ ] Discord authentication works and the Administration tab is available.
+- [ ] `AGENTS.md`, [Application Architecture](docs/ARCHITECTURE.md), the
+      [documentation index](docs/README.md), and the references relevant to the
+      change have been read.
+- [ ] Existing components and helpers have been checked before adding new code.
+- [ ] Tests, migrations, and documentation have been updated when required.
+- [ ] `npm run check:quality` and `npm run build` pass.
+- [ ] The final diff contains only the intended files and no local credentials.

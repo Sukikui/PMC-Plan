@@ -1,42 +1,44 @@
-# Documentation Index
+# Documentation
 
-This directory contains the contributor and integration documentation for PMC
-Plan. Start with the local setup, then use the topic-specific references below.
+This index is the entry point for PMC Plan's contributor and technical
+documentation. Each document owns one topic so setup instructions,
+architecture, operational procedures, and API contracts remain separate.
 
-## 🚀 Contributor Guides
+## Start Here
 
-- [Local Development](DEVELOPMENT.md): local PostgreSQL, private snapshots,
-  developer identity bootstrap, MineVerify testing, and database commands.
-- [Architecture](ARCHITECTURE.md): runtime layers, domain boundaries, data
-  loading, authorization, and extension points.
+- [Development Setup](../DEVELOPMENT.md): install the prerequisites, configure
+  the local environment, restore the development database, and run the app.
+- [Application Architecture](ARCHITECTURE.md): understand runtime layers,
+  domain boundaries, data loading, authorization, maps, and routing.
+
+## Engineering
+
 - [Code Quality](CODE_QUALITY.md): linting, type checking, dead-code analysis,
-  tests, and coverage.
-- [Database Deployment](DATABASE_DEPLOYMENT.md): migration baseline and the
-  production release procedure.
+  tests, coverage, and dependency security.
+- [Database Deployment](DATABASE_DEPLOYMENT.md): maintain the migration baseline
+  and deploy schema changes to production.
 
-## 🗺️ Maps and Assets
+## API References
 
-- [Map Image Format](MAP_IMAGE_FORMAT.md): overview images, tile generation,
-  coordinates, metadata, and directory conventions.
+- [Backend API](BACKEND_API.md): core route planning, authentication,
+  administration, and map-entry endpoints.
+- [Public Data Loading](api/data-loading.md): projections, progressive details,
+  pagination, caching, and invalidation.
+- [Spaces API](api/spaces.md): space data, permissions, mutations, and manager
+  transfers.
+- [Services API](api/services.md): service data, contact modes, permissions, and
+  mutations.
+- [Minecraft Items API](api/minecraft-items.md): localized item and block data,
+  textures, external sources, and caching.
+- [MineVerify API](api/mineverify.md): authenticated server-plugin requests and
+  the temporary account-linking lifecycle.
+
+## Maps and Player Assets
+
+- [Map Image Format](MAP_IMAGE_FORMAT.md): overview images, tiles, coordinates,
+  metadata, and world directory conventions.
 - [Minecraft Player Renders](MINECRAFT_HEADS.md): MC Heads endpoints, rendering
   scope, and local fallback behavior.
 
-## 🔌 Application APIs
-
-- [Backend API](BACKEND_API.md): route planning, Nether addressing, linked
-  portals, authentication, administration, and content endpoints.
-- [Public Data Loading](api/data-loading.md): lightweight collections,
-  progressive details, pagination, caching, and invalidation.
-- [Spaces API](api/spaces.md): space data model, permissions, mutations, and
-  transfer behavior.
-- [Services API](api/services.md): service data model, contact modes,
-  permissions, and mutations.
-- [Minecraft Items API](api-mc-resolve.md): item resolution and caching.
-
-## 🧩 External Integrations
-
-- [MineVerify API](api/mineverify.md): server-plugin request lifecycle and
-  authenticated callbacks.
-
-When endpoint behavior changes, update both the general backend reference and
-the relevant domain document.
+When endpoint behavior changes, update `BACKEND_API.md` and the relevant domain
+reference under `docs/api/`.

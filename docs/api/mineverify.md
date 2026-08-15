@@ -16,6 +16,11 @@ Every request must include the shared bearer token configured with `MINEVERIFY_T
 Authorization: Bearer <MINEVERIFY_TOKEN>
 ```
 
+All endpoints return HTTP `401` when the token is missing or invalid. Invalid
+payloads return `400`, unknown requests return `404`, conflicting callbacks
+return `409`, and unexpected server failures return `500`. Accepted events and
+idempotent retries return a successful `2xx` response.
+
 ## Endpoints
 
 ### GET `/mineverify/pending-requests`
@@ -143,8 +148,5 @@ and potentially several application instances:
 The durable account identity is stored in `MinecraftProfile`. The optional unique
 relation to `User` represents the active PMC Plan account link.
 
-## Local Testing
-
-The Paper installation, per-developer token, plugin configuration, connectivity
-check, and complete in-game verification flow are documented in
-[Local Development](../DEVELOPMENT.md#testing-mineverify-locally).
+Local Paper installation, token configuration, and end-to-end verification are
+covered by the [MineVerify setup guide](../../DEVELOPMENT.md#-mineverify-setup).

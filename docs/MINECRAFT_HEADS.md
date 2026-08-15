@@ -30,11 +30,12 @@ The synchronized position panel uses:
 https://api.mcheads.org/iosbody/{player}/right/{size}
 ```
 
-`player` accepts a Minecraft username, UUID, or XUID. The requested PNG size is
-restricted to the provider's supported range of 16 to 512 pixels. The shared URL
-helpers clamp values outside this range. Head consumers request a 256-pixel
-source, while the position panel requests a 512-pixel body source for clean
-cropping. The right-facing orientation is shared by both renders.
+`player` accepts a Minecraft username, UUID, or XUID. Bedrock usernames must be
+prefixed with a dot. The requested PNG size is restricted to the provider's
+supported range of 16 to 512 pixels. The shared URL helpers clamp values outside
+this range. Head consumers request a 256-pixel source, while the position panel
+requests a 512-pixel body source for clean cropping. The right-facing
+orientation is shared by both renders.
 
 MC Heads caches generated images for one hour. PMC Plan requests non-default
 player images directly from the provider and does not proxy them through its

@@ -24,8 +24,11 @@ Services are autonomous managed content. They reuse map-entry management and
 Minecraft ownership without being associated with a place, world, coordinate,
 or space. Each service exposes a title and subtitle. Its contact is either
 disabled, derived from the primary Discord manager, or stored as a custom
-Discord URL. Optional payment metadata combines a Minecraft item identifier
-with a short description and reuses the standard item-resolution pipeline.
+Discord URL. Responses provide the resolved contact target through
+`contactHref` without exposing the manager's Discord platform identifier as a
+public identity field. Optional payment metadata combines a Minecraft item
+identifier with a short description and reuses the standard item-resolution
+pipeline.
 
 ### GET `/nether-address`
 

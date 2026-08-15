@@ -44,7 +44,7 @@ function parseDatabaseUrl(value, variableName) {
   if (!value) {
     throw new Error(
       `${variableName} is missing. Create .env.development.local from `
-      + '.env.development.example.',
+      + '.env.development.local.example.',
     );
   }
 

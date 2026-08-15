@@ -36,6 +36,13 @@ deployments remain separate operations so migration failures cannot silently
 occur during a Vercel build. Vercel Preview deployments are not connected to
 the production database.
 
+The maintainer-only `db:snapshot:publish` command loads `.env.local` and requires
+`POSTGRES_URL_NON_POOLING`, `SUPABASE_URL`, and
+`SUPABASE_SERVICE_ROLE_KEY`. Its bucket, object path, and signed URL lifetime
+can be customized with the corresponding `DATABASE_SNAPSHOT_*` variables. This
+workflow is not part of contributor setup. `.env.local.example` documents the
+complete maintainer and production environment without containing real values.
+
 The regular release flow is therefore:
 
 1. develop and test against the local resettable database;

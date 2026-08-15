@@ -1,12 +1,13 @@
 import type { Prisma, ServiceContactType } from '@/generated/prisma/client';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
+import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 import { contentCacheTags } from '@/lib/content/cache-tags';
 import { discordIdentitySelect, toPublicDiscordIdentity } from '@/lib/discord-user';
 import { prioritizePrimaryManagerOwner } from '@/lib/map-entry/owners';
 import { prisma } from '@/lib/prisma';
+import { getServiceContactHref } from './contact';
 import type { ServiceListItem } from './types';
-import { cacheDatabaseQuery } from '@/lib/cache/database-cache';
 
 const listInclude = {
   mapEntry: {
@@ -14,6 +15,7 @@ const listInclude = {
       primaryManager: {
         select: {
           ...discordIdentitySelect,
+          discordId: true,
           minecraftProfile: { select: { uuid: true } },
         },
       },
@@ -111,6 +113,11 @@ function toServiceListItem(record: ListRecord): ServiceListItem {
     description: record.description,
     contactType: record.contactType,
     contactDiscordUrl: record.contactDiscordUrl,
+    contactHref: getServiceContactHref(
+      record.contactType,
+      record.contactDiscordUrl,
+      entry.primaryManager.discordId,
+    ),
     illustrationItemId: record.illustrationItemId,
     paymentItemId: record.paymentItemId,
     paymentDescription: record.paymentDescription,

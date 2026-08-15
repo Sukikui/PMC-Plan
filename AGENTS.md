@@ -57,5 +57,5 @@
 - Checks: Ensure `npm run check:quality` and `npm run build` pass. Coverage baselines must never decrease.
 
 ## Security & Configuration Tips
-- Keep shared application secrets in `.env.local`, then copy `.env.development.example` to `.env.development.local` for local database overrides, the signed snapshot URL, and `DEV_DISCORD_ID`.
+- Contributors use only `.env.development.local`, created from `.env.development.local.example`, for the complete local application configuration. `.env.local` is reserved for maintainer-only workflows such as publishing database snapshots.
 - Do not commit secrets. Production credentials must remain limited to Vercel Production and the project owner's secure storage. Vercel Preview deployments must not receive production database credentials.

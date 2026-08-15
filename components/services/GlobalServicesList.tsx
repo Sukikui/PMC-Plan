@@ -14,7 +14,6 @@ import DiscordLink from '@/components/ui/DiscordLink';
 import MinecraftHeadImage from '@/components/ui/MinecraftHeadImage';
 import { listRowClassName } from '@/components/ui/ListRow';
 import UserAvatar from '@/components/ui/UserAvatar';
-import { getServiceContactHref } from '@/lib/services/contact';
 import type { ServiceListItem } from '@/lib/services/types';
 import { themeColors } from '@/lib/theme-colors';
 
@@ -147,7 +146,7 @@ function ServiceRow({
 }
 
 function ServiceContact({ service }: { service: ServiceListItem }) {
-  const contactHref = getServiceContactHref(service);
+  const contactHref = service.contactHref;
   if (service.contactType === 'primary_manager' && contactHref) {
     const manager = service.primaryManager;
     return (
