@@ -149,4 +149,4 @@ The durable account identity is stored in `MinecraftProfile`. The optional uniqu
 relation to `User` represents the active PMC Plan account link.
 
 Local Paper installation, token configuration, and end-to-end verification are
-covered by the [MineVerify setup guide](../../DEVELOPMENT.md#-mineverify-setup).
+covered by the [MineVerify setup guide](../../README.md#-mineverify-setup).

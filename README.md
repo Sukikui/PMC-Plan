@@ -654,10 +654,9 @@ maintained guide and reference currently available.
 
 ### Entry Points
 
-- [Developer Setup Guide](DEVELOPMENT.md): complete contributor setup,
+- [Developer Setup Guide](#developer-setup-guide): complete contributor setup,
   environment configuration, local database workflow, integrations, daily
-  development, and troubleshooting. Its content is reproduced above without
-  modification.
+  development, and troubleshooting.
 - [Documentation Index](docs/README.md): navigation by engineering, API, map,
   and player-asset topic.
 - [Repository Guidelines](AGENTS.md): language, architecture, quality,
