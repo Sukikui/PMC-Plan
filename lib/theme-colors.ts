@@ -123,10 +123,10 @@ export const themeColors = {
     dangerOutline: 'border border-red-300 bg-transparent text-red-600 hover:border-red-400 hover:bg-red-50/60 dark:border-red-600 dark:text-red-300 dark:hover:border-red-500 dark:hover:bg-red-900/20',
     dangerOutlineDisabled: 'cursor-not-allowed border border-red-200 bg-transparent text-red-300 dark:border-red-900/70 dark:text-red-700',
     neutralOutline: 'border border-gray-300 bg-transparent text-gray-700 hover:border-blue-400 hover:bg-blue-100/20 dark:border-gray-700 dark:text-gray-200 dark:hover:border-blue-500 dark:hover:bg-blue-500/10',
-    secondary: 'bg-white dark:bg-gray-900 hover:bg-white/90 hover:border-gray-300 dark:hover:border-gray-700',
+    secondary: 'bg-white dark:bg-gray-900 hover:bg-white/90 dark:hover:bg-gray-900/90 hover:border-gray-300 dark:hover:border-gray-700',
     ghost: 'bg-white dark:bg-transparent text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600',
     round: 'w-12 h-12 rounded-full',
-    iconAction: 'p-1 bg-white dark:bg-gray-900 hover:bg-white/90',
+    iconAction: 'p-1 bg-white dark:bg-gray-900 hover:bg-white/90 dark:hover:bg-gray-900/90',
   },
 
   toggle: {
