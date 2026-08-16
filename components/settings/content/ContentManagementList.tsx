@@ -14,7 +14,6 @@ import type {
   ContentManagementType,
 } from '@/lib/content-management/types';
 import { canAdministerContent } from '@/lib/content-permissions';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import { subscribeToContentUpdates } from '@/lib/content/client-events';
 import { serviceDetailQueryOptions } from '@/lib/services/client';
 import { themeColors } from '@/lib/theme-colors';
@@ -23,11 +22,9 @@ import usePaginatedManagementQuery from '@/components/settings/management/usePag
 import ContentManagementRow from './ContentManagementRow';
 
 export default function ContentManagementList({
-  onSelectItem,
   scope,
   type,
 }: {
-  onSelectItem?: SelectDestinationHandler;
   scope: ContentManagementScope;
   type: ContentManagementType;
 }) {
@@ -77,7 +74,7 @@ export default function ContentManagementList({
     state.setError(null);
     try {
       if (item.type === 'place' || item.type === 'portal') {
-        await openMapEntryInfoById(item.mapEntryId, item.type, onSelectItem);
+        await openMapEntryInfoById(item.mapEntryId, item.type);
       } else if (item.type === 'space') {
         openSpaceInfo({
           color: item.color,

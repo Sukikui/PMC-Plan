@@ -1,7 +1,6 @@
 'use client';
 
 import type { Session } from 'next-auth';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
 import { themeColors } from '@/lib/theme-colors';
 import ActionButton from '@/components/ui/ActionButton';
@@ -22,7 +21,6 @@ interface AccountSettingsProps {
   onSignIn: () => void;
   onSignOut: () => void;
   onUnlinkMinecraft: () => void;
-  onSelectItem?: SelectDestinationHandler;
 }
 
 export default function AccountSettings({
@@ -33,7 +31,6 @@ export default function AccountSettings({
   onSignIn,
   onSignOut,
   onUnlinkMinecraft,
-  onSelectItem,
 }: AccountSettingsProps) {
   const { effectiveRole } = useAdminMode();
 
@@ -86,7 +83,7 @@ export default function AccountSettings({
       {user && (
         <>
           <SectionSeparator className="my-6" />
-          <AccountContentList onSelectItem={onSelectItem} />
+          <AccountContentList />
         </>
       )}
     </section>

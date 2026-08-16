@@ -24,6 +24,7 @@ interface OverlayStackContextValue {
   layers: string[];
   revealedLayerId: string | null;
   beginClose: (layerId: string) => void;
+  closeAll: () => void;
   register: (layerId: string, onClose: () => void) => void;
   unregister: (layerId: string) => void;
 }
@@ -131,6 +132,12 @@ export function OverlayStackProvider({ children }: { children: ReactNode }) {
     closeHandlersRef.current.get(topLayerId)?.();
   }, []);
 
+  const closeAll = useCallback(() => {
+    [...layersRef.current]
+      .reverse()
+      .forEach((layerId) => closeHandlersRef.current.get(layerId)?.());
+  }, []);
+
   useEffect(() => {
     if (!hasOpenOverlays) return;
 
@@ -157,8 +164,8 @@ export function OverlayStackProvider({ children }: { children: ReactNode }) {
   }, [closeTopLayer, hasOpenOverlays]);
 
   const value = useMemo(
-    () => ({ layers, revealedLayerId, beginClose, register, unregister }),
-    [beginClose, layers, revealedLayerId, register, unregister],
+    () => ({ layers, revealedLayerId, beginClose, closeAll, register, unregister }),
+    [beginClose, closeAll, layers, revealedLayerId, register, unregister],
   );
 
   return (
@@ -178,6 +185,14 @@ export function OverlayStackProvider({ children }: { children: ReactNode }) {
       )}
     </OverlayStackContext.Provider>
   );
+}
+
+export function useOverlayStackActions() {
+  const stack = useContext(OverlayStackContext);
+  if (!stack) {
+    throw new Error('useOverlayStackActions must be used within OverlayStackProvider');
+  }
+  return { closeAll: stack.closeAll };
 }
 
 export function useOverlayLayer(

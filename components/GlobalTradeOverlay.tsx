@@ -18,7 +18,6 @@ import IconActionButton from '@/components/ui/IconActionButton';
 import OverlayHeader from '@/components/ui/OverlayHeader';
 import { OverlaySlideTrack } from '@/components/ui/OverlaySlider';
 import OverlaySurface from '@/components/ui/OverlaySurface';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import InfiniteLoadSentinel from '@/components/ui/InfiniteLoadSentinel';
 import { useDebouncedValue } from '@/components/ui/useDebouncedValue';
 import { serviceListQueryOptions } from '@/lib/services/client';
@@ -28,13 +27,11 @@ import { themeColors } from '@/lib/theme-colors';
 interface GlobalTradeOverlayProps {
   onBack?: () => void;
   onClose?: () => void;
-  onSelectItem?: SelectDestinationHandler;
 }
 
 export default function GlobalTradeOverlay({
   onBack,
   onClose,
-  onSelectItem,
 }: GlobalTradeOverlayProps) {
   const { openPlaceInfoById } = useOverlay();
   const [activeTab, setActiveTab] = useState<GlobalMarketTab>('offers');
@@ -106,12 +103,11 @@ export default function GlobalTradeOverlay({
                 >
                   <GlobalOffersList
                     offers={offers}
-                    onOpenPlace={(placeId, selectItem) => {
+                    onOpenPlace={(placeId) => {
                       if (placeId) {
-                        void openPlaceInfoById(placeId, selectItem);
+                        void openPlaceInfoById(placeId);
                       }
                     }}
-                    onSelectItem={onSelectItem}
                   />
                   <InfiniteLoadSentinel
                     hasNextPage={Boolean(offerState.hasNextPage)}

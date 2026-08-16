@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import DestinationPanel from '@/components/DestinationPanel';
@@ -41,7 +41,7 @@ export default function Home() {
   const [manualCoords, setManualCoords] = useState<{x: string; y: string; z: string; world: 'overworld' | 'nether'}>({
     x: '', y: '', z: '', world: OVERWORLD_MAP_WORLD
   });
-  const { openPlaceInfo, openSpaceInfo } = useOverlay();
+  const { openPlaceInfo, openSpaceInfo, registerDestinationHandler } = useOverlay();
   const marketOverlay = useOverlayDisclosure();
   const spaceExplorerOverlay = useOverlayDisclosure();
   const [startupPreloadComplete, setStartupPreloadComplete] = useState(false);
@@ -75,7 +75,7 @@ export default function Home() {
     };
   }, [queryClient]);
 
-  const handlePlaceSelect = (id: string, type: DestinationType, world?: MapWorld) => {
+  const handlePlaceSelect = useCallback((id: string, type: DestinationType, world?: MapWorld) => {
     if (id !== selectedPlaceId) {
       setRoute(null);
       setRouteSelection(null);
@@ -87,10 +87,14 @@ export default function Home() {
 
     setSelectedPlaceId(id);
     setSelectedPlaceType(type);
-  };
+  }, [selectedPlaceId]);
+
+  useEffect(() => (
+    registerDestinationHandler(handlePlaceSelect)
+  ), [handlePlaceSelect, registerDestinationHandler]);
 
   const handleInfoClick = (item: PlaceSummary | PortalSummary, type: 'place' | 'portal') => {
-    openPlaceInfo(item, type, handlePlaceSelect);
+    openPlaceInfo(item, type);
   };
 
   const toggleNetherMap = () => {
@@ -128,7 +132,6 @@ export default function Home() {
     <div className={`relative h-screen overflow-hidden ${themeColors.mainScreen.noDestination} ${themeColors.transition}`}>
       <MainMapBackground
         world={activeMapWorld}
-        onSelectItem={handlePlaceSelect}
         selectedId={selectedPlaceId}
         selectedType={selectedPlaceType}
         routePath={routePath}
@@ -170,7 +173,6 @@ export default function Home() {
         onOpenMarket={marketOverlay.open}
         onOpenNetherMap={toggleNetherMap}
         onOpenSpaces={spaceExplorerOverlay.open}
-        onSelectItem={handlePlaceSelect}
       />
 
       {/* Global Market button is rendered by SettingsPanel (absolute above trigger/panel) */}
@@ -184,7 +186,6 @@ export default function Home() {
         >
           <GlobalTradeOverlay
             onClose={marketOverlay.close}
-            onSelectItem={handlePlaceSelect}
           />
         </Overlay>
       )}

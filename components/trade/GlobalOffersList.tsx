@@ -9,22 +9,16 @@ import {
   TradeOfferColumnsHeader,
   TradeOfferPreview,
 } from '@/components/trade/TradeOfferPreview';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import type { GlobalOffer } from '@/lib/trade/global-offers';
 
 interface GlobalOffersListProps {
   offers: GlobalOffer[];
-  onOpenPlace: (
-    placeId: string,
-    onSelectItem?: SelectDestinationHandler,
-  ) => void;
-  onSelectItem?: SelectDestinationHandler;
+  onOpenPlace: (placeId: string) => void;
 }
 
 export default function GlobalOffersList({
   offers,
   onOpenPlace,
-  onSelectItem,
 }: GlobalOffersListProps) {
   const [expandedOffer, setExpandedOffer] = useState<TradeOffer | null>(null);
 
@@ -40,7 +34,7 @@ export default function GlobalOffersList({
             key={`${place.id || 'unknown'}-${index}`}
             leading={(
               <GlobalOfferSource
-                onOpenPlace={() => onOpenPlace(place.id, onSelectItem)}
+                onOpenPlace={() => onOpenPlace(place.id)}
                 place={place}
               />
             )}
