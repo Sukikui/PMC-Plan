@@ -6,12 +6,10 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const testConnectionString = process.env.NODE_ENV === 'test'
-  ? 'postgresql://unconfigured:unconfigured@127.0.0.1:1/unconfigured'
-  : undefined;
-const adapter = new PrismaPg(createPrismaPgConfig(
-  process.env.DATABASE_URL ?? testConnectionString,
-));
+// Next.js imports route modules while building, including in CI without database secrets.
+const connectionString = process.env.DATABASE_URL
+  ?? 'postgresql://unconfigured:unconfigured@127.0.0.1:1/unconfigured';
+const adapter = new PrismaPg(createPrismaPgConfig(connectionString));
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
 
