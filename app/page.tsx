@@ -97,6 +97,11 @@ export default function Home() {
     openPlaceInfo(item, type);
   };
 
+  const clearSelectedDestination = useCallback(() => {
+    if (!selectedPlaceId) return;
+    handlePlaceSelect('', selectedPlaceType, activeMapWorld);
+  }, [activeMapWorld, handlePlaceSelect, selectedPlaceId, selectedPlaceType]);
+
   const toggleNetherMap = () => {
     setActiveMapWorld((world) => (
       world === NETHER_MAP_WORLD ? OVERWORLD_MAP_WORLD : NETHER_MAP_WORLD
@@ -138,6 +143,7 @@ export default function Home() {
         activeRouteSegmentId={activeRouteSegmentId}
         syncedPlayerUuid={playerPosition?.uuid}
         linkedMinecraftUuid={linkedMinecraftUuid}
+        onClearSelection={clearSelectedDestination}
       />
 
       <RouteMapControls

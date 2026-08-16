@@ -17,6 +17,7 @@ interface MainMapBackgroundProps {
   activeRouteSegmentId?: string | null;
   syncedPlayerUuid?: string | null;
   linkedMinecraftUuid?: string | null;
+  onClearSelection?: () => void;
 }
 
 export default function MainMapBackground({
@@ -27,6 +28,7 @@ export default function MainMapBackground({
   activeRouteSegmentId,
   syncedPlayerUuid,
   linkedMinecraftUuid,
+  onClearSelection,
 }: MainMapBackgroundProps) {
   const { openPlaceInfo } = useOverlay();
   const { points, pointById, loading, error } = useWorldMapPoints(world);
@@ -66,6 +68,7 @@ export default function MainMapBackground({
         activeRouteSegmentId={activeRouteSegmentId}
         syncedPlayerUuid={syncedPlayerUuid}
         linkedMinecraftUuid={linkedMinecraftUuid}
+        onMapClick={onClearSelection}
         onPointSelect={(point) => {
           const selectedPoint = pointById.get(point.id);
           if (selectedPoint) {

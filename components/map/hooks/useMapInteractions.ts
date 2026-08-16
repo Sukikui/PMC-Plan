@@ -23,6 +23,7 @@ interface UseMapInteractionsParams {
   scheduleView: (nextZoom: number, nextPan: MapPan) => void;
   cancelAnimation: () => void;
   onMapMoveStart: () => void;
+  onMapClick?: () => void;
   onPointSelect?: (point: InteractiveMapPoint) => void;
 }
 
@@ -38,6 +39,7 @@ export const useMapInteractions = ({
   scheduleView,
   cancelAnimation,
   onMapMoveStart,
+  onMapClick,
   onPointSelect,
 }: UseMapInteractionsParams) => {
   const [isPanning, setIsPanning] = useState(false);
@@ -152,12 +154,15 @@ export const useMapInteractions = ({
 
   const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const pointToSelect = pendingPointSelectRef.current;
-    const shouldSelectPoint = pointToSelect && !hasDraggedRef.current;
+    const hasDragged = hasDraggedRef.current;
     stopPanning(event.currentTarget, event.pointerId);
-    if (shouldSelectPoint) {
+
+    if (pointToSelect && !hasDragged) {
       onPointSelect?.(pointToSelect);
+    } else if (!pointToSelect && !hasDragged) {
+      onMapClick?.();
     }
-  }, [onPointSelect, stopPanning]);
+  }, [onMapClick, onPointSelect, stopPanning]);
 
   return {
     isPanning,

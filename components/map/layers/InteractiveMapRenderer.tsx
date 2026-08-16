@@ -43,6 +43,7 @@ interface InteractiveMapRendererProps {
   activeRouteSegmentId?: string | null;
   syncedPlayerUuid?: string | null;
   linkedMinecraftUuid?: string | null;
+  onMapClick?: () => void;
   onPointSelect?: (point: InteractiveMapPoint) => void;
 }
 type MapViewSnapshot = {
@@ -62,6 +63,7 @@ export default function InteractiveMapRenderer({
   activeRouteSegmentId,
   syncedPlayerUuid,
   linkedMinecraftUuid,
+  onMapClick,
   onPointSelect,
 }: InteractiveMapRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -166,6 +168,7 @@ export default function InteractiveMapRenderer({
     scheduleView: view.scheduleView,
     cancelAnimation: view.cancelAnimation,
     onMapMoveStart: handleMapMoveStart,
+    onMapClick,
     onPointSelect,
   });
   const iconPointIds = useViewportPointIcons({
