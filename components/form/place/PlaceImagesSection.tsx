@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
 import CrossIcon from '@/components/icons/CrossIcon';
 import PlusIcon from '@/components/icons/PlusIcon';
 import FormHint from '@/components/form/common/FormHint';
@@ -13,23 +13,29 @@ import type { FormPlaceImage } from './place-form-types';
 interface PlaceImagesSectionProps {
   images: FormPlaceImage[];
   previewErrors: Record<string, boolean>;
+  reorderable: boolean;
   onAdd: () => string;
   onPreviewError: (imageId: string) => void;
   onRemove: (imageId: string) => void;
+  onReorder: (sourceId: string, targetId: string) => void;
   onUpdate: (imageId: string, url: string) => void;
 }
 
 export default function PlaceImagesSection({
   images,
   previewErrors,
+  reorderable,
   onAdd,
   onPreviewError,
   onRemove,
+  onReorder,
   onUpdate,
 }: PlaceImagesSectionProps) {
   const [selectedImageId, setSelectedImageId] = useState<string | null>(
     images[0]?.id ?? null,
   );
+  const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
+  const [dropTargetImageId, setDropTargetImageId] = useState<string | null>(null);
   const selectedImage = images.find((image) => image.id === selectedImageId) ?? null;
   const selectedIndex = selectedImage
     ? images.findIndex((image) => image.id === selectedImage.id)
@@ -44,6 +50,50 @@ export default function PlaceImagesSection({
     if (selectedImageId === imageId) {
       setSelectedImageId(images.find((image) => image.id !== imageId)?.id ?? null);
     }
+  };
+
+  const endDrag = () => {
+    setDraggedImageId(null);
+    setDropTargetImageId(null);
+  };
+
+  const startDrag = (event: DragEvent<HTMLDivElement>, imageId: string) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const dragPreview = event.currentTarget.cloneNode(true) as HTMLElement;
+    Object.assign(dragPreview.style, {
+      height: `${bounds.height}px`,
+      left: '-10000px',
+      opacity: '1',
+      pointerEvents: 'none',
+      position: 'fixed',
+      top: '-10000px',
+      transform: 'none',
+      width: `${bounds.width}px`,
+    });
+    document.body.appendChild(dragPreview);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', imageId);
+    event.dataTransfer.setDragImage(
+      dragPreview,
+      event.clientX - bounds.left,
+      event.clientY - bounds.top,
+    );
+    requestAnimationFrame(() => dragPreview.remove());
+    setDraggedImageId(imageId);
+  };
+
+  const dragOver = (event: DragEvent<HTMLDivElement>, imageId: string) => {
+    if (!draggedImageId || draggedImageId === imageId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDropTargetImageId(imageId);
+  };
+
+  const drop = (event: DragEvent<HTMLDivElement>, targetId: string) => {
+    event.preventDefault();
+    const sourceId = draggedImageId ?? event.dataTransfer.getData('text/plain');
+    if (sourceId && sourceId !== targetId) onReorder(sourceId, targetId);
+    endDrag();
   };
 
   return (
@@ -63,6 +113,13 @@ export default function PlaceImagesSection({
             index={index}
             hasPreviewError={Boolean(previewErrors[image.id])}
             selected={image.id === selectedImageId}
+            dragging={image.id === draggedImageId}
+            dropTarget={image.id === dropTargetImageId}
+            draggable={reorderable && images.length > 1}
+            onDragEnd={endDrag}
+            onDragOver={dragOver}
+            onDragStart={startDrag}
+            onDrop={drop}
             onPreviewError={onPreviewError}
             onRemove={removeImage}
             onSelect={setSelectedImageId}
@@ -125,6 +182,13 @@ function PlaceImageThumbnail({
   index,
   hasPreviewError,
   selected,
+  dragging,
+  dropTarget,
+  draggable,
+  onDragEnd,
+  onDragOver,
+  onDragStart,
+  onDrop,
   onPreviewError,
   onRemove,
   onSelect,
@@ -133,6 +197,13 @@ function PlaceImageThumbnail({
   index: number;
   hasPreviewError: boolean;
   selected: boolean;
+  dragging: boolean;
+  dropTarget: boolean;
+  draggable: boolean;
+  onDragEnd: () => void;
+  onDragOver: (event: DragEvent<HTMLDivElement>, imageId: string) => void;
+  onDragStart: (event: DragEvent<HTMLDivElement>, imageId: string) => void;
+  onDrop: (event: DragEvent<HTMLDivElement>, imageId: string) => void;
   onPreviewError: (imageId: string) => void;
   onRemove: (imageId: string) => void;
   onSelect: (imageId: string) => void;
@@ -141,7 +212,19 @@ function PlaceImageThumbnail({
   const label = index === 0 ? 'Image principale' : `Image ${index + 1}`;
 
   return (
-    <div className="group relative">
+    <div
+      className={`group relative ${themeColors.util.roundedLg} ${themeColors.transitionAll} ${
+        draggable ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${dragging ? 'scale-95 opacity-50' : ''} ${
+        dropTarget ? `${themeColors.selection.place.halo} scale-[1.02]` : ''
+      }`}
+      draggable={draggable}
+      onDragEnd={onDragEnd}
+      onDragOver={(event) => onDragOver(event, image.id)}
+      onDragStart={(event) => onDragStart(event, image.id)}
+      onDrop={(event) => onDrop(event, image.id)}
+      title={draggable ? `Déplacer ${label.toLowerCase()}` : undefined}
+    >
       <button
         type="button"
         aria-label={`Modifier ${label.toLowerCase()}`}
@@ -153,11 +236,12 @@ function PlaceImageThumbnail({
             : themeColors.form.imageThumbnailInactive
         }`}
       >
-        {previewUrl && !hasPreviewError ? (
+        {previewUrl && !hasPreviewError && !dragging ? (
           <>
             <img
               src={previewUrl}
               alt=""
+              draggable={false}
               className="h-full w-full object-cover"
               onError={() => onPreviewError(image.id)}
             />

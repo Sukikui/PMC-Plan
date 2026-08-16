@@ -1,13 +1,17 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@/generated/prisma/client';
+import { createPrismaPgConfig } from '@/lib/prisma/connection';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const connectionString = process.env.DATABASE_URL
-  ?? 'postgresql://unconfigured:unconfigured@127.0.0.1:1/unconfigured';
-const adapter = new PrismaPg({ connectionString });
+const testConnectionString = process.env.NODE_ENV === 'test'
+  ? 'postgresql://unconfigured:unconfigured@127.0.0.1:1/unconfigured'
+  : undefined;
+const adapter = new PrismaPg(createPrismaPgConfig(
+  process.env.DATABASE_URL ?? testConnectionString,
+));
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
 

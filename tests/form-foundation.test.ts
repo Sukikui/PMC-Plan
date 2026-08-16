@@ -2,7 +2,10 @@ import {
   areEntityFieldsValid,
   normalizeEntityFields,
 } from '@/components/form/common/entity-fields';
-import { parseCoordinateTriplet } from '@/components/form/common/form-values';
+import {
+  moveArrayItemById,
+  parseCoordinateTriplet,
+} from '@/components/form/common/form-values';
 import {
   getMapEntryDeleteEndpoint,
   getMapEntrySaveEndpoint,
@@ -47,6 +50,17 @@ describe('content form foundation', () => {
       y: 64,
       z: -12,
     });
+  });
+
+  it('reorders form items by their stable identifiers', () => {
+    const items = [{ id: 'first' }, { id: 'second' }, { id: 'third' }];
+
+    expect(moveArrayItemById(items, 'first', 'third')).toEqual([
+      { id: 'second' },
+      { id: 'third' },
+      { id: 'first' },
+    ]);
+    expect(items.map(({ id }) => id)).toEqual(['first', 'second', 'third']);
   });
 
   it('uses the expected portal endpoints for linked and single portals', () => {

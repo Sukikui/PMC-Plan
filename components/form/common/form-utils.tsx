@@ -7,6 +7,7 @@ import {
 
 export {
   generateFormId,
+  moveArrayItemById,
   parseCoordinateTriplet,
   slugify,
   type CoordinatesInput,
