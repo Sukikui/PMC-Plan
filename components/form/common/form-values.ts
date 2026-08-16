@@ -32,3 +32,18 @@ export const generateFormId = () => {
   }
   return Math.random().toString(36).slice(2, 10);
 };
+
+export function moveArrayItemById<T extends { id: string }>(
+  items: T[],
+  sourceId: string,
+  targetId: string,
+) {
+  const sourceIndex = items.findIndex(({ id }) => id === sourceId);
+  const targetIndex = items.findIndex(({ id }) => id === targetId);
+  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return items;
+
+  const reordered = [...items];
+  const [movedItem] = reordered.splice(sourceIndex, 1);
+  reordered.splice(targetIndex, 0, movedItem);
+  return reordered;
+}

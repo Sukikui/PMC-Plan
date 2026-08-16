@@ -2,7 +2,12 @@
 
 import React, { useState } from 'react';
 import { createPlaceSnapshot } from '../common/form-change-detection';
-import { generateFormId, parseCoordinateTriplet, type CoordinatesInput } from '../common/form-utils';
+import {
+  generateFormId,
+  moveArrayItemById,
+  parseCoordinateTriplet,
+  type CoordinatesInput,
+} from '../common/form-utils';
 import { useEntityForm } from '../common/useEntityForm';
 import { useFormSubmission } from '../common/useFormSubmission';
 import FormActions from '../common/FormActions';
@@ -291,9 +296,13 @@ export default function PlaceForm({
         <PlaceImagesSection
           images={placeImageInputs}
           previewErrors={placeImagePreviewErrors}
+          reorderable={mode === 'edit'}
           onAdd={addPlaceImage}
           onPreviewError={(imageId) => setPlaceImagePreviewErrors((prev) => ({ ...prev, [imageId]: true }))}
           onRemove={removePlaceImage}
+          onReorder={(sourceId, targetId) => setPlaceImageInputs((current) => (
+            moveArrayItemById(current, sourceId, targetId)
+          ))}
           onUpdate={updatePlaceImageUrl}
         />
       </FormSection>
