@@ -37,7 +37,6 @@ export default function InfoOverlayStack({
               <InfoOverlay
                 item={layer.item as Place | Portal | PlaceSummary | PortalSummary}
                 onClose={close}
-                onSelectItem={layer.onSelectItem}
                 type={layer.type}
               />
             )}

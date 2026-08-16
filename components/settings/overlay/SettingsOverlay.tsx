@@ -7,7 +7,6 @@ import {
   useState,
 } from 'react';
 import type { Session } from 'next-auth';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
 import type { AppTheme } from '@/components/settings/ThemeSelector';
 import AccountSettings from '@/components/settings/account/AccountSettings';
@@ -37,7 +36,6 @@ interface SettingsOverlayProps {
   onSignOut: () => void;
   onThemeChange: (theme: AppTheme) => void;
   onUnlinkMinecraft: () => void;
-  onSelectItem?: SelectDestinationHandler;
 }
 
 export default function SettingsOverlay({
@@ -55,7 +53,6 @@ export default function SettingsOverlay({
   onSignOut,
   onThemeChange,
   onUnlinkMinecraft,
-  onSelectItem,
 }: SettingsOverlayProps) {
   const hasAdminAccess = isAdministrationRole(user?.role);
   const {
@@ -124,7 +121,6 @@ export default function SettingsOverlay({
                     onSignIn={onSignIn}
                     onSignOut={onSignOut}
                     onUnlinkMinecraft={onUnlinkMinecraft}
-                    onSelectItem={onSelectItem}
                   />
                 )}
                 {tab.id === 'appearance' && (

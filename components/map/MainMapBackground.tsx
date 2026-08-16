@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import InteractiveMapRenderer from '@/components/map/layers/InteractiveMapRenderer';
 import { useWorldMapPoints } from '@/components/map/hooks/useOverworldMapPoints';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import { mapMetadataByWorld, NETHER_MAP_WORLD, OVERWORLD_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
 import { netherAxisLineOverlays } from '@/lib/map/nether-overlays';
 import type { MapRoutePath } from '@/lib/map/route-path';
@@ -12,7 +11,6 @@ import { themeColors } from '@/lib/theme-colors';
 
 interface MainMapBackgroundProps {
   world?: MapWorld;
-  onSelectItem?: SelectDestinationHandler;
   selectedId?: string;
   selectedType?: 'place' | 'portal';
   routePath?: MapRoutePath | null;
@@ -23,7 +21,6 @@ interface MainMapBackgroundProps {
 
 export default function MainMapBackground({
   world = OVERWORLD_MAP_WORLD,
-  onSelectItem,
   selectedId,
   selectedType,
   routePath,
@@ -72,7 +69,7 @@ export default function MainMapBackground({
         onPointSelect={(point) => {
           const selectedPoint = pointById.get(point.id);
           if (selectedPoint) {
-            openPlaceInfo(selectedPoint.item, selectedPoint.itemType, onSelectItem);
+            openPlaceInfo(selectedPoint.item, selectedPoint.itemType);
           }
         }}
       />

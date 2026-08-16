@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useState, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import Overlay from '@/components/ui/Overlay';
+import { useOverlayStackActions } from '@/components/ui/OverlayStackProvider';
 import type { OpenFormOverlayOptions } from '@/components/form/FormOverlay';
 import { useInfoOverlayStack } from '@/components/overlay/useInfoOverlayStack';
 import type { Place, Portal } from '@/lib/api/types';
@@ -36,17 +37,18 @@ interface FormOverlayState {
 }
 
 interface OverlayContextValue {
-  openPlaceInfoById: (placeId: string, onSelectItem?: SelectDestinationHandler) => Promise<void>;
+  openPlaceInfoById: (placeId: string) => Promise<void>;
   openMapEntryInfoById: (
     mapEntryId: string,
     type: MapEntryOverlayType,
-    onSelectItem?: SelectDestinationHandler,
   ) => Promise<void>;
-  openPlaceInfo: (item: Place | Portal | PlaceSummary | PortalSummary, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => void;
+  openPlaceInfo: (item: Place | Portal | PlaceSummary | PortalSummary, type: MapEntryOverlayType) => void;
   openSpaceInfo: (space: Space | SpaceReference | SpaceSummary) => void;
   openServiceEditor: (service: Service, canDelete: boolean) => void;
   closeOverlay: () => void;
   openFormOverlay: (options: OpenFormOverlayOptions) => void;
+  navigateToDestination: SelectDestinationHandler;
+  registerDestinationHandler: (handler: SelectDestinationHandler) => () => void;
 }
 
 const OverlayContext = createContext<OverlayContextValue | null>(null);
@@ -67,6 +69,7 @@ function clearScheduledClose(timeoutRef: TimeoutRef) {
 
 export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
+  const { closeAll } = useOverlayStackActions();
   const infoStack = useInfoOverlayStack();
   const { applyManagementUpdate } = infoStack;
   const [formOverlayState, setFormOverlayState] = useState<FormOverlayState>({
@@ -75,6 +78,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     options: { mode: 'add' },
   });
   const formTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const destinationHandlerRef = useRef<SelectDestinationHandler | null>(null);
 
   useEffect(() => {
     return () => {
@@ -86,18 +90,32 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     applyManagementUpdate(management);
   }), [applyManagementUpdate]);
 
-  const openPlaceInfoById = async (placeId: string, onSelectItem?: SelectDestinationHandler) => {
+  const registerDestinationHandler = useCallback((handler: SelectDestinationHandler) => {
+    destinationHandlerRef.current = handler;
+    return () => {
+      if (destinationHandlerRef.current === handler) {
+        destinationHandlerRef.current = null;
+      }
+    };
+  }, []);
+
+  const navigateToDestination = useCallback<SelectDestinationHandler>((id, type, world) => {
+    destinationHandlerRef.current?.(id, type, world);
+    closeAll();
+  }, [closeAll]);
+
+  const openPlaceInfoById = async (placeId: string) => {
     try {
       const data = await queryClient.ensureQueryData(mapContentQueryOptions);
       const place = data.places.find((item) => item.id === placeId);
-      if (place) infoStack.open(place, 'place', onSelectItem);
+      if (place) infoStack.open(place, 'place');
     } catch {
       /* ignore */
     }
   };
 
-  const openPlaceInfo = (item: Place | Portal | PlaceSummary | PortalSummary, type: MapEntryOverlayType, onSelectItem?: SelectDestinationHandler) => {
-    infoStack.open(item, type, onSelectItem);
+  const openPlaceInfo = (item: Place | Portal | PlaceSummary | PortalSummary, type: MapEntryOverlayType) => {
+    infoStack.open(item, type);
   };
 
   const openSpaceInfo = (space: Space | SpaceReference | SpaceSummary) => {
@@ -118,11 +136,10 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const openMapEntryInfoById = async (
     mapEntryId: string,
     type: MapEntryOverlayType,
-    onSelectItem?: SelectDestinationHandler,
   ) => {
     const data = await queryClient.ensureQueryData(mapContentQueryOptions);
     const item = findMapEntrySummary(data, mapEntryId, type);
-    if (item) openPlaceInfo(item, type, onSelectItem);
+    if (item) openPlaceInfo(item, type);
   };
 
   const closeOverlay = infoStack.closeTop;
@@ -180,7 +197,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <OverlayContext.Provider value={{ openPlaceInfoById, openMapEntryInfoById, openPlaceInfo, openSpaceInfo, openServiceEditor, closeOverlay, openFormOverlay }}>
+    <OverlayContext.Provider value={{ closeOverlay, navigateToDestination, openFormOverlay, openMapEntryInfoById, openPlaceInfo, openPlaceInfoById, openServiceEditor, openSpaceInfo, registerDestinationHandler }}>
       {children}
       {infoStack.layers.length > 0 && (
         <InfoOverlayStack

@@ -4,14 +4,9 @@ import { useState } from 'react';
 import ContentManagementList from '@/components/settings/content/ContentManagementList';
 import ContentManagementTabs from '@/components/settings/content/ContentManagementTabs';
 import type { ContentManagementType } from '@/lib/content-management/types';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import { themeColors } from '@/lib/theme-colors';
 
-export default function AccountContentList({
-  onSelectItem,
-}: {
-  onSelectItem?: SelectDestinationHandler;
-}) {
+export default function AccountContentList() {
   const [activePage, setActivePage] = useState<ContentManagementType>('place');
 
   return (
@@ -27,7 +22,6 @@ export default function AccountContentList({
       />
       <ContentManagementList
         key={activePage}
-        onSelectItem={onSelectItem}
         scope="managed"
         type={activePage}
       />

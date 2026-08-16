@@ -23,25 +23,23 @@ import {
   canAdministerContent,
   canManageContent,
 } from '@/lib/content-permissions';
-import { toMapWorld, type SelectDestinationHandler } from '@/lib/destination/selection';
+import { toMapWorld } from '@/lib/destination/selection';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
 
 interface InfoOverlayProps {
   onClose: () => void;
   item: Place | Portal | PlaceSummary | PortalSummary;
   type: 'place' | 'portal';
-  onSelectItem?: SelectDestinationHandler;
 }
 
 export default function InfoOverlay({
   onClose,
   item,
   type,
-  onSelectItem,
 }: InfoOverlayProps) {
   const { data: session } = useSession();
   const { effectiveRole } = useAdminMode();
-  const { openFormOverlay, openSpaceInfo } = useOverlay();
+  const { navigateToDestination, openFormOverlay, openSpaceInfo } = useOverlay();
   const detailQuery = useQuery({
     ...mapEntryDetailQueryOptions(type, item.mapEntryId),
     initialData: isMapEntryDetail(item) ? item : undefined,
@@ -164,8 +162,7 @@ export default function InfoOverlay({
           onClose={onClose}
           onEdit={handleEditClick}
           onSelectItem={() => {
-            onSelectItem?.(item.id, type, toMapWorld(item.world));
-            onClose();
+            navigateToDestination(item.id, type, toMapWorld(item.world));
           }}
         />
       )}

@@ -26,7 +26,6 @@ import SectionSeparator from '@/components/ui/SectionSeparator';
 import { useOverlayDisclosure } from '@/components/ui/useOverlayDisclosure';
 import { themeColors } from '@/lib/theme-colors';
 import { useTheme } from '@/lib/use-theme';
-import type { SelectDestinationHandler } from '@/lib/destination/selection';
 import {
   loadMinecraftLinkOverlay,
   loadSettingsOverlay,
@@ -41,7 +40,6 @@ interface SettingsPanelProps {
   onOpenMarket?: () => void;
   onOpenNetherMap?: () => void;
   onOpenSpaces?: () => void;
-  onSelectItem?: SelectDestinationHandler;
 }
 
 const GAP = 16;
@@ -54,7 +52,6 @@ export default function SettingsPanel({
   onOpenMarket,
   onOpenNetherMap,
   onOpenSpaces,
-  onSelectItem,
 }: SettingsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [panelHeight, setPanelHeight] = useState(0);
@@ -183,7 +180,6 @@ export default function SettingsPanel({
           onSignOut={() => void signOut()}
           onThemeChange={changeTheme}
           onUnlinkMinecraft={() => void minecraftLink.unlinkAccount()}
-          onSelectItem={onSelectItem}
         />
       )}
 
