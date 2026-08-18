@@ -14,6 +14,7 @@ import { slugify, type CoordinatesInput } from './form-utils';
 interface PlaceSnapshotInput {
   address: string;
   category: PlaceCategory;
+  color: string;
   coordinates: CoordinatesInput;
   description: string;
   discordUrl: string;
@@ -27,6 +28,7 @@ interface PlaceSnapshotInput {
 }
 
 interface PortalSnapshotInput {
+  color: string;
   description: string;
   linkedCoordinates: {
     nether: CoordinatesInput;
@@ -55,6 +57,7 @@ export function useFormHasChanges(snapshot: unknown, ready = true) {
 export function createPlaceSnapshot(input: PlaceSnapshotInput) {
   return {
     slug: slugify(input.slugSource),
+    color: input.color,
     spaceId: input.spaceId,
     name: input.name.trim(),
     world: input.world,
@@ -72,6 +75,7 @@ export function createPlaceSnapshot(input: PlaceSnapshotInput) {
 export function createPortalSnapshot(input: PortalSnapshotInput) {
   const common = {
     slug: slugify(input.slugSource),
+    color: input.color,
     spaceId: input.spaceId,
     name: input.name.trim(),
     description: normalizeText(input.description),

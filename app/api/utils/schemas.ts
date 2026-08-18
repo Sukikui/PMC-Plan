@@ -3,6 +3,10 @@ import {
   CONTENT_FIELD_LIMITS,
 } from '@/lib/content/constraints';
 import {
+  contentColorSchema,
+  DEFAULT_CONTENT_COLOR,
+} from '@/lib/content/colors';
+import {
   mapEntryCreationSchema,
   mapEntryUpdateSchema,
 } from '@/lib/map-entry/schemas';
@@ -58,6 +62,7 @@ export const tradeOfferSchema = z
   });
 
 const placeSchema = z.object({
+  color: contentColorSchema,
   slug: slugSchema,
   name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
   world: z.enum(['overworld', 'nether']),
@@ -76,14 +81,17 @@ const placeSchema = z.object({
 });
 
 export const CreatePlaceSchema = placeSchema.extend({
+  color: contentColorSchema.default(DEFAULT_CONTENT_COLOR),
   management: mapEntryCreationSchema.optional(),
 });
 
 export const UpdatePlaceSchema = placeSchema.extend({
+  color: contentColorSchema.optional(),
   management: mapEntryUpdateSchema.optional(),
 });
 
 const singlePortalSchema = z.object({
+  color: contentColorSchema,
   mode: z.literal('single'),
   spaceId: mapEntrySpaceIdSchema,
   portal: z.object({
@@ -99,6 +107,7 @@ const singlePortalSchema = z.object({
 });
 
 const linkedPortalSchema = z.object({
+  color: contentColorSchema,
   mode: z.literal('linked'),
   spaceId: mapEntrySpaceIdSchema,
   slug: slugSchema,
@@ -119,11 +128,23 @@ const linkedPortalSchema = z.object({
 });
 
 export const CreatePortalSchema = z.discriminatedUnion('mode', [
-  singlePortalSchema.extend({ management: mapEntryCreationSchema.optional() }),
-  linkedPortalSchema.extend({ management: mapEntryCreationSchema.optional() }),
+  singlePortalSchema.extend({
+    color: contentColorSchema.default(DEFAULT_CONTENT_COLOR),
+    management: mapEntryCreationSchema.optional(),
+  }),
+  linkedPortalSchema.extend({
+    color: contentColorSchema.default(DEFAULT_CONTENT_COLOR),
+    management: mapEntryCreationSchema.optional(),
+  }),
 ]);
 
 export const UpdatePortalSchema = z.discriminatedUnion('mode', [
-  singlePortalSchema.extend({ management: mapEntryUpdateSchema.optional() }),
-  linkedPortalSchema.extend({ management: mapEntryUpdateSchema.optional() }),
+  singlePortalSchema.extend({
+    color: contentColorSchema.optional(),
+    management: mapEntryUpdateSchema.optional(),
+  }),
+  linkedPortalSchema.extend({
+    color: contentColorSchema.optional(),
+    management: mapEntryUpdateSchema.optional(),
+  }),
 ]);

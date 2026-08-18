@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSpaceForeground } from '@/lib/spaces/colors';
+import { getColorForeground } from '@/lib/content/colors';
 import {
   DEFAULT_SPACE_LOGO_BACKGROUND,
   DEFAULT_SPACE_LOGO_ZOOM,
@@ -59,7 +59,7 @@ export default function SpaceLogo({
         backgroundColor: hasImage && logoBackground === 'transparent'
           ? 'transparent'
           : color,
-        color: getSpaceForeground(color),
+        color: getColorForeground(color),
       }}
     >
       {hasImage ? (

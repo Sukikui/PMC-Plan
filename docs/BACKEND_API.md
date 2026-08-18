@@ -479,6 +479,12 @@ records the Discord account responsible for the latest content or management
 mutation. Existing entries without an audit value fall back to their primary
 manager when serialized.
 
+`MapEntry.color` stores the canonical `#RRGGBB` color shared by a place or by
+both endpoints of a linked portal. Public map rendering uses the associated
+space color when one exists; otherwise it uses this map-entry color. Omitted
+colors default to the application blue `#3B82F6` during creation; update
+requests that omit the field preserve the stored color.
+
 Public owners are independent `MinecraftProfile` records referenced through
 `MapEntryOwner`. They are display metadata and never grant write access.
 Adding a Discord manager automatically suggests their linked Minecraft profile
@@ -911,6 +917,7 @@ None
   {
     "id": "village_suki",
     "name": "Village de Suki",
+    "color": "#3B82F6",
     "world": "overworld",
     "category": "construction",
     "coordinates": {"x": 5000, "y": 70, "z": 300},
@@ -985,6 +992,10 @@ manager's linked Minecraft profile is present in `owners`, read serialization
 moves it to the first position while preserving the relative order of every
 other owner.
 
+`color` is the place-specific map color. When `space` is non-null, clients
+must render `space.color` instead while preserving `color` for a later
+dissociation.
+
 **Examples:**
 ```bash
 # Get all places
@@ -1007,6 +1018,7 @@ Creates a place and its management resource.
   `management.excludedOwnerUuids`.
 - Accepts an optional nullable `spaceId`. Attaching to a space requires the
   authenticated effective role to manage that space.
+- Accepts a canonical `color` in `#RRGGBB` format, defaulting to `#3B82F6`.
 - Validates every selected Discord manager and resolves Minecraft owner names
   through Mojang before opening the database transaction.
 - Automatically includes linked Minecraft profiles for selected managers unless
@@ -1023,7 +1035,8 @@ access to the target space. The optional `management` object contains the
 complete desired manager and owner state described under Map Entry Management.
 Public fields, space association, management relations, and an optional primary
 transfer are committed atomically. The update records the authenticated actor
-as the last editor.
+as the last editor. Updating `color` changes the standalone map color without
+overriding the color of an associated space.
 
 ### DELETE `/places/{slug}`
 
@@ -1082,6 +1095,7 @@ because approval is handled at the account level.
   {
     "id": "portal_village_start",
     "name": "Portail du Village",
+    "color": "#3B82F6",
     "world": "overworld",
     "coordinates": {"x": -120, "y": 65, "z": -220},
     "description": "Portail près du village de départ",
@@ -1141,6 +1155,8 @@ Creates either one portal or an Overworld/Nether linked pair.
 - Applies the same optional creation management payload as `POST /places`.
 - Accepts the same optional nullable `spaceId` and target-space permission
   checks as `POST /places`.
+- Accepts the same canonical `color` as places. Linked endpoints share it
+  through their common `MapEntry`.
 - Creates linked portal pairs in one Prisma transaction.
 - Both endpoints of a linked pair reference the same `MapEntry`.
 - Makes created portals immediately available through `GET /portals`.
@@ -1157,7 +1173,9 @@ are then updated on their respective endpoints. Renaming the pair therefore
 cannot update only one world or break its logical identity. The optional
 nullable `spaceId` follows the same rules as place updates. The optional
 `management` object also follows the place update contract and is committed in
-the same transaction as both portal endpoints.
+the same transaction as both portal endpoints. The shared `color` is updated
+once for the complete linked pair; an associated space color remains visually
+authoritative.
 
 ### DELETE `/portals/{slug}`
 

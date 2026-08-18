@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     const management = await prepareMapEntryCreation(
       payload.management,
       payload.spaceId,
+      payload.color,
     );
 
     if (payload.mode === 'single') {

@@ -11,7 +11,7 @@ import {
   canManageContent,
 } from '@/lib/content-permissions';
 import { MapEntryError } from '@/lib/map-entry/service';
-import { setMapEntrySpace } from '@/lib/map-entry/space-association';
+import { updateMapEntryPresentation } from '@/lib/map-entry/space-association';
 import { indexLinkedPortalPairs } from '@/lib/portal/linked-portals';
 import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
@@ -94,10 +94,10 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
             address,
           },
         });
-        await setMapEntrySpace(tx, portal.mapEntryId, {
+        await updateMapEntryPresentation(tx, portal.mapEntryId, {
           userId: session.user.id,
           role: actorRole,
-        }, payload.spaceId);
+        }, { color: payload.color, spaceId: payload.spaceId });
         if (management) {
           await updateMapEntryManagement(tx, portal.mapEntryId, {
             userId: session.user.id,
@@ -167,10 +167,10 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
         },
       });
 
-      await setMapEntrySpace(tx, portal.mapEntryId, {
+      await updateMapEntryPresentation(tx, portal.mapEntryId, {
         userId: session.user.id,
         role: actorRole,
-      }, payload.spaceId);
+      }, { color: payload.color, spaceId: payload.spaceId });
       if (management) {
         await updateMapEntryManagement(tx, portal.mapEntryId, {
           userId: session.user.id,

@@ -4,6 +4,7 @@ export type PlaceSummary = Pick<
   Place,
   | 'address'
   | 'category'
+  | 'color'
   | 'coordinates'
   | 'description'
   | 'id'
@@ -19,6 +20,7 @@ export type PlaceSummary = Pick<
 export type PortalSummary = Pick<
   Portal,
   | 'address'
+  | 'color'
   | 'coordinates'
   | 'description'
   | 'id'

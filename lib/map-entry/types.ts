@@ -40,6 +40,7 @@ export interface MapEntryManagement {
 }
 
 export interface MapEntryCreationInput {
+  color?: string;
   managerIds: string[];
   owners: MinecraftOwner[];
   excludedOwnerUuids: string[];

@@ -3,6 +3,7 @@ import {
   CONTENT_FIELD_LIMITS,
   CONTENT_MANAGEMENT_LIMITS,
 } from '@/lib/content/constraints';
+import { contentColorSchema } from '@/lib/content/colors';
 import { discordUrlSchema } from '@/lib/validation/discord-url';
 import { slugSchema } from '@/lib/validation/slug';
 import {
@@ -21,16 +22,11 @@ const nullableText = (maxLength: number) => z
   .optional()
   .transform((value) => value || null);
 
-const spaceColorSchema = z
-  .string()
-  .regex(/^#[0-9A-F]{6}$/i, 'La couleur doit être au format hexadécimal.')
-  .transform((value) => value.toUpperCase());
-
 const baseSpaceSchema = z.object({
   name: z.string().trim().min(1).max(CONTENT_FIELD_LIMITS.name),
   description: nullableText(CONTENT_FIELD_LIMITS.description),
   discordUrl: discordUrlSchema,
-  color: spaceColorSchema,
+  color: contentColorSchema,
   logoUrl: z
     .string()
     .trim()

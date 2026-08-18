@@ -25,6 +25,7 @@ export interface FormPlaceImage {
 
 export interface InitialPlaceData {
   type: 'place';
+  color: string;
   name: string;
   id: string;
   world: string;
@@ -46,6 +47,7 @@ export interface InitialPlaceData {
 }
 
 export interface PlaceFormPayload {
+  color: string;
   slug: string;
   name: string;
   world: 'overworld' | 'nether';

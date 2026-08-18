@@ -30,11 +30,14 @@ export async function validateSpaceAssociation(
   }
 }
 
-export async function setMapEntrySpace(
+export async function updateMapEntryPresentation(
   tx: Prisma.TransactionClient,
   mapEntryId: string,
   actor: MapEntryActor,
-  spaceId: string | null | undefined,
+  presentation: {
+    color?: string;
+    spaceId: string | null | undefined;
+  },
 ) {
   const entry = await tx.mapEntry.findUnique({
     where: { id: mapEntryId },
@@ -44,14 +47,22 @@ export async function setMapEntrySpace(
     throw new MapEntryError('Ressource introuvable.', 404);
   }
 
-  if (spaceId !== undefined && spaceId !== entry.spaceId) {
-    await validateSpaceAssociation(tx, actor, spaceId);
+  if (
+    presentation.spaceId !== undefined
+    && presentation.spaceId !== entry.spaceId
+  ) {
+    await validateSpaceAssociation(tx, actor, presentation.spaceId);
   }
 
   await tx.mapEntry.update({
     where: { id: mapEntryId },
     data: {
-      ...(spaceId !== undefined ? { spaceId } : {}),
+      ...(presentation.color !== undefined
+        ? { color: presentation.color }
+        : {}),
+      ...(presentation.spaceId !== undefined
+        ? { spaceId: presentation.spaceId }
+        : {}),
       lastEditorId: actor.userId,
     },
   });

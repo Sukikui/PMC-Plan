@@ -8,6 +8,7 @@ import type {
   MapEntryUpdateInput,
   MinecraftOwner,
 } from './types';
+import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
 
 interface MapEntryCreationPayload {
   managerIds?: string[];
@@ -26,6 +27,7 @@ interface MapEntryUpdatePayload {
 export async function prepareMapEntryCreation(
   payload?: MapEntryCreationPayload,
   spaceId?: string | null,
+  color = DEFAULT_CONTENT_COLOR,
 ): Promise<MapEntryCreationInput> {
   const managerIds = Array.from(new Set(payload?.managerIds ?? []));
   const ownerNames = Array.from(new Set(payload?.ownerNames ?? []));
@@ -34,6 +36,7 @@ export async function prepareMapEntryCreation(
     : [];
 
   return {
+    color,
     managerIds,
     owners,
     excludedOwnerUuids: Array.from(new Set(payload?.excludedOwnerUuids ?? [])),

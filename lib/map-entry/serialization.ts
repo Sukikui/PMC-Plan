@@ -19,6 +19,7 @@ interface PublicPrimaryManagerRecord extends StoredDiscordIdentity {
 }
 
 interface PublicMapEntryRecord {
+  color: string;
   id: string;
   primaryManagerId: string;
   updatedAt: Date;
@@ -143,6 +144,10 @@ export function toMapEntrySpace(
   entry: PublicMapEntryRecord,
 ): SpaceReference | null {
   return entry.space;
+}
+
+export function toMapEntryColor(entry: PublicMapEntryRecord): string {
+  return entry.color;
 }
 
 export function toMapEntryManagement(entry: ManagementMapEntryRecord): MapEntryManagement {

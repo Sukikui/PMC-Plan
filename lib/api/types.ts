@@ -10,6 +10,7 @@ export interface Coordinates {
 }
 
 export interface Portal {
+  color: string;
   id: string;
   name: string;
   world: string;
@@ -53,6 +54,7 @@ export interface TradeOffer {
 }
 
 export interface Place {
+  color: string;
   id: string;
   name: string;
   world: string;

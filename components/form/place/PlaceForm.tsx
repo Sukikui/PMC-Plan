@@ -12,6 +12,7 @@ import { useEntityForm } from '../common/useEntityForm';
 import { useFormSubmission } from '../common/useFormSubmission';
 import FormActions from '../common/FormActions';
 import CommonFields from '../common/CommonFields';
+import ContentColorField, { ContentPresentationSection } from '../common/ContentColorField';
 import FormSection from '../common/FormSection';
 import SpaceAssociationField from '../association/SpaceAssociationField';
 import TagInput from '../common/TagInput';
@@ -51,6 +52,7 @@ import {
   type UpdateTradeOffer,
 } from './place-form-types';
 import type { SpaceReference } from '@/lib/spaces/types';
+import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
 
 export type { InitialPlaceData, PlaceFormPayload } from './place-form-types';
 
@@ -74,6 +76,7 @@ export default function PlaceForm({
     initialData?.id,
     initialData?.description,
   );
+  const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
   const [placeWorld, setPlaceWorld] = useState<'overworld' | 'nether'>(initialData?.world === 'nether' ? 'nether' : 'overworld');
   const [placeCategory, setPlaceCategory] = useState<PlaceCategory>(
     initialData?.category && isPlaceCategory(initialData.category)
@@ -126,6 +129,7 @@ export default function PlaceForm({
     ...createPlaceSnapshot({
       address: placeAddress.value,
       category: placeCategory,
+      color,
       coordinates: placeCoords,
       description: fields.description,
       discordUrl: discordOverrideUrl ?? '',
@@ -221,6 +225,7 @@ export default function PlaceForm({
     }
 
     return {
+      color,
       slug: fields.input.slug,
       name: fields.input.name,
       world: placeWorld,
@@ -273,18 +278,8 @@ export default function PlaceForm({
         />
       </FormSection>
 
-      <FormSection title="Gestion">
-        <MapEntryManagementFields
-          disabled={submission.isSubmitting}
-          mapEntryId={initialData?.mapEntryId}
-          mode={mode}
-          draft={managementDraft}
-          onDraftChange={setManagementDraft}
-          onReadyChange={setManagementReady}
-        />
-      </FormSection>
-
-      <FormSection title="Présentation">
+      <ContentPresentationSection>
+        <ContentColorField color={color} disabled={submission.isSubmitting} entityLabel="lieu" onChange={setColor} space={selectedSpace} />
         <PlaceCategorySelector value={placeCategory} onChange={setPlaceCategory} />
         <TagInput
           label="Tags"
@@ -304,6 +299,17 @@ export default function PlaceForm({
             moveArrayItemById(current, sourceId, targetId)
           ))}
           onUpdate={updatePlaceImageUrl}
+        />
+      </ContentPresentationSection>
+
+      <FormSection title="Gestion">
+        <MapEntryManagementFields
+          disabled={submission.isSubmitting}
+          mapEntryId={initialData?.mapEntryId}
+          mode={mode}
+          draft={managementDraft}
+          onDraftChange={setManagementDraft}
+          onReadyChange={setManagementReady}
         />
       </FormSection>
 

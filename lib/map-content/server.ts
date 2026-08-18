@@ -28,7 +28,9 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
         slug: true,
         tags: true,
         world: true,
-        mapEntry: { select: { space: publicMapEntryInclude.space } },
+        mapEntry: {
+          select: { color: true, space: publicMapEntryInclude.space },
+        },
       },
     }),
     prisma.portal.findMany({
@@ -43,12 +45,15 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
         name: true,
         slug: true,
         world: true,
-        mapEntry: { select: { space: publicMapEntryInclude.space } },
+        mapEntry: {
+          select: { color: true, space: publicMapEntryInclude.space },
+        },
       },
     }),
   ]);
 
   const places = placeRecords.map((place): PlaceSummary => ({
+    color: place.mapEntry.color,
     id: place.slug,
     name: place.name,
     world: place.world,
@@ -67,6 +72,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
   }));
   const portals = normalizeLinkedPortalIdentities(portalRecords.map(
     (portal): PortalSummary => ({
+      color: portal.mapEntry.color,
       id: portal.slug,
       slug: portal.slug,
       name: portal.name,
@@ -89,7 +95,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
 
 const loadCachedMapContent = cacheDatabaseQuery(
   loadMapContentUncached,
-  ['public-map-content-v1'],
+  ['public-map-content-v2'],
   { revalidate: 300, tags: [contentCacheTags.map] },
 );
 

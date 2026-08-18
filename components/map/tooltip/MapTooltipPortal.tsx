@@ -3,7 +3,7 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import SpaceLogo from '@/components/spaces/SpaceLogo';
-import { getSpaceColorWithAlpha, getSpaceForeground } from '@/lib/spaces/colors';
+import { getColorForeground, getColorWithAlpha } from '@/lib/content/colors';
 import { themeColors } from '@/lib/theme-colors';
 import { PLACE_PREVIEW_ANIMATION_DURATION_MS } from '../core/map-constants';
 import {
@@ -68,8 +68,8 @@ function MapTooltipItem({
       maxWidth: `${MAP_TOOLTIP_LABEL_MAX_WIDTH_REM}rem`,
       ...(measuredWidth ? { width: `${measuredWidth}px` } : {}),
       ...(tooltip.markerColor ? {
-        backgroundColor: getSpaceColorWithAlpha(tooltip.markerColor, 0.75),
-        color: getSpaceForeground(tooltip.markerColor),
+        backgroundColor: getColorWithAlpha(tooltip.markerColor, 0.75),
+        color: getColorForeground(tooltip.markerColor),
       } : {}),
     };
   }, [tooltip.markerColor, tooltipLabel]);

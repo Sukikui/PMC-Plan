@@ -25,8 +25,9 @@ Paginated responses share this envelope:
 
 Returns the complete lightweight projection required by the map and destination
 panel. Places include identity, world, coordinates, description, address,
-category, tags, associated space, and their first preview image. Portals expose
-the equivalent map fields and linked-portal identity. The response deliberately
+category, tags, canonical color, associated space, and their first preview
+image. Portals expose the equivalent map fields and linked-portal identity. The
+response deliberately
 omits managers, owners, trade offers, complete image collections, and audit
 metadata.
 
@@ -38,7 +39,9 @@ metadata.
 ```
 
 Linked portal endpoints keep their world-specific coordinates and descriptions
-while sharing their canonical name and slug.
+while sharing their canonical name, slug, and color. Map points resolve their
+effective color as `space.color` when associated, then fall back to the
+map-entry `color`.
 
 ## GET `/api/map-entries/{id}/detail`
 

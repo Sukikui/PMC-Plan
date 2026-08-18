@@ -42,7 +42,7 @@ describe('data-loading projections', () => {
       coordZ: -8,
       description: 'Marché local',
       images: ['preview.png', 'secondary.png'],
-      mapEntry: { space: null },
+      mapEntry: { color: '#3B82F6', space: null },
       mapEntryId: 'entry-place',
       name: 'Marché',
       slug: 'marche',
@@ -55,6 +55,7 @@ describe('data-loading projections', () => {
       places: [{
         address: null,
         category: 'commerce',
+        color: '#3B82F6',
         coordinates: { x: 12, y: 64, z: -8 },
         description: 'Marché local',
         id: 'marche',

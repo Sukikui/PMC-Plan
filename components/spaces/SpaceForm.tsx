@@ -5,9 +5,15 @@ import type { Session } from 'next-auth';
 import CommonFields from '@/components/form/common/CommonFields';
 import DiscordUrlField from '@/components/form/common/DiscordUrlField';
 import FormActions from '@/components/form/common/FormActions';
+import ContentColorField, {
+  ContentPresentationSection,
+} from '@/components/form/common/ContentColorField';
 import FormField from '@/components/form/common/FormField';
 import FormHint from '@/components/form/common/FormHint';
 import FormSection from '@/components/form/common/FormSection';
+import LabeledRangeField, {
+  rangeFieldSectionClassName,
+} from '@/components/form/common/LabeledRangeField';
 import { imageUrlPlaceholder } from '@/components/form/common/form-placeholders';
 import { formInputClassName } from '@/components/form/common/form-styles';
 import { useEntityForm } from '@/components/form/common/useEntityForm';
@@ -19,7 +25,7 @@ import {
   toManagedIdentity,
 } from '@/components/form/management/managed-users';
 import { canAdministerContent } from '@/lib/content-permissions';
-import { DEFAULT_SPACE_COLOR } from '@/lib/spaces/colors';
+import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
 import {
   DEFAULT_SPACE_LOGO_BACKGROUND,
   DEFAULT_SPACE_LOGO_ZOOM,
@@ -34,12 +40,8 @@ import type {
   SpaceLogoBackground,
   SpaceUser,
 } from '@/lib/spaces/types';
-import SpaceColorPicker from './SpaceColorPicker';
 import SpaceLogo from './SpaceLogo';
 import SpaceLogoBackgroundSelector from './SpaceLogoBackgroundSelector';
-import SpaceRangeField, {
-  spaceRangeSectionClassName,
-} from './SpaceRangeField';
 
 interface SpaceFormProps {
   effectiveRole?: string;
@@ -119,7 +121,9 @@ export default function SpaceForm({
           namePlaceholder="Valnyfrost"
           slugPlaceholder="valnyfrost"
         />
+      </FormSection>
 
+      <ContentPresentationSection>
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
           <SpaceLogo
             color={input.color}
@@ -149,8 +153,8 @@ export default function SpaceForm({
         </div>
 
         {input.logoUrl && (
-          <div className={spaceRangeSectionClassName}>
-            <SpaceRangeField
+          <div className={rangeFieldSectionClassName}>
+            <LabeledRangeField
               accentHandle
               disabled={submission.isSubmitting}
               label="Zoom du logo"
@@ -174,12 +178,13 @@ export default function SpaceForm({
           </div>
         )}
 
-        <SpaceColorPicker
+        <ContentColorField
+          color={input.color}
           disabled={submission.isSubmitting}
-          value={input.color}
+          entityLabel="espace"
           onChange={(color) => setDetails((current) => ({ ...current, color }))}
         />
-      </FormSection>
+      </ContentPresentationSection>
 
       <FormSection title="Gestion">
         <ManagedUsersField
@@ -240,7 +245,7 @@ interface SpaceDetailsDraft {
 
 function getInitialDetails(space?: Space): SpaceDetailsDraft {
   return {
-    color: space?.color ?? DEFAULT_SPACE_COLOR,
+    color: space?.color ?? DEFAULT_CONTENT_COLOR,
     discordUrl: space?.discordUrl ?? null,
     logoBackground: space?.logoBackground ?? DEFAULT_SPACE_LOGO_BACKGROUND,
     logoUrl: space?.logoUrl ?? null,

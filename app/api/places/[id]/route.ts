@@ -12,7 +12,7 @@ import {
 } from '@/lib/content-permissions';
 import { buildTradeOffersCreateData } from '../../utils/trade-offers';
 import { MapEntryError } from '@/lib/map-entry/service';
-import { setMapEntrySpace } from '@/lib/map-entry/space-association';
+import { updateMapEntryPresentation } from '@/lib/map-entry/space-association';
 import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
@@ -112,10 +112,10 @@ export async function PUT(request: NextRequest, context: PlaceRouteContext) {
         where: { uid: place.uid },
         data: placeData,
       });
-      await setMapEntrySpace(tx, place.mapEntryId, {
+      await updateMapEntryPresentation(tx, place.mapEntryId, {
         userId: session.user.id,
         role: actorRole,
-      }, payload.spaceId);
+      }, { color: payload.color, spaceId: payload.spaceId });
       if (management) {
         await updateMapEntryManagement(tx, place.mapEntryId, {
           userId: session.user.id,

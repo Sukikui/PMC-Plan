@@ -1,9 +1,25 @@
-export const DEFAULT_SPACE_COLOR = '#3B82F6';
+import { z } from 'zod';
+
+export const DEFAULT_CONTENT_COLOR = '#3B82F6';
+
+export const contentColorSchema = z
+  .string()
+  .regex(/^#[0-9A-F]{6}$/i, 'La couleur doit être au format hexadécimal.')
+  .transform((value) => value.toUpperCase());
 
 export interface HslColor {
   hue: number;
   saturation: number;
   lightness: number;
+}
+
+export interface ContentColorSource {
+  color: string;
+  space?: { color: string } | null;
+}
+
+export function resolveContentColor(content: ContentColorSource) {
+  return content.space?.color ?? content.color;
 }
 
 export function hexToHsl(color: string): HslColor {
@@ -55,7 +71,7 @@ export function hslToHex({ hue, saturation, lightness }: HslColor) {
     .toUpperCase()}`;
 }
 
-export function normalizeSpaceHexInput(input: string) {
+export function normalizeHexColorInput(input: string) {
   const digits = input
     .replace(/#/g, '')
     .replace(/[^0-9A-F]/gi, '')
@@ -64,13 +80,13 @@ export function normalizeSpaceHexInput(input: string) {
   return `#${digits}`;
 }
 
-export function getSpaceForeground(color: string) {
+export function getColorForeground(color: string) {
   const { red, green, blue } = parseHexChannels(color);
   const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
   return luminance >= 150 ? '#111827' : '#FFFFFF';
 }
 
-export function getSpaceColorWithAlpha(color: string, alpha: number) {
+export function getColorWithAlpha(color: string, alpha: number) {
   const { red, green, blue } = parseHexChannels(color);
   const normalizedAlpha = Math.min(1, Math.max(0, alpha));
   return `rgba(${red}, ${green}, ${blue}, ${normalizedAlpha})`;
@@ -79,7 +95,7 @@ export function getSpaceColorWithAlpha(color: string, alpha: number) {
 function parseHexChannels(color: string) {
   const source = /^#[0-9A-F]{6}$/i.test(color)
     ? color
-    : DEFAULT_SPACE_COLOR;
+    : DEFAULT_CONTENT_COLOR;
   return {
     red: Number.parseInt(source.slice(1, 3), 16),
     green: Number.parseInt(source.slice(3, 5), 16),

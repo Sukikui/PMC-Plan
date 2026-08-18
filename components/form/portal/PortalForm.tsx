@@ -5,18 +5,17 @@ import { themeColors } from '@/lib/theme-colors';
 import { createPortalSnapshot } from '../common/form-change-detection';
 import {
   parseCoordinateTriplet,
-  renderCoordinateInputs,
   type CoordinatesInput,
 } from '../common/form-utils';
 import { useEntityForm } from '../common/useEntityForm';
 import { useFormSubmission } from '../common/useFormSubmission';
 import FormActions from '../common/FormActions';
 import CommonFields from '../common/CommonFields';
+import ContentColorField, { ContentPresentationSection } from '../common/ContentColorField';
 import FormSection from '../common/FormSection';
 import SpaceAssociationField from '../association/SpaceAssociationField';
-import { NetherAddressField, useNetherAddress } from '../nether/NetherAddressField';
+import { useNetherAddress } from '../nether/NetherAddressField';
 import {
-  NetherCoordinatesField,
   useNetherCoordinates,
 } from '../nether/NetherCoordinatesField';
 import MapEntryManagementFields from '../management/MapEntryManagementFields';
@@ -30,12 +29,14 @@ import {
   type MapEntryUpdatePayload,
 } from '@/lib/map-entry/types';
 import type { SpaceReference } from '@/lib/spaces/types';
+import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
+import PortalLocationFields from './PortalLocationFields';
 
 const blankCoords = { x: '', y: '', z: '' };
-const NETHER_ADDRESS_LABEL = 'Adresse dans le nether';
 
 export interface InitialPortalData {
   type: 'portal';
+  color: string;
   variant: 'overworld' | 'nether' | 'linked';
   name: string;
   id: string;
@@ -54,6 +55,7 @@ export interface InitialPortalData {
 }
 
 type SinglePortalPayload = {
+  color: string;
   mode: 'single';
   management?: MapEntryCreationPayload | MapEntryUpdatePayload;
   spaceId: string | null;
@@ -68,6 +70,7 @@ type SinglePortalPayload = {
 }
 
 type LinkedPortalPayload = {
+  color: string;
   mode: 'linked';
   management?: MapEntryCreationPayload | MapEntryUpdatePayload;
   spaceId: string | null;
@@ -107,6 +110,7 @@ export default function PortalForm({
     initialData?.id,
     initialData?.description,
   );
+  const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
   const [portalVariant, setPortalVariant] = useState(initialData?.variant || 'overworld');
   const [singleCoords, setSingleCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
 
@@ -137,6 +141,7 @@ export default function PortalForm({
   });
   const snapshot = {
     ...createPortalSnapshot({
+      color,
       description: fields.description,
       linkedCoordinates: {
         nether: netherCoords,
@@ -172,6 +177,7 @@ export default function PortalForm({
           throw new Error('Les coordonnées du portail sont invalides.');
         }
         const payload = {
+          color,
           mode: 'single' as const,
           management: mode === 'add'
             ? toMapEntryCreationPayload(managementDraft)
@@ -192,6 +198,7 @@ export default function PortalForm({
           throw new Error('Les coordonnées des portails sont invalides.');
         }
         const payload = {
+          color,
           mode: 'linked' as const,
           management: mode === 'add'
             ? toMapEntryCreationPayload(managementDraft)
@@ -219,39 +226,6 @@ export default function PortalForm({
     await submission.execute(onDelete);
   };
 
-  const renderSingleForm = (world: 'overworld' | 'nether') => {
-    return (
-      <div className="space-y-4">
-        <div className="space-y-3">
-          {renderCoordinateInputs(singleCoords, setSingleCoords, `Coordonnées ${world}`)}
-        </div>
-        {world === 'nether' && (
-          <NetherAddressField
-            address={singleAddress}
-            label={NETHER_ADDRESS_LABEL}
-          />
-        )}
-      </div>
-    );
-  };
-
-  const renderLinkedForm = () => (
-    <div className="space-y-4">
-      {renderCoordinateInputs(
-        overworldCoords,
-        setOverworldCoords,
-        'Coordonnées overworld',
-      )}
-      <div className="space-y-3">
-        <NetherCoordinatesField coordinates={netherCoordinates} />
-        <NetherAddressField
-          address={netherAddress}
-          label={NETHER_ADDRESS_LABEL}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <FormSection title="Informations générales">
@@ -270,6 +244,16 @@ export default function PortalForm({
           slugPlaceholder="valny-portail-marche-imperial"
         />
       </FormSection>
+
+      <ContentPresentationSection>
+        <ContentColorField
+          color={color}
+          disabled={submission.isSubmitting}
+          entityLabel="portail"
+          onChange={setColor}
+          space={selectedSpace}
+        />
+      </ContentPresentationSection>
 
       <FormSection title="Gestion">
         <MapEntryManagementFields
@@ -322,7 +306,16 @@ export default function PortalForm({
           </div>
         </div>
 
-        {isLinkedVariant ? renderLinkedForm() : renderSingleForm(singleWorld)}
+        <PortalLocationFields
+          netherAddress={netherAddress}
+          netherCoordinates={netherCoordinates}
+          overworldCoordinates={overworldCoords}
+          setOverworldCoordinates={setOverworldCoords}
+          setSingleCoordinates={setSingleCoords}
+          singleAddress={singleAddress}
+          singleCoordinates={singleCoords}
+          variant={portalVariant}
+        />
       </FormSection>
 
       <FormActions

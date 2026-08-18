@@ -11,6 +11,7 @@ import {
 import {
   publicMapEntryInclude,
   toMapEntryAccess,
+  toMapEntryColor,
   toMapEntryEditor,
   toMapEntryPrimaryManager,
   toMapEntrySpace,
@@ -78,6 +79,7 @@ function toPlace(place: PlaceRecord): Place {
   const space = toMapEntrySpace(place.mapEntry);
 
   return {
+    color: toMapEntryColor(place.mapEntry),
     id: place.slug,
     name: place.name,
     world: place.world,
@@ -109,6 +111,7 @@ function toPlace(place: PlaceRecord): Place {
 function toPortal(portal: PortalRecord): Portal {
   const access = toMapEntryAccess(portal.mapEntry);
   return {
+    color: toMapEntryColor(portal.mapEntry),
     id: portal.slug,
     slug: portal.slug,
     name: portal.name,
