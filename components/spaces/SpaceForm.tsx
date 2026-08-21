@@ -124,6 +124,13 @@ export default function SpaceForm({
       </FormSection>
 
       <ContentPresentationSection>
+        <ContentColorField
+          color={input.color}
+          disabled={submission.isSubmitting}
+          entityLabel="espace"
+          onChange={(color) => setDetails((current) => ({ ...current, color }))}
+        />
+
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
           <SpaceLogo
             color={input.color}
@@ -177,13 +184,6 @@ export default function SpaceForm({
             />
           </div>
         )}
-
-        <ContentColorField
-          color={input.color}
-          disabled={submission.isSubmitting}
-          entityLabel="espace"
-          onChange={(color) => setDetails((current) => ({ ...current, color }))}
-        />
       </ContentPresentationSection>
 
       <FormSection title="Gestion">
