@@ -77,6 +77,17 @@ describe('linked portals', () => {
       .toBe('Nom actuel');
   });
 
+  it('exposes the first portal image as its map preview', () => {
+    const previewImage = 'https://example.com/portal-preview.png';
+    const portals = mockPortals.slice(0, 2).map((portal) => ({
+      ...portal,
+      images: [previewImage, 'https://example.com/portal-secondary.png'],
+    }));
+
+    expect(buildWorldMapPoints([], portals, 'overworld')[0]?.previewImageSrc)
+      .toBe(previewImage);
+  });
+
   it('does not merge standalone portals that only share a slug', () => {
     const portals = [
       mockPortals[0],

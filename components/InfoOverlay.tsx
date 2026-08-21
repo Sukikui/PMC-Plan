@@ -118,6 +118,7 @@ export default function InfoOverlay({
         mapEntryId: portal.mapEntryId,
         primaryManagerId: portal.primaryManagerId,
         space: portal.space,
+        images: portal.images,
         coordinates: portal['nether-associate'] ? undefined : portal.coordinates,
         address: portal.world === 'nether' && !portal['nether-associate'] ? portal.address : undefined,
         overworldCoordinates: portal['nether-associate'] ? portal.coordinates : undefined,

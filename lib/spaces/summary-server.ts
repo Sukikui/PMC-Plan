@@ -25,9 +25,9 @@ const summarySelect = {
   entries: {
     orderBy: { createdAt: 'asc' as const },
     select: {
+      images: true,
       place: {
         select: {
-          images: true,
           _count: {
             select: { tradeOffers: { where: validTradeOfferWhere } },
           },
@@ -87,7 +87,7 @@ const loadCachedSummaries = cacheDatabaseQuery(
     query,
     sort,
   }),
-  ['space-summaries-v2'],
+  ['space-summaries-v3'],
   { revalidate: 300, tags: [contentCacheTags.spaces] },
 );
 
@@ -191,7 +191,8 @@ function toSpaceSummary(record: SummaryRecord): SpaceSummary {
     ),
     placeCount: record.entries.filter(({ place }) => place).length,
     portalCount: record.entries.filter(({ portals }) => portals.length).length,
-    previewImage: record.entries.find(({ place }) => place?.images[0])
-      ?.place?.images[0] ?? null,
+    previewImage: record.entries.find(({ images, place }) => (
+      place && images[0]
+    ))?.images[0] ?? null,
   };
 }

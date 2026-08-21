@@ -88,6 +88,9 @@ export function buildWorldMapPoints(
         label: item.name,
         iconSrc: getMapIconSrc('portail'),
         markerColor: resolveContentColor(item),
+        previewImageSrc: 'previewImage' in item
+          ? item.previewImage ?? undefined
+          : item.images[0],
         spaceLogo: toMapTooltipSpaceLogo(item.space),
         item,
         itemType: 'portal',

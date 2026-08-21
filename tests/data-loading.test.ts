@@ -41,15 +41,33 @@ describe('data-loading projections', () => {
       coordY: 64,
       coordZ: -8,
       description: 'Marché local',
-      images: ['preview.png', 'secondary.png'],
-      mapEntry: { color: '#3B82F6', space: null },
+      mapEntry: {
+        color: '#3B82F6',
+        images: ['preview.png', 'secondary.png'],
+        space: null,
+      },
       mapEntryId: 'entry-place',
       name: 'Marché',
       slug: 'marche',
       tags: ['commerce'],
       world: 'overworld',
     }]);
-    portalFindMany.mockResolvedValue([]);
+    portalFindMany.mockResolvedValue([{
+      address: null,
+      coordX: 80,
+      coordY: 70,
+      coordZ: 40,
+      description: 'Portail local',
+      mapEntry: {
+        color: '#3B82F6',
+        images: ['portal-preview.png'],
+        space: null,
+      },
+      mapEntryId: 'entry-portal',
+      name: 'Portail',
+      slug: 'portail',
+      world: 'overworld',
+    }]);
 
     await expect(loadMapContentUncached()).resolves.toEqual({
       places: [{
@@ -66,7 +84,20 @@ describe('data-loading projections', () => {
         tags: ['commerce'],
         world: 'overworld',
       }],
-      portals: [],
+      portals: [{
+        address: '',
+        color: '#3B82F6',
+        coordinates: { x: 80, y: 70, z: 40 },
+        description: 'Portail local',
+        id: 'portail',
+        mapEntryId: 'entry-portal',
+        name: 'Portail',
+        'nether-associate': null,
+        previewImage: 'portal-preview.png',
+        slug: 'portail',
+        space: null,
+        world: 'overworld',
+      }],
     });
     expect(placeFindMany).toHaveBeenCalledWith(expect.objectContaining({
       select: expect.not.objectContaining({ tradeOffers: expect.anything() }),

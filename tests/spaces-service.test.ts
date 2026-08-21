@@ -252,6 +252,10 @@ function createSpaceRecordBase() {
     entries: [
       {
         id: 'entry-place',
+        images: [
+          'https://example.com/place-1.png',
+          'https://example.com/place-2.png',
+        ],
         primaryManager,
         place: {
           _count: { tradeOffers: 2 },
@@ -259,10 +263,6 @@ function createSpaceRecordBase() {
           slug: 'place-centrale',
           name: 'Place centrale',
           category: 'construction',
-          images: [
-            'https://example.com/place-1.png',
-            'https://example.com/place-2.png',
-          ],
           world: 'overworld',
         },
         portals: [],
@@ -273,6 +273,7 @@ function createSpaceRecordBase() {
       },
       {
         id: 'entry-portal',
+        images: [],
         primaryManager: {
           ...primaryManager,
           minecraftProfile: null,

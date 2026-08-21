@@ -30,7 +30,9 @@ export type PortalSummary = Pick<
   | 'slug'
   | 'space'
   | 'world'
->;
+> & {
+  previewImage: string | null;
+};
 
 export interface MapContentResponse {
   places: PlaceSummary[];

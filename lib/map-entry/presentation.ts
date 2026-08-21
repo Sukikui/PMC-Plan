@@ -2,6 +2,12 @@ import type { Prisma } from '@/generated/prisma/client';
 import { canManageContent } from '@/lib/content-permissions';
 import { MapEntryError, type MapEntryActor } from './service';
 
+interface MapEntryPresentation {
+  color?: string;
+  images?: string[];
+  spaceId: string | null | undefined;
+}
+
 export async function validateSpaceAssociation(
   tx: Prisma.TransactionClient,
   actor: MapEntryActor,
@@ -34,10 +40,7 @@ export async function updateMapEntryPresentation(
   tx: Prisma.TransactionClient,
   mapEntryId: string,
   actor: MapEntryActor,
-  presentation: {
-    color?: string;
-    spaceId: string | null | undefined;
-  },
+  presentation: MapEntryPresentation,
 ) {
   const entry = await tx.mapEntry.findUnique({
     where: { id: mapEntryId },
@@ -59,6 +62,9 @@ export async function updateMapEntryPresentation(
     data: {
       ...(presentation.color !== undefined
         ? { color: presentation.color }
+        : {}),
+      ...(presentation.images !== undefined
+        ? { images: presentation.images }
         : {}),
       ...(presentation.spaceId !== undefined
         ? { spaceId: presentation.spaceId }

@@ -1,7 +1,6 @@
 import { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_PLACE_CATEGORY, isPlaceCategory } from '@/lib/place/categories';
-import { normalizePlaceImages } from '@/lib/place/images';
 import { resolvePlaceDiscordUrl } from '@/lib/place/discord';
 import {
   indexLinkedPortalPairs,
@@ -13,6 +12,7 @@ import {
   toMapEntryAccess,
   toMapEntryColor,
   toMapEntryEditor,
+  toMapEntryImages,
   toMapEntryPrimaryManager,
   toMapEntrySpace,
   toMinecraftOwners,
@@ -74,7 +74,6 @@ function toPlace(place: PlaceRecord): Place {
   const trades = place.tradeOffers
     .map((offer) => toTradeOffer(offer))
     .filter((offer): offer is TradeOffer => offer !== null);
-  const images = normalizePlaceImages(place.images);
   const access = toMapEntryAccess(place.mapEntry);
   const space = toMapEntrySpace(place.mapEntry);
 
@@ -93,7 +92,7 @@ function toPlace(place: PlaceRecord): Place {
     category: isPlaceCategory(place.category)
       ? place.category
       : DEFAULT_PLACE_CATEGORY,
-    images,
+    images: toMapEntryImages(place.mapEntry),
     tags: place.tags,
     owners: toMinecraftOwners(place.mapEntry),
     space,
@@ -123,6 +122,7 @@ function toPortal(portal: PortalRecord): Portal {
     },
     description: portal.description ?? null,
     address: portal.address ?? '',
+    images: toMapEntryImages(portal.mapEntry),
     owners: toMinecraftOwners(portal.mapEntry),
     space: toMapEntrySpace(portal.mapEntry),
     lastEditor: toMapEntryEditor(portal.mapEntry),

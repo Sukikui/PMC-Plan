@@ -13,6 +13,7 @@ import {
   toPublicDiscordIdentity,
 } from '@/lib/discord-user';
 import { prioritizePrimaryManagerOwner } from './owners';
+import { normalizeContentImages } from '@/lib/content/images';
 
 interface PublicPrimaryManagerRecord extends StoredDiscordIdentity {
   minecraftProfile: MinecraftOwner | null;
@@ -20,6 +21,7 @@ interface PublicPrimaryManagerRecord extends StoredDiscordIdentity {
 
 interface PublicMapEntryRecord {
   color: string;
+  images: string[];
   id: string;
   primaryManagerId: string;
   updatedAt: Date;
@@ -148,6 +150,10 @@ export function toMapEntrySpace(
 
 export function toMapEntryColor(entry: PublicMapEntryRecord): string {
   return entry.color;
+}
+
+export function toMapEntryImages(entry: PublicMapEntryRecord): string[] {
+  return normalizeContentImages(entry.images);
 }
 
 export function toMapEntryManagement(entry: ManagementMapEntryRecord): MapEntryManagement {

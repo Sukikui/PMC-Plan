@@ -11,7 +11,10 @@ import {
   mapEntryUpdateSchema,
 } from '@/lib/map-entry/schemas';
 import { DEFAULT_PLACE_CATEGORY, PLACE_CATEGORIES } from '@/lib/place/categories';
-import { MAX_PLACE_IMAGE_URLS, PLACE_IMAGE_URL_MAX_LENGTH } from '@/lib/place/images';
+import {
+  CONTENT_IMAGE_URL_MAX_LENGTH,
+  MAX_CONTENT_IMAGE_URLS,
+} from '@/lib/content/images';
 import { MAX_TRADE_OFFER_DESCRIPTION_LENGTH } from '@/lib/trade-offers';
 import { discordUrlSchema } from '@/lib/validation/discord-url';
 import { slugSchema } from '@/lib/validation/slug';
@@ -23,7 +26,13 @@ const coordinateSchema = z.object({
 });
 
 const tagSchema = z.string().min(1).max(32);
-const placeImageUrlSchema = z.string().trim().url().max(PLACE_IMAGE_URL_MAX_LENGTH);
+const contentImageUrlSchema = z.string()
+  .trim()
+  .url()
+  .max(CONTENT_IMAGE_URL_MAX_LENGTH);
+const contentImagesSchema = z.array(contentImageUrlSchema)
+  .max(MAX_CONTENT_IMAGE_URLS)
+  .optional();
 const mapEntrySpaceIdSchema = z.string().min(1).nullable().optional();
 
 const tradeItemSchema = z.object({
@@ -76,7 +85,7 @@ const placeSchema = z.object({
   tags: z.array(tagSchema).optional(),
   discordUrl: discordUrlSchema,
   spaceId: mapEntrySpaceIdSchema,
-  images: z.array(placeImageUrlSchema).max(MAX_PLACE_IMAGE_URLS).optional(),
+  images: contentImagesSchema,
   tradeOffers: z.array(tradeOfferSchema).optional(),
 });
 
@@ -92,6 +101,7 @@ export const UpdatePlaceSchema = placeSchema.extend({
 
 const singlePortalSchema = z.object({
   color: contentColorSchema,
+  images: contentImagesSchema,
   mode: z.literal('single'),
   spaceId: mapEntrySpaceIdSchema,
   portal: z.object({
@@ -108,6 +118,7 @@ const singlePortalSchema = z.object({
 
 const linkedPortalSchema = z.object({
   color: contentColorSchema,
+  images: contentImagesSchema,
   mode: z.literal('linked'),
   spaceId: mapEntrySpaceIdSchema,
   slug: slugSchema,

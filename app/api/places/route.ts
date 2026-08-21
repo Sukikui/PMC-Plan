@@ -6,12 +6,12 @@ import { auth } from '@/auth';
 import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
-import { normalizePlaceImages } from '@/lib/place/images';
+import { normalizeContentImages } from '@/lib/content/images';
 import { canContribute } from '@/lib/content-permissions';
 import { buildTradeOffersCreateData } from '../utils/trade-offers';
 import { createMapEntry, MapEntryError } from '@/lib/map-entry/service';
 import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
-import { validateSpaceAssociation } from '@/lib/map-entry/space-association';
+import { validateSpaceAssociation } from '@/lib/map-entry/presentation';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 import { invalidateRouteData } from '../route/service/route-data';
 import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
@@ -50,13 +50,12 @@ export async function POST(request: NextRequest) {
     const description = payload.description?.trim() || null;
     const address = await resolveNetherAddressForWorld(payload.world, payload.coordinates, payload.address);
     const discordUrl = payload.discordUrl?.trim() || null;
-    const images = normalizePlaceImages(payload.images);
+    const images = normalizeContentImages(payload.images);
 
     const tradeOffersData = buildTradeOffersCreateData(payload.tradeOffers);
     const management = await prepareMapEntryCreation(
       payload.management,
-      payload.spaceId,
-      payload.color,
+      { color: payload.color, images, spaceId: payload.spaceId },
     );
 
     const created = await prisma.$transaction(async (tx) => {
@@ -76,7 +75,6 @@ export async function POST(request: NextRequest) {
           coordZ: payload.coordinates.z,
           description,
           address,
-          images,
           tags,
           discordUrl,
           mapEntryId: mapEntry.id,
@@ -96,7 +94,7 @@ export async function POST(request: NextRequest) {
         place: {
           slug: created.slug,
           name: created.name,
-          images: created.images,
+          images,
         },
       },
       { status: 201 }

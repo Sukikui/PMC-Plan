@@ -485,6 +485,11 @@ space color when one exists; otherwise it uses this map-entry color. Omitted
 colors default to the application blue `#3B82F6` during creation; update
 requests that omit the field preserve the stored color.
 
+`MapEntry.images` stores the ordered image gallery shared by places and
+portals. A linked portal pair therefore has one gallery for both endpoints.
+The array accepts up to 10 unique image URLs; the first URL is the preview
+shown on the map and the first slide in the detail overlay.
+
 Public owners are independent `MinecraftProfile` records referenced through
 `MapEntryOwner`. They are display metadata and never grant write access.
 Adding a Discord manager automatically suggests their linked Minecraft profile
@@ -978,7 +983,9 @@ For places in the Nether, `address` contains the nearest Nether highway address 
 
 `category` is the functional place category used by the interactive map icons. Allowed values are `construction`, `commerce`, `zone_communautaire`, and `ferme`. When omitted during creation or update, the API defaults it to `construction`.
 
-Places can store up to 10 image URLs directly on the `Place.images` database field. Create and update payloads accept an `images` array; an empty or omitted array means the place has no image.
+Place create and update payloads accept an `images` array containing up to 10
+image URLs. The normalized array is stored on the shared `MapEntry`; an empty
+or omitted array means the place has no image.
 
 Trade offers accept an optional `description` of up to 2,000 characters. Empty or
 whitespace-only values are stored as `null` and returned as `null` by `GET /places`.
@@ -1019,6 +1026,7 @@ Creates a place and its management resource.
 - Accepts an optional nullable `spaceId`. Attaching to a space requires the
   authenticated effective role to manage that space.
 - Accepts a canonical `color` in `#RRGGBB` format, defaulting to `#3B82F6`.
+- Accepts the optional ordered `images` gallery stored on the `MapEntry`.
 - Validates every selected Discord manager and resolves Minecraft owner names
   through Mojang before opening the database transaction.
 - Automatically includes linked Minecraft profiles for selected managers unless
@@ -1099,6 +1107,7 @@ because approval is handled at the account level.
     "world": "overworld",
     "coordinates": {"x": -120, "y": 65, "z": -220},
     "description": "Portail près du village de départ",
+    "images": ["https://cdn.example.com/portail_village.png"],
     "nether-associate": {
       "coordinates": {"x": -15, "y": 70, "z": -28},
       "description": null,
@@ -1157,6 +1166,8 @@ Creates either one portal or an Overworld/Nether linked pair.
   checks as `POST /places`.
 - Accepts the same canonical `color` as places. Linked endpoints share it
   through their common `MapEntry`.
+- Accepts the same optional ordered `images` gallery as places. Linked
+  endpoints share one gallery through their common `MapEntry`.
 - Creates linked portal pairs in one Prisma transaction.
 - Both endpoints of a linked pair reference the same `MapEntry`.
 - Makes created portals immediately available through `GET /portals`.
@@ -1175,7 +1186,8 @@ nullable `spaceId` follows the same rules as place updates. The optional
 `management` object also follows the place update contract and is committed in
 the same transaction as both portal endpoints. The shared `color` is updated
 once for the complete linked pair; an associated space color remains visually
-authoritative.
+authoritative. The `images` array is also replaced once on the shared
+`MapEntry`, so both worlds always expose the same ordered gallery.
 
 ### DELETE `/portals/{slug}`
 

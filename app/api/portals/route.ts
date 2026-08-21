@@ -12,7 +12,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { canContribute } from '@/lib/content-permissions';
 import { createMapEntry, MapEntryError } from '@/lib/map-entry/service';
 import { prepareMapEntryCreation } from '@/lib/map-entry/creation';
-import { validateSpaceAssociation } from '@/lib/map-entry/space-association';
+import { validateSpaceAssociation } from '@/lib/map-entry/presentation';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 import {
   indexLinkedPortalPairs,
@@ -20,6 +20,7 @@ import {
 } from '@/lib/portal/linked-portals';
 import { invalidateRouteData } from '../route/service/route-data';
 import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
+import { normalizeContentImages } from '@/lib/content/images';
 
 const QuerySchema = z.object({
   'merge-nether-portals': z.coerce.boolean().optional().default(false),
@@ -71,10 +72,10 @@ export async function POST(request: NextRequest) {
     const json = await request.json();
     const payload = CreatePortalSchema.parse(json);
     const userId = session.user.id;
+    const images = normalizeContentImages(payload.images);
     const management = await prepareMapEntryCreation(
       payload.management,
-      payload.spaceId,
-      payload.color,
+      { color: payload.color, images, spaceId: payload.spaceId },
     );
 
     if (payload.mode === 'single') {
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
               slug: created.slug,
               world: created.world,
               name: created.name,
+              images,
             },
           ],
         },
@@ -176,11 +178,13 @@ export async function POST(request: NextRequest) {
               slug: result.overworldPortal.slug,
               world: result.overworldPortal.world,
               name: result.overworldPortal.name,
+              images,
             },
             {
               slug: result.netherPortal.slug,
               world: result.netherPortal.world,
               name: result.netherPortal.name,
+              images,
             },
         ],
       },

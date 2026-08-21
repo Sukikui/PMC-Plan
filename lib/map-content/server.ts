@@ -22,14 +22,17 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
         coordY: true,
         coordZ: true,
         description: true,
-        images: true,
         mapEntryId: true,
         name: true,
         slug: true,
         tags: true,
         world: true,
         mapEntry: {
-          select: { color: true, space: publicMapEntryInclude.space },
+          select: {
+            color: true,
+            images: true,
+            space: publicMapEntryInclude.space,
+          },
         },
       },
     }),
@@ -46,7 +49,11 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
         slug: true,
         world: true,
         mapEntry: {
-          select: { color: true, space: publicMapEntryInclude.space },
+          select: {
+            color: true,
+            images: true,
+            space: publicMapEntryInclude.space,
+          },
         },
       },
     }),
@@ -65,7 +72,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
     description: place.description,
     address: place.address,
     category: place.category,
-    previewImage: place.images[0] ?? null,
+    previewImage: place.mapEntry.images[0] ?? null,
     tags: place.tags,
     mapEntryId: place.mapEntryId,
     space: place.mapEntry.space,
@@ -85,6 +92,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
       description: portal.description,
       address: portal.address ?? '',
       mapEntryId: portal.mapEntryId,
+      previewImage: portal.mapEntry.images[0] ?? null,
       space: portal.mapEntry.space,
       'nether-associate': null,
     }),
@@ -95,7 +103,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
 
 const loadCachedMapContent = cacheDatabaseQuery(
   loadMapContentUncached,
-  ['public-map-content-v2'],
+  ['public-map-content-v3'],
   { revalidate: 300, tags: [contentCacheTags.map] },
 );
 

@@ -34,6 +34,7 @@ const portal: PortalSummary = {
   description: 'Description du portail.',
   address: '',
   space: null,
+  previewImage: null,
   'nether-associate': null,
 };
 

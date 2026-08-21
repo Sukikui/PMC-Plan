@@ -61,6 +61,7 @@ export async function createMapEntry(
   return tx.mapEntry.create({
     data: {
       color: input.color ?? DEFAULT_CONTENT_COLOR,
+      images: input.images ?? [],
       spaceId: input.spaceId ?? null,
       primaryManagerId,
       lastEditorId: primaryManagerId,

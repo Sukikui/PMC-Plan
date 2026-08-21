@@ -11,6 +11,7 @@ export interface Coordinates {
 
 export interface Portal {
   color: string;
+  images: string[];
   id: string;
   name: string;
   world: string;

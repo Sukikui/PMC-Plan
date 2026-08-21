@@ -12,6 +12,8 @@ import { useFormSubmission } from '../common/useFormSubmission';
 import FormActions from '../common/FormActions';
 import CommonFields from '../common/CommonFields';
 import ContentColorField, { ContentPresentationSection } from '../common/ContentColorField';
+import ContentImagesField from '../common/ContentImagesField';
+import { useContentImages } from '../common/useContentImages';
 import FormSection from '../common/FormSection';
 import SpaceAssociationField from '../association/SpaceAssociationField';
 import { useNetherAddress } from '../nether/NetherAddressField';
@@ -24,71 +26,18 @@ import {
   getMapEntryDraftSnapshot,
   toMapEntryCreationPayload,
   toMapEntryUpdatePayload,
-  type MapEntryCreationPayload,
-  type MapEntryEditor,
-  type MapEntryUpdatePayload,
 } from '@/lib/map-entry/types';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
 import PortalLocationFields from './PortalLocationFields';
+import type {
+  InitialPortalData,
+  PortalFormPayload,
+} from './portal-form-types';
+
+export type { InitialPortalData, PortalFormPayload } from './portal-form-types';
 
 const blankCoords = { x: '', y: '', z: '' };
-
-export interface InitialPortalData {
-  type: 'portal';
-  color: string;
-  variant: 'overworld' | 'nether' | 'linked';
-  name: string;
-  id: string;
-  canDelete?: boolean;
-  lastEditor?: MapEntryEditor;
-  managerIds: string[];
-  mapEntryId?: string;
-  primaryManagerId: string;
-  space?: SpaceReference | null;
-  coordinates?: { x: number; y: number; z: number }; // For single portals
-  address?: string; // For single nether portals
-  overworldCoordinates?: { x: number; y: number; z: number }; // For linked portals
-  netherCoordinates?: { x: number; y: number; z: number }; // For linked portals
-  description?: string;
-  netherAddress?: string; // For linked nether portals
-}
-
-type SinglePortalPayload = {
-  color: string;
-  mode: 'single';
-  management?: MapEntryCreationPayload | MapEntryUpdatePayload;
-  spaceId: string | null;
-  portal: {
-    slug: string;
-    name: string;
-    world: 'overworld' | 'nether';
-    coordinates: { x: number; y: number; z: number };
-    description?: string;
-    address?: string;
-  };
-}
-
-type LinkedPortalPayload = {
-  color: string;
-  mode: 'linked';
-  management?: MapEntryCreationPayload | MapEntryUpdatePayload;
-  spaceId: string | null;
-  slug: string;
-  name: string;
-  description?: string;
-  overworld: {
-    coordinates: { x: number; y: number; z: number };
-    description?: string;
-  };
-  nether: {
-    coordinates: { x: number; y: number; z: number };
-    description?: string;
-    address?: string;
-  };
-}
-
-export type PortalFormPayload = SinglePortalPayload | LinkedPortalPayload;
 
 interface PortalFormProps {
   mode?: 'add' | 'edit';
@@ -111,6 +60,7 @@ export default function PortalForm({
     initialData?.description,
   );
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
+  const contentImages = useContentImages(initialData?.images);
   const [portalVariant, setPortalVariant] = useState(initialData?.variant || 'overworld');
   const [singleCoords, setSingleCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
 
@@ -143,6 +93,7 @@ export default function PortalForm({
     ...createPortalSnapshot({
       color,
       description: fields.description,
+      images: contentImages.images,
       linkedCoordinates: {
         nether: netherCoords,
         overworld: overworldCoords,
@@ -165,7 +116,9 @@ export default function PortalForm({
     : parsedSingleCoords !== null;
   const submission = useFormSubmission({
     isReady: managementReady,
-    isValid: fields.isValid && hasValidCoordinates,
+    isValid: fields.isValid
+      && hasValidCoordinates
+      && !contentImages.hasInvalidImage,
     mode,
     snapshot,
   });
@@ -178,6 +131,7 @@ export default function PortalForm({
         }
         const payload = {
           color,
+          images: contentImages.values,
           mode: 'single' as const,
           management: mode === 'add'
             ? toMapEntryCreationPayload(managementDraft)
@@ -199,6 +153,7 @@ export default function PortalForm({
         }
         const payload = {
           color,
+          images: contentImages.values,
           mode: 'linked' as const,
           management: mode === 'add'
             ? toMapEntryCreationPayload(managementDraft)
@@ -252,6 +207,10 @@ export default function PortalForm({
           entityLabel="portail"
           onChange={setColor}
           space={selectedSpace}
+        />
+        <ContentImagesField
+          controller={contentImages}
+          reorderable={mode === 'edit'}
         />
       </ContentPresentationSection>
 
