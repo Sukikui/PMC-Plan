@@ -14,6 +14,10 @@ import {
   getTradeOffersValidationError,
 } from '@/components/form/place/place-offer-payload';
 import { CONTENT_FIELD_LIMITS } from '@/lib/content/constraints';
+import {
+  MAX_CONTENT_IMAGE_URLS,
+  normalizeContentImages,
+} from '@/lib/content/images';
 
 describe('content form foundation', () => {
   it('normalizes the shared name, slug and description fields', () => {
@@ -61,6 +65,25 @@ describe('content form foundation', () => {
       { id: 'first' },
     ]);
     expect(items.map(({ id }) => id)).toEqual(['first', 'second', 'third']);
+  });
+
+  it('normalizes shared place and portal image galleries', () => {
+    const images = [
+      ' https://example.com/main.png ',
+      'https://example.com/main.png',
+      ...Array.from(
+        { length: MAX_CONTENT_IMAGE_URLS },
+        (_, index) => `https://example.com/${index}.png`,
+      ),
+    ];
+
+    expect(normalizeContentImages(images)).toEqual([
+      'https://example.com/main.png',
+      ...Array.from(
+        { length: MAX_CONTENT_IMAGE_URLS - 1 },
+        (_, index) => `https://example.com/${index}.png`,
+      ),
+    ]);
   });
 
   it('uses the expected portal endpoints for linked and single portals', () => {

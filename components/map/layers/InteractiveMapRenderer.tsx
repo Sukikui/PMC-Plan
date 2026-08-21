@@ -110,7 +110,7 @@ export default function InteractiveMapRenderer({
     preloadPreviewImage,
     showPointTooltip,
     updatePointTooltipPosition,
-    schedulePlacePreview,
+    schedulePreview,
     showFocusedPointTooltip,
     collapseFocusedPreview,
     hidePointTooltip,
@@ -335,7 +335,7 @@ export default function InteractiveMapRenderer({
             preloadPreviewImage={preloadPreviewImage}
             showPointTooltip={showPointTooltip}
             updatePointTooltipPosition={updatePointTooltipPosition}
-            schedulePlacePreview={schedulePlacePreview}
+            schedulePreview={schedulePreview}
             hidePointTooltip={hidePointTooltip}
             onPointSelect={onPointSelect}
           />

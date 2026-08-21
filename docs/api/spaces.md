@@ -26,8 +26,10 @@ A space stores:
 Members are not stored independently. They are deduplicated by Minecraft UUID
 and recomputed from every associated place and portal whenever a space is
 returned. Gallery images are also not stored on the space: they retain the
-identifier, slug, and name of their source place. The offer count is not
-stored either; it is computed from the trade offers of every associated place.
+identifier, slug, and name of their source place and are read from that place's
+shared map-entry gallery. Portal images do not enter the space gallery. The
+offer count is not stored either; it is computed from the trade offers of every
+associated place.
 
 Place and portal summaries are also computed from associated map entries. They
 contain the public content identity, world metadata, and ordered Minecraft

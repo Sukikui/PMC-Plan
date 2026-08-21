@@ -74,6 +74,8 @@ model MinecraftProfile {
 
 model MapEntry {
   id               String            @id @default(cuid())
+  color            String            @default("#3B82F6")
+  images           String[]          @default([])
   spaceId          String?           @map("space_id")
   primaryManagerId String            @map("primary_manager_id")
   lastEditorId     String?           @map("last_editor_id")
@@ -168,7 +170,6 @@ model Place {
   description String?
   address     String?
   category    PlaceCategory @default(construction)
-  images      String[]      @default([])
   tags        String[]      @default([])
   discordUrl  String?       @map("discord_url")
   mapEntryId  String        @unique @map("map_entry_id")

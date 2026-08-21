@@ -11,13 +11,14 @@ import {
   canManageContent,
 } from '@/lib/content-permissions';
 import { MapEntryError } from '@/lib/map-entry/service';
-import { setMapEntrySpace } from '@/lib/map-entry/space-association';
+import { updateMapEntryPresentation } from '@/lib/map-entry/presentation';
 import { indexLinkedPortalPairs } from '@/lib/portal/linked-portals';
 import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 import { invalidateRouteData } from '../../route/service/route-data';
 import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
+import { normalizeContentImages } from '@/lib/content/images';
 
 import { UpdatePortalSchema } from '../../utils/schemas';
 
@@ -67,6 +68,7 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
 
     const json = await request.json();
     const payload = UpdatePortalSchema.parse(json);
+    const images = normalizeContentImages(payload.images);
     const management = payload.management
       ? await prepareMapEntryUpdate(payload.management)
       : null;
@@ -94,10 +96,10 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
             address,
           },
         });
-        await setMapEntrySpace(tx, portal.mapEntryId, {
+        await updateMapEntryPresentation(tx, portal.mapEntryId, {
           userId: session.user.id,
           role: actorRole,
-        }, payload.spaceId);
+        }, { color: payload.color, images, spaceId: payload.spaceId });
         if (management) {
           await updateMapEntryManagement(tx, portal.mapEntryId, {
             userId: session.user.id,
@@ -116,6 +118,7 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
               slug: updated.slug,
               world: updated.world,
               name: updated.name,
+              images,
             },
           ],
         },
@@ -167,10 +170,10 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
         },
       });
 
-      await setMapEntrySpace(tx, portal.mapEntryId, {
+      await updateMapEntryPresentation(tx, portal.mapEntryId, {
         userId: session.user.id,
         role: actorRole,
-      }, payload.spaceId);
+      }, { color: payload.color, images, spaceId: payload.spaceId });
       if (management) {
         await updateMapEntryManagement(tx, portal.mapEntryId, {
           userId: session.user.id,
@@ -189,11 +192,13 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
               slug: result.overworldPortal.slug,
               world: result.overworldPortal.world,
               name: result.overworldPortal.name,
+              images,
             },
             {
               slug: result.netherPortal.slug,
               world: result.netherPortal.world,
               name: result.netherPortal.name,
+              images,
             },
         ],
       },

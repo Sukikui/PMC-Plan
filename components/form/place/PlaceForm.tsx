@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { createPlaceSnapshot } from '../common/form-change-detection';
 import {
   generateFormId,
-  moveArrayItemById,
   parseCoordinateTriplet,
   type CoordinatesInput,
 } from '../common/form-utils';
@@ -12,6 +11,7 @@ import { useEntityForm } from '../common/useEntityForm';
 import { useFormSubmission } from '../common/useFormSubmission';
 import FormActions from '../common/FormActions';
 import CommonFields from '../common/CommonFields';
+import ContentColorField, { ContentPresentationSection } from '../common/ContentColorField';
 import FormSection from '../common/FormSection';
 import SpaceAssociationField from '../association/SpaceAssociationField';
 import TagInput from '../common/TagInput';
@@ -19,7 +19,8 @@ import { useExistingTags } from '../common/useExistingTags';
 import { useNetherAddress } from '../nether/NetherAddressField';
 import MapEntryManagementFields from '../management/MapEntryManagementFields';
 import PlaceCategorySelector from './PlaceCategorySelector';
-import PlaceImagesSection from './PlaceImagesSection';
+import ContentImagesField from '../common/ContentImagesField';
+import { useContentImages } from '../common/useContentImages';
 import PlaceTradeOffersSection from './PlaceTradeOffersSection';
 import PlaceDiscordField from './PlaceDiscordField';
 import PlaceWorldFields from './PlaceWorldFields';
@@ -28,7 +29,6 @@ import {
   isPlaceCategory,
   type PlaceCategory,
 } from '@/lib/place/categories';
-import { MAX_PLACE_IMAGE_URLS, normalizePlaceImages } from '@/lib/place/images';
 import {
   emptyMapEntryDraft,
   getMapEntryDraftSnapshot,
@@ -41,9 +41,7 @@ import {
 } from './place-offer-payload';
 import {
   blankCoords,
-  createImageInput,
   createTradeOffer,
-  type FormPlaceImage,
   type FormTradeItem,
   type FormTradeOffer,
   type InitialPlaceData,
@@ -51,6 +49,7 @@ import {
   type UpdateTradeOffer,
 } from './place-form-types';
 import type { SpaceReference } from '@/lib/spaces/types';
+import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
 
 export type { InitialPlaceData, PlaceFormPayload } from './place-form-types';
 
@@ -74,6 +73,7 @@ export default function PlaceForm({
     initialData?.id,
     initialData?.description,
   );
+  const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
   const [placeWorld, setPlaceWorld] = useState<'overworld' | 'nether'>(initialData?.world === 'nether' ? 'nether' : 'overworld');
   const [placeCategory, setPlaceCategory] = useState<PlaceCategory>(
     initialData?.category && isPlaceCategory(initialData.category)
@@ -104,11 +104,7 @@ export default function PlaceForm({
   const [discordOverrideEnabled, setDiscordOverrideEnabled] = useState(
     Boolean(initialData?.discordOverride) || !initialData?.space?.discordUrl,
   );
-  const [placeImageInputs, setPlaceImageInputs] = useState<FormPlaceImage[]>(() => {
-    const images = normalizePlaceImages(initialData?.images);
-    return images.map((url) => createImageInput(url));
-  });
-  const [placeImagePreviewErrors, setPlaceImagePreviewErrors] = useState<Record<string, boolean>>({});
+  const contentImages = useContentImages(initialData?.images);
   const [placeTradeOffers, setPlaceTradeOffers] = useState<FormTradeOffer[]>(
     initialData?.trade?.map((offer) => ({
       ...offer,
@@ -126,10 +122,11 @@ export default function PlaceForm({
     ...createPlaceSnapshot({
       address: placeAddress.value,
       category: placeCategory,
+      color,
       coordinates: placeCoords,
       description: fields.description,
       discordUrl: discordOverrideUrl ?? '',
-      images: placeImageInputs,
+      images: contentImages.images,
       name: fields.name,
       offers: placeTradeOffers,
       slugSource: fields.input.slug,
@@ -140,41 +137,16 @@ export default function PlaceForm({
     management: getMapEntryDraftSnapshot(managementDraft),
   };
   const parsedCoords = parseCoordinateTriplet(placeCoords);
-  const hasInvalidImage = placeImageInputs.some((image) => (
-    image.url.trim() && placeImagePreviewErrors[image.id]
-  ));
   const tradeOffersError = getTradeOffersValidationError(placeTradeOffers);
   const submission = useFormSubmission({
     isReady: managementReady,
     isValid: fields.isValid
       && parsedCoords !== null
-      && !hasInvalidImage
+      && !contentImages.hasInvalidImage
       && tradeOffersError === null,
     mode,
     snapshot,
   });
-
-  const updatePlaceImageUrl = (imageId: string, url: string) => {
-    setPlaceImageInputs((prev) => prev.map((image) => image.id === imageId ? { ...image, url } : image));
-    setPlaceImagePreviewErrors((prev) => ({ ...prev, [imageId]: false }));
-  };
-
-  const addPlaceImage = () => {
-    const image = createImageInput();
-    setPlaceImageInputs((prev) => (
-      prev.length >= MAX_PLACE_IMAGE_URLS ? prev : [...prev, image]
-    ));
-    return image.id;
-  };
-
-  const removePlaceImage = (imageId: string) => {
-    setPlaceImageInputs((prev) => prev.filter((image) => image.id !== imageId));
-    setPlaceImagePreviewErrors((prev) => {
-      const next = { ...prev };
-      delete next[imageId];
-      return next;
-    });
-  };
 
   const updateTradeItem = <K extends keyof FormTradeItem>(
     offerId: string,
@@ -213,14 +185,14 @@ export default function PlaceForm({
       throw new Error('Les coordonnées du lieu sont invalides.');
     }
 
-    const images = normalizePlaceImages(placeImageInputs.map((image) => image.url));
-    if (hasInvalidImage) {
+    if (contentImages.hasInvalidImage) {
       throw new Error(
         'L’aperçu d’une image est invalide. Vérifiez l’URL ou retirez l’image concernée.',
       );
     }
 
     return {
+      color,
       slug: fields.input.slug,
       name: fields.input.name,
       world: placeWorld,
@@ -231,7 +203,7 @@ export default function PlaceForm({
       tags: placeTags,
       discordUrl: discordOverrideUrl,
       spaceId: selectedSpace?.id ?? null,
-      images,
+      images: contentImages.values,
       management: mode === 'add'
         ? toMapEntryCreationPayload(managementDraft)
         : toMapEntryUpdatePayload(managementDraft),
@@ -273,18 +245,8 @@ export default function PlaceForm({
         />
       </FormSection>
 
-      <FormSection title="Gestion">
-        <MapEntryManagementFields
-          disabled={submission.isSubmitting}
-          mapEntryId={initialData?.mapEntryId}
-          mode={mode}
-          draft={managementDraft}
-          onDraftChange={setManagementDraft}
-          onReadyChange={setManagementReady}
-        />
-      </FormSection>
-
-      <FormSection title="Présentation">
+      <ContentPresentationSection>
+        <ContentColorField color={color} disabled={submission.isSubmitting} entityLabel="lieu" onChange={setColor} space={selectedSpace} />
         <PlaceCategorySelector value={placeCategory} onChange={setPlaceCategory} />
         <TagInput
           label="Tags"
@@ -293,17 +255,20 @@ export default function PlaceForm({
           onChange={setPlaceTags}
           suggestions={existingTags}
         />
-        <PlaceImagesSection
-          images={placeImageInputs}
-          previewErrors={placeImagePreviewErrors}
+        <ContentImagesField
+          controller={contentImages}
           reorderable={mode === 'edit'}
-          onAdd={addPlaceImage}
-          onPreviewError={(imageId) => setPlaceImagePreviewErrors((prev) => ({ ...prev, [imageId]: true }))}
-          onRemove={removePlaceImage}
-          onReorder={(sourceId, targetId) => setPlaceImageInputs((current) => (
-            moveArrayItemById(current, sourceId, targetId)
-          ))}
-          onUpdate={updatePlaceImageUrl}
+        />
+      </ContentPresentationSection>
+
+      <FormSection title="Gestion">
+        <MapEntryManagementFields
+          disabled={submission.isSubmitting}
+          mapEntryId={initialData?.mapEntryId}
+          mode={mode}
+          draft={managementDraft}
+          onDraftChange={setManagementDraft}
+          onReadyChange={setManagementReady}
         />
       </FormSection>
 

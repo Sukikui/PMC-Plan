@@ -3,9 +3,9 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import SpaceLogo from '@/components/spaces/SpaceLogo';
-import { getSpaceColorWithAlpha, getSpaceForeground } from '@/lib/spaces/colors';
+import { getColorForeground, getColorWithAlpha } from '@/lib/content/colors';
 import { themeColors } from '@/lib/theme-colors';
-import { PLACE_PREVIEW_ANIMATION_DURATION_MS } from '../core/map-constants';
+import { CONTENT_PREVIEW_ANIMATION_DURATION_MS } from '../core/map-constants';
 import {
   MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM,
   MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM,
@@ -68,8 +68,8 @@ function MapTooltipItem({
       maxWidth: `${MAP_TOOLTIP_LABEL_MAX_WIDTH_REM}rem`,
       ...(measuredWidth ? { width: `${measuredWidth}px` } : {}),
       ...(tooltip.markerColor ? {
-        backgroundColor: getSpaceColorWithAlpha(tooltip.markerColor, 0.75),
-        color: getSpaceForeground(tooltip.markerColor),
+        backgroundColor: getColorWithAlpha(tooltip.markerColor, 0.75),
+        color: getColorForeground(tooltip.markerColor),
       } : {}),
     };
   }, [tooltip.markerColor, tooltipLabel]);
@@ -130,7 +130,7 @@ function MapTooltipItem({
               width: `${MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM}rem`,
               height: tooltipPreviewImageHeightRem ? `${tooltipPreviewImageHeightRem}rem` : undefined,
               maxHeight: `${MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM}rem`,
-              '--map-tooltip-preview-duration': `${PLACE_PREVIEW_ANIMATION_DURATION_MS}ms`,
+              '--map-tooltip-preview-duration': `${CONTENT_PREVIEW_ANIMATION_DURATION_MS}ms`,
             } as React.CSSProperties}
           >
             <div className={`h-full overflow-hidden ${themeColors.util.rounded2Xl} ${themeColors.map.tooltipPreviewImageFrame}`}>

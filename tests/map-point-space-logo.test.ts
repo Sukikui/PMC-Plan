@@ -60,4 +60,21 @@ describe('map point space logos', () => {
 
     expect(point?.spaceLogo).toBeUndefined();
   });
+
+  it('uses the content color without a space and the space color otherwise', () => {
+    const contentColor = '#10B981';
+    const standalonePoint = buildWorldMapPoints(
+      [{ ...mockPlaces[0], color: contentColor, space: null }],
+      [],
+      'overworld',
+    )[0];
+    const associatedPoint = buildWorldMapPoints(
+      [{ ...mockPlaces[0], color: contentColor, space }],
+      [],
+      'overworld',
+    )[0];
+
+    expect(standalonePoint?.markerColor).toBe(contentColor);
+    expect(associatedPoint?.markerColor).toBe(space.color);
+  });
 });

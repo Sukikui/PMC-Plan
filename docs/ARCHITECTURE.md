@@ -109,12 +109,13 @@ durations, and invalidation rules.
 
 `MapEntry` is the shared management aggregate for a place, a linked portal pair,
 or a service. It carries the primary manager, additional managers, Minecraft
-owners, optional space association, audit editor, and timestamps.
+owners, canonical color, ordered image gallery, optional space association,
+audit editor, and timestamps.
 
-- a `Place` adds one world position, presentation fields, images, tags, and
+- a `Place` adds one world position, presentation fields, tags, and
   trade offers;
-- linked `Portal` records share one `MapEntry` while retaining one coordinate
-  set per world;
+- linked `Portal` records share one `MapEntry`, including its gallery, while
+  retaining one coordinate set per world;
 - a `Service` adds its presentation, contact mode, and payment information;
 - a `Space` has its own managers and groups map entries;
 - `User` represents the Discord account used for authentication and management;

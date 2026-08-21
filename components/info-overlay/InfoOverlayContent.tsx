@@ -58,10 +58,10 @@ export default function InfoOverlayContent({
               className: `h-full overflow-y-auto px-6 space-y-6 ${themeColors.panel.primary} ${themeColors.transition} ${hasTrade ? 'pt-[4.5rem] pb-12' : 'pt-9 pb-12 rounded-b-xl'} [&::-webkit-scrollbar]:hidden [scrollbar-width:none]`,
               content: (
                 <>
-                  {placeItem && (
+                  {item.images.length > 0 && (
                     <InfoImageCarousel
                       carouselId={item.id}
-                      images={(placeItem.images ?? []).map((src, index) => ({
+                      images={item.images.map((src, index) => ({
                         id: `${item.id}-${index}`,
                         src,
                         alt: `Image ${index + 1} de ${item.name}`,

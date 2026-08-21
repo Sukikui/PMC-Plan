@@ -5,14 +5,14 @@ import { getEffectiveRequestRole } from '@/lib/admin/request-role';
 import { z } from 'zod';
 import { Prisma } from '@/generated/prisma/client';
 import { resolveNetherAddressForWorld } from '../../utils/shared';
-import { normalizePlaceImages } from '@/lib/place/images';
+import { normalizeContentImages } from '@/lib/content/images';
 import {
   canAdministerContent,
   canManageContent,
 } from '@/lib/content-permissions';
 import { buildTradeOffersCreateData } from '../../utils/trade-offers';
 import { MapEntryError } from '@/lib/map-entry/service';
-import { setMapEntrySpace } from '@/lib/map-entry/space-association';
+import { updateMapEntryPresentation } from '@/lib/map-entry/presentation';
 import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest, context: PlaceRouteContext) {
     const description = payload.description?.trim() || null;
     const address = await resolveNetherAddressForWorld(payload.world, payload.coordinates, payload.address);
     const discordUrl = payload.discordUrl?.trim() || null;
-    const images = normalizePlaceImages(payload.images);
+    const images = normalizeContentImages(payload.images);
 
     const tradeOffersData = buildTradeOffersCreateData(payload.tradeOffers);
     const management = payload.management
@@ -100,7 +100,6 @@ export async function PUT(request: NextRequest, context: PlaceRouteContext) {
         address,
         tags,
         discordUrl,
-        images,
         tradeOffers: tradeOffersData.length
           ? {
               create: tradeOffersData,
@@ -112,10 +111,10 @@ export async function PUT(request: NextRequest, context: PlaceRouteContext) {
         where: { uid: place.uid },
         data: placeData,
       });
-      await setMapEntrySpace(tx, place.mapEntryId, {
+      await updateMapEntryPresentation(tx, place.mapEntryId, {
         userId: session.user.id,
         role: actorRole,
-      }, payload.spaceId);
+      }, { color: payload.color, images, spaceId: payload.spaceId });
       if (management) {
         await updateMapEntryManagement(tx, place.mapEntryId, {
           userId: session.user.id,
@@ -132,7 +131,7 @@ export async function PUT(request: NextRequest, context: PlaceRouteContext) {
         place: {
           slug: updatedPlace.slug,
           name: updatedPlace.name,
-          images: updatedPlace.images,
+          images,
         },
       },
       { status: 200 }

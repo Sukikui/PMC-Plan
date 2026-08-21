@@ -3,6 +3,8 @@ import type { Place, Portal } from '../lib/api/types';
 const fixtureDate = new Date('2024-01-01T00:00:00.000Z');
 
 const baseEntity = {
+  color: '#3B82F6',
+  images: [],
   mapEntryId: 'test-entry',
   primaryManagerId: 'test-user',
   primaryManager: {

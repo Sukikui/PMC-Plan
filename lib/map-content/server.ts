@@ -22,13 +22,18 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
         coordY: true,
         coordZ: true,
         description: true,
-        images: true,
         mapEntryId: true,
         name: true,
         slug: true,
         tags: true,
         world: true,
-        mapEntry: { select: { space: publicMapEntryInclude.space } },
+        mapEntry: {
+          select: {
+            color: true,
+            images: true,
+            space: publicMapEntryInclude.space,
+          },
+        },
       },
     }),
     prisma.portal.findMany({
@@ -43,12 +48,19 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
         name: true,
         slug: true,
         world: true,
-        mapEntry: { select: { space: publicMapEntryInclude.space } },
+        mapEntry: {
+          select: {
+            color: true,
+            images: true,
+            space: publicMapEntryInclude.space,
+          },
+        },
       },
     }),
   ]);
 
   const places = placeRecords.map((place): PlaceSummary => ({
+    color: place.mapEntry.color,
     id: place.slug,
     name: place.name,
     world: place.world,
@@ -60,13 +72,14 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
     description: place.description,
     address: place.address,
     category: place.category,
-    previewImage: place.images[0] ?? null,
+    previewImage: place.mapEntry.images[0] ?? null,
     tags: place.tags,
     mapEntryId: place.mapEntryId,
     space: place.mapEntry.space,
   }));
   const portals = normalizeLinkedPortalIdentities(portalRecords.map(
     (portal): PortalSummary => ({
+      color: portal.mapEntry.color,
       id: portal.slug,
       slug: portal.slug,
       name: portal.name,
@@ -79,6 +92,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
       description: portal.description,
       address: portal.address ?? '',
       mapEntryId: portal.mapEntryId,
+      previewImage: portal.mapEntry.images[0] ?? null,
       space: portal.mapEntry.space,
       'nether-associate': null,
     }),
@@ -89,7 +103,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
 
 const loadCachedMapContent = cacheDatabaseQuery(
   loadMapContentUncached,
-  ['public-map-content-v1'],
+  ['public-map-content-v3'],
   { revalidate: 300, tags: [contentCacheTags.map] },
 );
 

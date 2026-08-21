@@ -1,23 +1,21 @@
 'use client';
 
 import { useRef } from 'react';
-import { normalizePlaceImages } from '@/lib/place/images';
+import { normalizeContentImages } from '@/lib/content/images';
 import { normalizeTradeOfferDescription } from '@/lib/trade-offers';
 import type { PlaceCategory } from '@/lib/place/categories';
-import type {
-  FormPlaceImage,
-  FormTradeItem,
-  FormTradeOffer,
-} from '../place/place-form-types';
+import type { FormContentImage } from './useContentImages';
+import type { FormTradeItem, FormTradeOffer } from '../place/place-form-types';
 import { slugify, type CoordinatesInput } from './form-utils';
 
 interface PlaceSnapshotInput {
   address: string;
   category: PlaceCategory;
+  color: string;
   coordinates: CoordinatesInput;
   description: string;
   discordUrl: string;
-  images: FormPlaceImage[];
+  images: FormContentImage[];
   name: string;
   offers: FormTradeOffer[];
   slugSource: string;
@@ -27,7 +25,9 @@ interface PlaceSnapshotInput {
 }
 
 interface PortalSnapshotInput {
+  color: string;
   description: string;
+  images: FormContentImage[];
   linkedCoordinates: {
     nether: CoordinatesInput;
     overworld: CoordinatesInput;
@@ -55,6 +55,7 @@ export function useFormHasChanges(snapshot: unknown, ready = true) {
 export function createPlaceSnapshot(input: PlaceSnapshotInput) {
   return {
     slug: slugify(input.slugSource),
+    color: input.color,
     spaceId: input.spaceId,
     name: input.name.trim(),
     world: input.world,
@@ -64,7 +65,7 @@ export function createPlaceSnapshot(input: PlaceSnapshotInput) {
     address: input.world === 'nether' ? normalizeText(input.address) : null,
     tags: input.tags.map((tag) => tag.trim()).filter(Boolean),
     discordUrl: normalizeText(input.discordUrl),
-    images: normalizePlaceImages(input.images.map((image) => image.url)),
+    images: normalizeContentImages(input.images.map((image) => image.url)),
     offers: input.offers.map(normalizeOffer),
   };
 }
@@ -72,9 +73,11 @@ export function createPlaceSnapshot(input: PlaceSnapshotInput) {
 export function createPortalSnapshot(input: PortalSnapshotInput) {
   const common = {
     slug: slugify(input.slugSource),
+    color: input.color,
     spaceId: input.spaceId,
     name: input.name.trim(),
     description: normalizeText(input.description),
+    images: normalizeContentImages(input.images.map((image) => image.url)),
   };
 
   if (input.variant === 'linked') {

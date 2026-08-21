@@ -65,6 +65,7 @@ export default function InfoOverlay({
         mode: 'edit',
         initialData: {
           type: 'place',
+          color: place.color,
           name: place.name,
           id: place.id,
           world: place.world as 'overworld' | 'nether',
@@ -107,6 +108,7 @@ export default function InfoOverlay({
       mode: 'edit',
       initialData: {
         type: 'portal',
+        color: portal.color,
         variant: portal['nether-associate'] ? 'linked' : portal.world as 'overworld' | 'nether',
         name: portal.name,
         id: portal.id,
@@ -116,6 +118,7 @@ export default function InfoOverlay({
         mapEntryId: portal.mapEntryId,
         primaryManagerId: portal.primaryManagerId,
         space: portal.space,
+        images: portal.images,
         coordinates: portal['nether-associate'] ? undefined : portal.coordinates,
         address: portal.world === 'nether' && !portal['nether-associate'] ? portal.address : undefined,
         overworldCoordinates: portal['nether-associate'] ? portal.coordinates : undefined,

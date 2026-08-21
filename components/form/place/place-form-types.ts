@@ -18,13 +18,9 @@ export interface FormTradeOffer extends Omit<SharedTradeOffer, 'gives' | 'wants'
   wants: FormTradeItem;
 }
 
-export interface FormPlaceImage {
-  id: string;
-  url: string;
-}
-
 export interface InitialPlaceData {
   type: 'place';
+  color: string;
   name: string;
   id: string;
   world: string;
@@ -46,6 +42,7 @@ export interface InitialPlaceData {
 }
 
 export interface PlaceFormPayload {
+  color: string;
   slug: string;
   name: string;
   world: 'overworld' | 'nether';
@@ -84,11 +81,6 @@ export const createTradeOffer = (): FormTradeOffer => ({
   wants: createTradeItem(),
   negotiable: false,
   description: null,
-});
-
-export const createImageInput = (url = ''): FormPlaceImage => ({
-  id: generateFormId(),
-  url,
 });
 
 export const blankCoords = { x: '', y: '', z: '' };

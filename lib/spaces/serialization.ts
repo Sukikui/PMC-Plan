@@ -29,6 +29,7 @@ export const spaceInclude = {
     orderBy: { createdAt: 'asc' as const },
     select: {
       id: true,
+      images: true,
       primaryManager: {
         select: {
           minecraftProfile: {
@@ -44,7 +45,6 @@ export const spaceInclude = {
           uid: true,
           slug: true,
           name: true,
-          images: true,
           world: true,
           category: true,
         },
@@ -121,14 +121,14 @@ export function toSpace(record: SpaceRecord): Space {
       total,
       { place },
     ) => total + (place?._count.tradeOffers ?? 0), 0),
-    images: entries.flatMap(({ place }) => (
-      place?.images.map((url, index) => ({
+    images: entries.flatMap(({ images, place }) => (
+      place ? images.map((url, index) => ({
         id: `${place.uid}-${index}`,
         url,
         placeId: place.uid,
         placeSlug: place.slug,
         placeName: place.name,
-      })) ?? []
+      })) : []
     )),
     places: sortByLocalizedName(places),
     portals: sortByLocalizedName(portals),

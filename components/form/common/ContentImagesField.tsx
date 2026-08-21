@@ -7,30 +7,30 @@ import FormHint from '@/components/form/common/FormHint';
 import { imageUrlPlaceholder } from '@/components/form/common/form-placeholders';
 import { formInputClassName } from '@/components/form/common/form-styles';
 import { themeColors } from '@/lib/theme-colors';
-import { MAX_PLACE_IMAGE_URLS } from '@/lib/place/images';
-import type { FormPlaceImage } from './place-form-types';
+import { MAX_CONTENT_IMAGE_URLS } from '@/lib/content/images';
+import type {
+  ContentImagesController,
+  FormContentImage,
+} from './useContentImages';
 
-interface PlaceImagesSectionProps {
-  images: FormPlaceImage[];
-  previewErrors: Record<string, boolean>;
+interface ContentImagesFieldProps {
+  controller: ContentImagesController;
   reorderable: boolean;
-  onAdd: () => string;
-  onPreviewError: (imageId: string) => void;
-  onRemove: (imageId: string) => void;
-  onReorder: (sourceId: string, targetId: string) => void;
-  onUpdate: (imageId: string, url: string) => void;
 }
 
-export default function PlaceImagesSection({
-  images,
-  previewErrors,
+export default function ContentImagesField({
+  controller,
   reorderable,
-  onAdd,
-  onPreviewError,
-  onRemove,
-  onReorder,
-  onUpdate,
-}: PlaceImagesSectionProps) {
+}: ContentImagesFieldProps) {
+  const {
+    images,
+    previewErrors,
+    add,
+    markPreviewError,
+    remove,
+    reorder,
+    update,
+  } = controller;
   const [selectedImageId, setSelectedImageId] = useState<string | null>(
     images[0]?.id ?? null,
   );
@@ -42,11 +42,11 @@ export default function PlaceImagesSection({
     : -1;
 
   const addImage = () => {
-    setSelectedImageId(onAdd());
+    setSelectedImageId(add());
   };
 
   const removeImage = (imageId: string) => {
-    onRemove(imageId);
+    remove(imageId);
     if (selectedImageId === imageId) {
       setSelectedImageId(images.find((image) => image.id !== imageId)?.id ?? null);
     }
@@ -92,7 +92,7 @@ export default function PlaceImagesSection({
   const drop = (event: DragEvent<HTMLDivElement>, targetId: string) => {
     event.preventDefault();
     const sourceId = draggedImageId ?? event.dataTransfer.getData('text/plain');
-    if (sourceId && sourceId !== targetId) onReorder(sourceId, targetId);
+    if (sourceId && sourceId !== targetId) reorder(sourceId, targetId);
     endDrag();
   };
 
@@ -101,13 +101,13 @@ export default function PlaceImagesSection({
       <div className="flex items-center justify-between gap-3">
         <span className={`text-xs font-medium ${themeColors.text.secondary}`}>Images (optionnel)</span>
         <span className={`text-xs tabular-nums ${themeColors.text.tertiary}`}>
-          {images.length}/{MAX_PLACE_IMAGE_URLS}
+          {images.length}/{MAX_CONTENT_IMAGE_URLS}
         </span>
       </div>
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {images.map((image, index) => (
-          <PlaceImageThumbnail
+          <ContentImageThumbnail
             key={image.id}
             image={image}
             index={index}
@@ -120,13 +120,13 @@ export default function PlaceImagesSection({
             onDragOver={dragOver}
             onDragStart={startDrag}
             onDrop={drop}
-            onPreviewError={onPreviewError}
+            onPreviewError={markPreviewError}
             onRemove={removeImage}
             onSelect={setSelectedImageId}
           />
         ))}
 
-        {images.length < MAX_PLACE_IMAGE_URLS && (
+        {images.length < MAX_CONTENT_IMAGE_URLS && (
           <button
             type="button"
             onClick={addImage}
@@ -140,14 +140,14 @@ export default function PlaceImagesSection({
 
       {selectedImage && (
         <div>
-          <label htmlFor={`place-image-${selectedImage.id}`} className="sr-only">
+          <label htmlFor={`content-image-${selectedImage.id}`} className="sr-only">
             URL de l&apos;image {selectedIndex + 1}
           </label>
           <input
-            id={`place-image-${selectedImage.id}`}
+            id={`content-image-${selectedImage.id}`}
             className={formInputClassName}
             value={selectedImage.url}
-            onChange={(event) => onUpdate(selectedImage.id, event.target.value)}
+            onChange={(event) => update(selectedImage.id, event.target.value)}
             placeholder={selectedIndex === 0
               ? imageUrlPlaceholder('image-principale')
               : imageUrlPlaceholder('image-supplementaire')}
@@ -177,7 +177,7 @@ export default function PlaceImagesSection({
   );
 }
 
-function PlaceImageThumbnail({
+function ContentImageThumbnail({
   image,
   index,
   hasPreviewError,
@@ -193,7 +193,7 @@ function PlaceImageThumbnail({
   onRemove,
   onSelect,
 }: {
-  image: FormPlaceImage;
+  image: FormContentImage;
   index: number;
   hasPreviewError: boolean;
   selected: boolean;

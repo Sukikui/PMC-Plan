@@ -9,6 +9,7 @@ import { resolveDestinationActivation } from '@/lib/destination/selection';
 import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 
 const place: PlaceSummary = {
+  color: '#3B82F6',
   id: 'place-1',
   mapEntryId: 'entry-place-1',
   name: 'Place test',
@@ -23,6 +24,7 @@ const place: PlaceSummary = {
 };
 
 const portal: PortalSummary = {
+  color: '#3B82F6',
   id: 'portal-1',
   mapEntryId: 'entry-portal-1',
   slug: 'portail-test',
@@ -32,6 +34,7 @@ const portal: PortalSummary = {
   description: 'Description du portail.',
   address: '',
   space: null,
+  previewImage: null,
   'nether-associate': null,
 };
 

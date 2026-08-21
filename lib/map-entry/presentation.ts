@@ -2,6 +2,12 @@ import type { Prisma } from '@/generated/prisma/client';
 import { canManageContent } from '@/lib/content-permissions';
 import { MapEntryError, type MapEntryActor } from './service';
 
+interface MapEntryPresentation {
+  color?: string;
+  images?: string[];
+  spaceId: string | null | undefined;
+}
+
 export async function validateSpaceAssociation(
   tx: Prisma.TransactionClient,
   actor: MapEntryActor,
@@ -30,11 +36,11 @@ export async function validateSpaceAssociation(
   }
 }
 
-export async function setMapEntrySpace(
+export async function updateMapEntryPresentation(
   tx: Prisma.TransactionClient,
   mapEntryId: string,
   actor: MapEntryActor,
-  spaceId: string | null | undefined,
+  presentation: MapEntryPresentation,
 ) {
   const entry = await tx.mapEntry.findUnique({
     where: { id: mapEntryId },
@@ -44,14 +50,25 @@ export async function setMapEntrySpace(
     throw new MapEntryError('Ressource introuvable.', 404);
   }
 
-  if (spaceId !== undefined && spaceId !== entry.spaceId) {
-    await validateSpaceAssociation(tx, actor, spaceId);
+  if (
+    presentation.spaceId !== undefined
+    && presentation.spaceId !== entry.spaceId
+  ) {
+    await validateSpaceAssociation(tx, actor, presentation.spaceId);
   }
 
   await tx.mapEntry.update({
     where: { id: mapEntryId },
     data: {
-      ...(spaceId !== undefined ? { spaceId } : {}),
+      ...(presentation.color !== undefined
+        ? { color: presentation.color }
+        : {}),
+      ...(presentation.images !== undefined
+        ? { images: presentation.images }
+        : {}),
+      ...(presentation.spaceId !== undefined
+        ? { spaceId: presentation.spaceId }
+        : {}),
       lastEditorId: actor.userId,
     },
   });

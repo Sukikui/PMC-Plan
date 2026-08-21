@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createMapEntry } from '@/lib/map-entry/service';
 import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
-import { setMapEntrySpace } from '@/lib/map-entry/space-association';
 import { toMapEntryDraft } from '@/lib/map-entry/types';
 
 jest.mock('@/lib/prisma', () => ({
@@ -22,9 +21,6 @@ const tx = {
     create: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
-  },
-  space: {
-    findUnique: jest.fn(),
   },
   mapEntryManager: {
     createMany: jest.fn(),
@@ -63,6 +59,8 @@ describe('map-entry service', () => {
     tx.mapEntry.create.mockResolvedValue({ id: 'entry-1' });
 
     await createMapEntry(tx as never, 'primary-user', {
+      color: '#1F2A65',
+      images: ['https://example.com/portal.png'],
       managerIds: ['manager-user'],
       owners: [
         { uuid: 'manager-uuid', name: 'ManagerMC' },
@@ -74,6 +72,8 @@ describe('map-entry service', () => {
 
     expect(tx.mapEntry.create).toHaveBeenCalledWith({
       data: {
+        color: '#1F2A65',
+        images: ['https://example.com/portal.png'],
         spaceId: 'space-1',
         primaryManagerId: 'primary-user',
         lastEditorId: 'primary-user',
@@ -296,42 +296,4 @@ describe('map-entry service', () => {
     expect(draft.excludedOwnerUuids).toEqual(['primary-uuid']);
   });
 
-  it('associates content with a space managed by the actor', async () => {
-    tx.mapEntry.findUnique.mockResolvedValue({ spaceId: null });
-    tx.space.findUnique.mockResolvedValue({
-      primaryManagerId: 'primary-user',
-      managers: [],
-    });
-
-    await setMapEntrySpace(
-      tx as never,
-      'entry-1',
-      primaryActor,
-      'space-1',
-    );
-
-    expect(tx.mapEntry.update).toHaveBeenCalledWith({
-      where: { id: 'entry-1' },
-      data: {
-        spaceId: 'space-1',
-        lastEditorId: 'primary-user',
-      },
-    });
-  });
-
-  it('rejects association with a space the actor cannot manage', async () => {
-    tx.mapEntry.findUnique.mockResolvedValue({ spaceId: null });
-    tx.space.findUnique.mockResolvedValue({
-      primaryManagerId: 'another-user',
-      managers: [],
-    });
-
-    await expect(setMapEntrySpace(
-      tx as never,
-      'entry-1',
-      primaryActor,
-      'space-1',
-    )).rejects.toMatchObject({ status: 403 });
-    expect(tx.mapEntry.update).not.toHaveBeenCalled();
-  });
 });

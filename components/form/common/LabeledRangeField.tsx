@@ -3,20 +3,20 @@ import RangeSlider, {
 } from '@/components/ui/RangeSlider';
 import { themeColors } from '@/lib/theme-colors';
 
-type SpaceRangeFieldProps = Omit<
+type LabeledRangeFieldProps = Omit<
   RangeSliderProps,
   'ariaLabel' | 'className'
 > & {
   label: string;
 };
 
-export const spaceRangeSectionClassName =
+export const rangeFieldSectionClassName =
   'grid gap-5 md:grid-cols-[minmax(0,1fr)_11rem] md:items-end';
 
-export default function SpaceRangeField({
+export default function LabeledRangeField({
   label,
   ...sliderProps
-}: SpaceRangeFieldProps) {
+}: LabeledRangeFieldProps) {
   return (
     <label className="grid grid-cols-[5.25rem_minmax(0,1fr)] items-center gap-3">
       <span className={`text-xs font-medium ${themeColors.text.secondary}`}>

@@ -4,26 +4,28 @@ import { useEffect, useState } from 'react';
 import {
   hexToHsl,
   hslToHex,
-  normalizeSpaceHexInput,
+  normalizeHexColorInput,
   type HslColor,
-} from '@/lib/spaces/colors';
+} from '@/lib/content/colors';
 import { themeColors } from '@/lib/theme-colors';
-import { formInputClassName } from '@/components/form/common/form-styles';
-import SpaceRangeField, {
-  spaceRangeSectionClassName,
-} from './SpaceRangeField';
+import { formInputClassName } from './form-styles';
+import LabeledRangeField, {
+  rangeFieldSectionClassName,
+} from './LabeledRangeField';
 
-interface SpaceColorPickerProps {
+interface ColorPickerProps {
+  ariaLabel: string;
   disabled?: boolean;
   onChange: (color: string) => void;
   value: string;
 }
 
-export default function SpaceColorPicker({
+export default function ColorPicker({
+  ariaLabel,
   disabled = false,
   onChange,
   value,
-}: SpaceColorPickerProps) {
+}: ColorPickerProps) {
   const [hexInput, setHexInput] = useState(value);
   const [hsl, setHsl] = useState(() => hexToHsl(value));
 
@@ -43,7 +45,7 @@ export default function SpaceColorPicker({
   };
 
   const updateHex = (rawValue: string) => {
-    const normalized = normalizeSpaceHexInput(rawValue);
+    const normalized = normalizeHexColorInput(rawValue);
     setHexInput(normalized);
     if (/^#[0-9A-F]{6}$/.test(normalized)) {
       setHsl(hexToHsl(normalized));
@@ -52,11 +54,11 @@ export default function SpaceColorPicker({
   };
 
   return (
-    <fieldset aria-label="Couleur de l’espace" disabled={disabled}>
-      <div className={spaceRangeSectionClassName}>
+    <fieldset aria-label={ariaLabel} disabled={disabled}>
+      <div className={rangeFieldSectionClassName}>
         <div className="space-y-3">
           {CHANNELS.map(({ key, label, maximum }) => (
-            <SpaceRangeField
+            <LabeledRangeField
               key={key}
               disabled={disabled}
               gradient={getChannelGradient(key, hsl.hue)}

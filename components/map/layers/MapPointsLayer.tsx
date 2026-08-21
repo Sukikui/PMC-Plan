@@ -30,7 +30,7 @@ interface MapPointsLayerProps {
   preloadPreviewImage: (src: string | undefined, pointId: string) => void;
   showPointTooltip: (point: ScreenMapPoint, expanded: boolean) => void;
   updatePointTooltipPosition: (point: ScreenMapPoint) => void;
-  schedulePlacePreview: (point: ScreenMapPoint) => void;
+  schedulePreview: (point: ScreenMapPoint) => void;
   hidePointTooltip: () => void;
   onPointSelect?: (point: InteractiveMapPoint) => void;
 }
@@ -49,7 +49,7 @@ export default function MapPointsLayer({
   preloadPreviewImage,
   showPointTooltip,
   updatePointTooltipPosition,
-  schedulePlacePreview,
+  schedulePreview,
   hidePointTooltip,
   onPointSelect,
 }: MapPointsLayerProps) {
@@ -100,7 +100,7 @@ export default function MapPointsLayer({
                 hoveredPointRef.current = { id: point.id, startedAt: Date.now() };
                 preloadPreviewImage(point.previewImageSrc, point.id);
                 showPointTooltip(point, false);
-                schedulePlacePreview(point);
+                schedulePreview(point);
               }
             }}
             onMouseMove={() => {
