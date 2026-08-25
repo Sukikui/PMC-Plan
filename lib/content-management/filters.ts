@@ -4,6 +4,7 @@ import type {
   ContentManagementFilter,
   ContentManagementType,
 } from './types';
+import { UNIDENTIFIED_PORTAL_LABEL } from '@/lib/portal/identity';
 
 export function getMapEntryWhere(
   type: Exclude<ContentManagementType, 'space'>,
@@ -25,6 +26,10 @@ export function getMapEntryWhere(
   const contextSearch: Prisma.MapEntryWhereInput[] = type === 'service'
     ? []
     : [{ space: { is: { name: text } } }];
+  const unidentifiedPortalSearch: Prisma.MapEntryWhereInput[] = (
+    type === 'portal'
+    && UNIDENTIFIED_PORTAL_LABEL.toLowerCase().includes(query.trim().toLowerCase())
+  ) ? [{ portals: { some: { name: null } } }] : [];
   const discordManagerSearch: Prisma.MapEntryWhereInput[] = discordQuery
     ? [
         { primaryManager: { is: { discordUsername: discordText } } },
@@ -35,6 +40,7 @@ export function getMapEntryWhere(
   constraints.push({
     OR: [
       getContentSearch(type, text),
+      ...unidentifiedPortalSearch,
       ...contextSearch,
       { primaryManager: { is: { discordDisplayName: text } } },
       ...discordManagerSearch,

@@ -38,6 +38,7 @@ import {
   getMapEntryDeleteEndpoint,
   getMapEntrySaveEndpoint,
 } from './form-endpoints';
+import type { InfoOverlayContentTarget } from '@/lib/ui/info-overlay-stack';
 
 type FormInitialData = (
   (InitialPlaceData & { type: 'place' })
@@ -49,6 +50,7 @@ type FormInitialData = (
 export type FormCategory = 'portal' | 'place' | 'service' | 'space';
 
 export interface OpenFormOverlayOptions {
+  intent?: 'claim';
   initialCategory?: FormCategory;
   initialData?: FormInitialData;
   mode: 'add' | 'edit';
@@ -61,7 +63,7 @@ interface FormOverlayProps extends OpenFormOverlayOptions {
     entityType: 'place' | 'portal',
     payload: PlaceFormPayload | PortalFormPayload,
   ) => void | Promise<void>;
-  onSpaceDeleted?: (space: Space) => void;
+  onDeleted?: (target: InfoOverlayContentTarget) => void;
 }
 
 const categoryTabs = [
@@ -74,10 +76,11 @@ const categoryTabs = [
 export default function FormOverlay({
   initialCategory,
   initialData,
+  intent,
   mode,
   onClose,
+  onDeleted,
   onSaved,
-  onSpaceDeleted,
   onSpaceSaved,
 }: FormOverlayProps) {
   const queryClient = useQueryClient();
@@ -107,7 +110,7 @@ export default function FormOverlay({
       || initialData?.type === 'portal'
       ? initialData
       : undefined;
-    const url = getMapEntrySaveEndpoint(entityType, mode, mapEntryData);
+    const url = getMapEntrySaveEndpoint(entityType, mode, mapEntryData, intent);
     const method = mode === 'add' ? 'POST' : 'PUT';
     const entityLabel = entityType === 'place' ? 'lieu' : 'portail';
 
@@ -151,6 +154,9 @@ export default function FormOverlay({
       mapEntryId: initialData.mapEntryId,
       type: initialData.type,
     });
+    if (initialData.mapEntryId) {
+      onDeleted?.({ id: initialData.mapEntryId, kind: 'map-entry' });
+    }
     onClose();
   };
 
@@ -179,7 +185,7 @@ export default function FormOverlay({
       previousSlug: initialData.slug,
       type: 'space',
     });
-    onSpaceDeleted?.(initialData);
+    onDeleted?.({ id: initialData.id, kind: 'space' });
     onClose();
   };
 
@@ -253,6 +259,7 @@ export default function FormOverlay({
       className: 'pt-16',
       content: (
         <PortalForm
+          intent={intent}
           mode={mode}
           initialData={initialData?.type === 'portal' ? initialData : undefined}
           onSubmit={handlePortalSubmit}

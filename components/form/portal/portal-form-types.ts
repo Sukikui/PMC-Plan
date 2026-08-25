@@ -11,6 +11,7 @@ export interface InitialPortalData {
   images?: string[];
   variant: 'overworld' | 'nether' | 'linked';
   name: string;
+  unidentified: boolean;
   id: string;
   canDelete?: boolean;
   lastEditor?: MapEntryEditor;
@@ -28,16 +29,19 @@ export interface InitialPortalData {
 
 interface PortalPayloadBase {
   color: string;
+  identity: PortalIdentityPayload;
   images: string[];
   management?: MapEntryCreationPayload | MapEntryUpdatePayload;
   spaceId: string | null;
 }
 
+type PortalIdentityPayload =
+  | { status: 'unidentified'; slug: string }
+  | { status: 'identified'; slug: string; name: string };
+
 interface SinglePortalPayload extends PortalPayloadBase {
   mode: 'single';
   portal: {
-    slug: string;
-    name: string;
     world: 'overworld' | 'nether';
     coordinates: { x: number; y: number; z: number };
     description?: string;
@@ -47,8 +51,6 @@ interface SinglePortalPayload extends PortalPayloadBase {
 
 interface LinkedPortalPayload extends PortalPayloadBase {
   mode: 'linked';
-  slug: string;
-  name: string;
   overworld: {
     coordinates: { x: number; y: number; z: number };
     description?: string;

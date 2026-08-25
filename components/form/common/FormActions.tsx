@@ -13,6 +13,10 @@ interface FormActionsProps {
   onDelete?: () => void;
   entityType: 'place' | 'portal' | 'service' | 'space';
   entitySlug: string;
+  confirmation?: {
+    message: string;
+    value: string;
+  };
 }
 
 export default function FormActions({
@@ -24,6 +28,7 @@ export default function FormActions({
   onDelete,
   entityType,
   entitySlug,
+  confirmation,
 }: FormActionsProps) {
   const entityLabel = {
     place: { definite: 'le lieu', genitive: 'du lieu' },
@@ -31,7 +36,9 @@ export default function FormActions({
     service: { definite: 'le service', genitive: 'du service' },
     space: { definite: 'l’espace', genitive: 'de l’espace' },
   }[entityType];
-  const confirmationMessage = `Pour confirmer la suppression définitive, écris le slug ${entityLabel.genitive}.`;
+  const confirmationMessage = confirmation?.message
+    ?? `Pour confirmer la suppression définitive, écris le slug ${entityLabel.genitive}.`;
+  const confirmationValue = confirmation?.value ?? entitySlug;
   const submitText = mode === 'add'
     ? `Créer ${entityLabel.definite}`
     : `Modifier ${entityLabel.definite}`;
@@ -48,7 +55,7 @@ export default function FormActions({
         <TypedDestructiveAction
           actionLabel="Supprimer"
           confirmationMessage={confirmationMessage}
-          confirmationValue={entitySlug}
+          confirmationValue={confirmationValue}
           disabled={isSubmitting}
           onConfirm={onDelete}
         >

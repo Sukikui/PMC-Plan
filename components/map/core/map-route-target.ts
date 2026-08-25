@@ -102,6 +102,7 @@ const toRouteLabelPoint = (
     ...point,
     kind: 'route',
     label: details.label,
+    unidentified: details.unidentified,
     screen: mapPercentToScreenPoint(
       worldToMapPercent(view.metadata, point),
       view.viewport,

@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { createMapEntry } from '@/lib/map-entry/service';
-import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
+import {
+  claimMapEntryManagement,
+  updateMapEntryManagement,
+} from '@/lib/map-entry/management-update';
 import { toMapEntryDraft } from '@/lib/map-entry/types';
 
 jest.mock('@/lib/prisma', () => ({
@@ -115,6 +118,27 @@ describe('map-entry service', () => {
           create: [{ profileUuid: 'primary-uuid', position: 0 }],
         },
       }),
+    });
+  });
+
+  it('creates an unidentified entry without Minecraft owners', async () => {
+    tx.user.findMany.mockResolvedValue([
+      {
+        id: 'primary-user',
+        role: 'user',
+        minecraftProfile: { uuid: 'primary-uuid', name: 'PrimaryMC' },
+      },
+    ]);
+
+    await createMapEntry(tx as never, 'primary-user', {
+      includeManagerOwners: false,
+      managerIds: [],
+      owners: [{ uuid: 'manual-uuid', name: 'ManualMC' }],
+      excludedOwnerUuids: [],
+    });
+
+    expect(tx.mapEntry.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ owners: undefined }),
     });
   });
 
@@ -240,6 +264,47 @@ describe('map-entry service', () => {
 
     expect(tx.mapEntryManager.deleteMany).not.toHaveBeenCalled();
     expect(tx.mapEntryOwner.createMany).toHaveBeenCalled();
+  });
+
+  it('replaces unidentified portal management when it is claimed', async () => {
+    tx.mapEntry.findUnique.mockResolvedValue({
+      primaryManagerId: 'claiming-user',
+      managers: [{ userId: 'old-manager' }],
+    });
+    tx.user.findMany.mockResolvedValue([
+      {
+        id: 'claiming-user',
+        role: 'user',
+        discordUsername: 'claiming',
+        minecraftProfile: { uuid: 'claiming-uuid', name: 'ClaimingMC' },
+      },
+    ]);
+
+    await claimMapEntryManagement(
+      tx as never,
+      'entry-1',
+      { userId: 'claiming-user', role: 'user' },
+      {
+        managerIds: [],
+        owners: [],
+        excludedOwnerUuids: [],
+      },
+    );
+
+    expect(tx.mapEntry.update).toHaveBeenNthCalledWith(1, {
+      where: { id: 'entry-1' },
+      data: { primaryManagerId: 'claiming-user' },
+    });
+    expect(tx.mapEntryManager.deleteMany).toHaveBeenCalledWith({
+      where: { mapEntryId: 'entry-1' },
+    });
+    expect(tx.mapEntryOwner.createMany).toHaveBeenCalledWith({
+      data: [{
+        mapEntryId: 'entry-1',
+        profileUuid: 'claiming-uuid',
+        position: 0,
+      }],
+    });
   });
 
   it('prevents a secondary manager from changing the Discord team', async () => {

@@ -7,6 +7,7 @@ import type { SpaceReference } from '@/lib/spaces/types';
 import { getMapIconSrc, type MapIconCategory } from '@/lib/place/categories';
 import { themeColors } from '@/lib/theme-colors';
 import ContentInfoOverlayHeader from './ContentInfoOverlayHeader';
+import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
 
 interface InfoOverlayHeaderProps {
   canEdit: boolean;
@@ -61,7 +62,10 @@ export default function InfoOverlayHeader({
           onClick={() => onOpenSpace(space)}
         />
       ) : undefined}
-      title={item.name}
+      title={type === 'portal' && 'unidentified' in item && item.unidentified
+        ? <PortalIdentityLabel />
+        : item.name}
+      titleText={item.name}
     />
   );
 }

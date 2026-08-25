@@ -92,6 +92,14 @@ describe('content form foundation', () => {
       type: 'portal',
       variant: 'linked',
     })).toBe('/api/portals/spawn?world=overworld');
+    expect(getMapEntrySaveEndpoint('portal', 'edit', {
+      id: 'portail-a7k9x',
+      mapEntryId: 'entry-1',
+      type: 'portal',
+      variant: 'nether',
+    }, 'claim')).toBe(
+      '/api/portals/portail-a7k9x?world=nether&claim=true&mapEntryId=entry-1',
+    );
     expect(getMapEntryDeleteEndpoint({
       id: 'spawn',
       type: 'portal',

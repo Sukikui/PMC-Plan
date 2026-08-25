@@ -7,7 +7,7 @@ interface IdentitySummaryProps {
   accentOnScopedGroupHover?: boolean;
   avatar: ReactNode;
   subtitle?: string | null;
-  title: string;
+  title: ReactNode;
   unlinked?: boolean;
 }
 

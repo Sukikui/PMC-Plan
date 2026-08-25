@@ -20,6 +20,7 @@ interface CreationMapEntryManagementFieldsProps {
   onChange: Dispatch<SetStateAction<MapEntryDraft>>;
   ownerRemovalGroup?: string;
   ownerTitle?: string;
+  ownersEnabled?: boolean;
 }
 
 export default function CreationMapEntryManagementFields({
@@ -28,6 +29,7 @@ export default function CreationMapEntryManagementFields({
   onChange,
   ownerRemovalGroup,
   ownerTitle,
+  ownersEnabled = true,
 }: CreationMapEntryManagementFieldsProps) {
   const { data: session } = useSession();
 
@@ -69,6 +71,7 @@ export default function CreationMapEntryManagementFields({
       onChange={onChange}
       ownerRemovalGroup={ownerRemovalGroup}
       ownerTitle={ownerTitle}
+      ownersEnabled={ownersEnabled}
       primaryManager={toManagedIdentity({
         ...session?.user,
         id: session?.user?.id ?? '',

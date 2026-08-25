@@ -179,10 +179,6 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     infoStack.updateSpace(space);
   };
 
-  const handleSpaceDeleted = (space: Space) => {
-    infoStack.removeSpace(space.id);
-  };
-
   const closeFormOverlay = () => {
     setFormOverlayState(prev => ({ ...prev, isClosing: true }));
     clearScheduledClose(formTimeoutRef);
@@ -210,8 +206,8 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
           <FormOverlay
             {...formOverlayState.options}
             onClose={closeFormOverlay}
+            onDeleted={infoStack.removeContent}
             onSaved={handleFormSaved}
-            onSpaceDeleted={handleSpaceDeleted}
             onSpaceSaved={handleSpaceSaved}
           />
         </Overlay>

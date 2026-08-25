@@ -39,6 +39,8 @@ interface PortalSnapshotInput {
   slugSource: string;
   spaceId: string | null;
   variant: 'overworld' | 'nether' | 'linked';
+  unidentified: boolean;
+  unidentifiedSlug: string;
 }
 
 export function useFormHasChanges(snapshot: unknown, ready = true) {
@@ -72,10 +74,15 @@ export function createPlaceSnapshot(input: PlaceSnapshotInput) {
 
 export function createPortalSnapshot(input: PortalSnapshotInput) {
   const common = {
-    slug: slugify(input.slugSource),
+    identity: input.unidentified
+      ? { status: 'unidentified', slug: input.unidentifiedSlug }
+      : {
+          status: 'identified',
+          slug: slugify(input.slugSource),
+          name: input.name.trim(),
+        },
     color: input.color,
     spaceId: input.spaceId,
-    name: input.name.trim(),
     description: normalizeText(input.description),
     images: normalizeContentImages(input.images.map((image) => image.url)),
   };

@@ -14,6 +14,7 @@ export interface Portal {
   images: string[];
   id: string;
   name: string;
+  unidentified: boolean;
   world: string;
   coordinates: Coordinates;
   description: string | null;

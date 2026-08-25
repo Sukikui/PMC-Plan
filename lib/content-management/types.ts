@@ -34,6 +34,7 @@ interface ContentManagementPortalSummary extends ContentManagementBase {
   mapEntryId: string;
   space: SpaceReference | null;
   type: 'portal';
+  unidentified: boolean;
   world: World;
 }
 

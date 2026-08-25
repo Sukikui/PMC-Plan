@@ -28,6 +28,7 @@ interface DraftMapEntryManagementFieldsProps {
   onTransfer?: (userId: string, confirmation: string) => Promise<boolean>;
   ownerRemovalGroup?: string;
   ownerTitle?: string;
+  ownersEnabled?: boolean;
   primaryManager: ManagedIdentity;
 }
 
@@ -39,6 +40,7 @@ export default function DraftMapEntryManagementFields({
   onTransfer,
   ownerRemovalGroup = 'propriétaires',
   ownerTitle = 'Propriétaires',
+  ownersEnabled = true,
   primaryManager,
 }: DraftMapEntryManagementFieldsProps) {
   const [busy, setBusy] = useState(false);
@@ -113,7 +115,7 @@ export default function DraftMapEntryManagementFields({
         primaryManager={primaryManager}
       />
 
-      <section className="space-y-2">
+      {ownersEnabled && <section className="space-y-2">
         <FormFieldLabel>{ownerTitle}</FormFieldLabel>
         {draft.owners.map((owner) => (
           <ListRow key={owner.uuid} className="flex items-center justify-between gap-3">
@@ -143,7 +145,7 @@ export default function DraftMapEntryManagementFields({
           </ListRow>
         ))}
         <OwnerNameInput busy={controlsDisabled} onAdd={resolveOwner} />
-      </section>
+      </section>}
       {error && (
         <p className={`text-xs ${themeColors.feedback.errorText}`}>{error}</p>
       )}

@@ -15,6 +15,7 @@ import InfoOverlayDetails from './InfoOverlayDetails';
 interface InfoOverlayContentProps {
   contentRef: React.RefObject<HTMLDivElement | null>;
   item: Place | Portal;
+  onClaim?: () => void;
   showBottomBlur: boolean;
   showTradeView: boolean;
   tradeSearchQuery: string;
@@ -26,6 +27,7 @@ interface InfoOverlayContentProps {
 export default function InfoOverlayContent({
   contentRef,
   item,
+  onClaim,
   showBottomBlur,
   showTradeView,
   tradeSearchQuery,
@@ -68,7 +70,7 @@ export default function InfoOverlayContent({
                       }))}
                     />
                   )}
-                  <InfoOverlayDetails item={item} type={type} />
+                  <InfoOverlayDetails item={item} onClaim={onClaim} type={type} />
                 </>
               ),
             },

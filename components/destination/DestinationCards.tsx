@@ -13,6 +13,7 @@ import {
   type MapIconCategory,
 } from '@/lib/place/categories';
 import type { DestinationCardActions } from './destination-panel-types';
+import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
 
 const DESCRIPTION_PREVIEW_MAX_LENGTH = 180;
 const DESCRIPTION_PREVIEW_MIN_SENTENCE_LENGTH = 40;
@@ -54,15 +55,21 @@ const DestinationIcon = ({ category }: { category: MapIconCategory }) => (
 function DestinationName({
   name,
   space,
+  unidentified = false,
 }: {
   name: string;
   space: PlaceSummary['space'];
+  unidentified?: boolean;
 }) {
   return (
     <div className="min-w-0 flex-1">
-      <div className={`font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} ${themeColors.transition}`}>
-        {name}
-      </div>
+      {unidentified ? (
+        <PortalIdentityLabel className={`font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} ${themeColors.transition}`} />
+      ) : (
+        <div className={`font-medium ${themeColors.text.primary} ${themeColors.interactive.groupHoverText} ${themeColors.transition}`}>
+          {name}
+        </div>
+      )}
       {space && (
         <div className="mt-0.5 pb-1 text-xs leading-tight">
           <span className={themeColors.text.tertiary}>à </span>
@@ -220,7 +227,11 @@ export function PortalDestinationCard({ portal, actions }: { portal: PortalSumma
       <div className="flex items-start justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <DestinationIcon category="portail" />
-          <DestinationName name={portal.name} space={portal.space} />
+          <DestinationName
+            name={portal.name}
+            space={portal.space}
+            unidentified={portal.unidentified}
+          />
         </div>
         <DestinationCardButtons
           actions={actions}

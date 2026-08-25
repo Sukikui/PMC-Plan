@@ -13,6 +13,7 @@ import type { ContentManagementSummary } from '@/lib/content-management/types';
 import { MANAGEMENT_LIST_ROW_HEIGHT_PX } from '@/lib/management/pagination';
 import { formatSpaceContentSummary } from '@/lib/spaces/summary';
 import { themeColors } from '@/lib/theme-colors';
+import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
 
 const mapEntryGridClass = 'grid-cols-[minmax(0,1.65fr)_minmax(0,0.85fr)_minmax(0,0.7fr)]';
 const compactIdentityGridClass = 'grid-cols-[minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,0.7fr)]';
@@ -74,7 +75,9 @@ function ContentIdentity({ item }: { item: ContentManagementSummary }) {
     <IdentitySummary
       avatar={getContentIdentity(item)}
       subtitle={item.type === 'space' ? `#${item.slug}` : item.slug}
-      title={item.name}
+      title={item.type === 'portal' && item.unidentified
+        ? <PortalIdentityLabel />
+        : item.name}
     />
   );
 }

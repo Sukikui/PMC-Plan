@@ -21,6 +21,11 @@ import {
 import { invalidateRouteData } from '../route/service/route-data';
 import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
 import { normalizeContentImages } from '@/lib/content/images';
+import { createPortalIdentity } from '@/lib/portal/identity.server';
+import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
 
 const QuerySchema = z.object({
   'merge-nether-portals': z.coerce.boolean().optional().default(false),
@@ -76,10 +81,10 @@ export async function POST(request: NextRequest) {
     const management = await prepareMapEntryCreation(
       payload.management,
       { color: payload.color, images, spaceId: payload.spaceId },
+      { includeOwners: payload.identity.status === 'identified' },
     );
 
     if (payload.mode === 'single') {
-      const slugValue = payload.portal.slug.toLowerCase();
       const address = await resolveNetherAddressForWorld(
         payload.portal.world,
         payload.portal.coordinates,
@@ -91,11 +96,11 @@ export async function POST(request: NextRequest) {
           userId,
           role: actorRole,
         }, management.spaceId);
+        const identity = await createPortalIdentity(tx, payload.identity);
         const mapEntry = await createMapEntry(tx, userId, management);
         return tx.portal.create({
           data: {
-            slug: slugValue,
-            name: payload.portal.name,
+            ...identity,
             world: payload.portal.world,
             coordX: payload.portal.coordinates.x,
             coordY: payload.portal.coordinates.y,
@@ -115,7 +120,8 @@ export async function POST(request: NextRequest) {
             {
               slug: created.slug,
               world: created.world,
-              name: created.name,
+              name: getPortalDisplayName(created.name),
+              unidentified: isPortalUnidentified(created.name),
               images,
             },
           ],
@@ -125,7 +131,6 @@ export async function POST(request: NextRequest) {
     }
 
     // linked portals
-    const slugValue = payload.slug.toLowerCase();
     const netherAddress = await resolveNetherAddressForWorld(
       'nether',
       payload.nether.coordinates,
@@ -137,11 +142,11 @@ export async function POST(request: NextRequest) {
         userId,
         role: actorRole,
       }, management.spaceId);
+      const identity = await createPortalIdentity(tx, payload.identity);
       const mapEntry = await createMapEntry(tx, userId, management);
       const overworldPortal = await tx.portal.create({
         data: {
-          slug: slugValue,
-          name: payload.name,
+          ...identity,
           world: 'overworld',
           coordX: payload.overworld.coordinates.x,
           coordY: payload.overworld.coordinates.y,
@@ -154,8 +159,7 @@ export async function POST(request: NextRequest) {
 
       const netherPortal = await tx.portal.create({
         data: {
-          slug: slugValue,
-          name: payload.name,
+          ...identity,
           world: 'nether',
           coordX: payload.nether.coordinates.x,
           coordY: payload.nether.coordinates.y,
@@ -177,13 +181,15 @@ export async function POST(request: NextRequest) {
             {
               slug: result.overworldPortal.slug,
               world: result.overworldPortal.world,
-              name: result.overworldPortal.name,
+              name: getPortalDisplayName(result.overworldPortal.name),
+              unidentified: isPortalUnidentified(result.overworldPortal.name),
               images,
             },
             {
               slug: result.netherPortal.slug,
               world: result.netherPortal.world,
-              name: result.netherPortal.name,
+              name: getPortalDisplayName(result.netherPortal.name),
+              unidentified: isPortalUnidentified(result.netherPortal.name),
               images,
             },
         ],

@@ -99,7 +99,8 @@ export async function resolveRoutePoint(
       world: foundPlace.world,
       name: foundPlace.name,
       id: foundPlace.id,
-      address: address ?? undefined
+      address: address ?? undefined,
+      unidentified: foundPlace.unidentified,
     };
   } else {
     const coordinates = {

@@ -15,6 +15,7 @@ interface EditMapEntryManagementFieldsProps {
   onChange: Dispatch<SetStateAction<MapEntryDraft>>;
   ownerRemovalGroup?: string;
   ownerTitle?: string;
+  ownersEnabled?: boolean;
 }
 
 export default function EditMapEntryManagementFields({
@@ -24,6 +25,7 @@ export default function EditMapEntryManagementFields({
   onChange,
   ownerRemovalGroup,
   ownerTitle,
+  ownersEnabled = true,
 }: EditMapEntryManagementFieldsProps) {
   const transfer = async (userId: string, confirmation: string) => {
     const nextPrimaryManager = draft.managers.find(({ id }) => id === userId);
@@ -52,6 +54,7 @@ export default function EditMapEntryManagementFields({
       onTransfer={transfer}
       ownerRemovalGroup={ownerRemovalGroup}
       ownerTitle={ownerTitle}
+      ownersEnabled={ownersEnabled}
       primaryManager={draft.primaryManager}
     />
   );

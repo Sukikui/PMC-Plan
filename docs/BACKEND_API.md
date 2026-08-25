@@ -1081,6 +1081,10 @@ because approval is handled at the account level.
       independent.
     - This read boundary also normalizes historical pairs whose duplicated
       database identity fields predate atomic pair updates.
+    - An unidentified portal stores a nullable `name`, but public responses
+      expose `name: "Portail inconnu"` together with
+      `unidentified: true`. Identified portals expose `unidentified: false`.
+      The generated technical slug is never used as user-facing text.
 - **Default Mode**: Returns one record per world after shared identity
   normalization.
 - **Primary manager identity**: Every portal exposes the compact Discord
@@ -1103,6 +1107,7 @@ because approval is handled at the account level.
   {
     "id": "portal_village_start",
     "name": "Portail du Village",
+    "unidentified": false,
     "color": "#3B82F6",
     "world": "overworld",
     "coordinates": {"x": -120, "y": 65, "z": -220},
@@ -1155,6 +1160,35 @@ because approval is handled at the account level.
 
 Creates either one portal or an Overworld/Nether linked pair.
 
+Portal identity uses an explicit discriminated payload. An identified portal
+submits its public identity:
+
+```json
+{
+  "identity": {
+    "status": "identified",
+    "name": "Portail du Village",
+    "slug": "portail-village"
+  }
+}
+```
+
+An unidentified portal omits its public name but submits the stable technical
+slug generated and displayed by the creation form:
+
+```json
+{
+  "identity": {
+    "status": "unidentified",
+    "slug": "portail-a7k9x"
+  }
+}
+```
+
+The API accepts only the generated `portail-xxxxx` format and rejects a
+collision. This technical slug remains available for routes and administration
+but is never presented as the portal name.
+
 **Internal logic:**
 - Returns `401` without an authenticated session.
 - Returns `403` when the authenticated account still has the `pending` role.
@@ -1168,6 +1202,8 @@ Creates either one portal or an Overworld/Nether linked pair.
   through their common `MapEntry`.
 - Accepts the same optional ordered `images` gallery as places. Linked
   endpoints share one gallery through their common `MapEntry`.
+- Does not create Minecraft ownership links for an unidentified portal. Its
+  Discord management team still records who can identify and maintain it.
 - Creates linked portal pairs in one Prisma transaction.
 - Both endpoints of a linked pair reference the same `MapEntry`.
 - Makes created portals immediately available through `GET /portals`.
@@ -1187,7 +1223,21 @@ nullable `spaceId` follows the same rules as place updates. The optional
 the same transaction as both portal endpoints. The shared `color` is updated
 once for the complete linked pair; an associated space color remains visually
 authoritative. The `images` array is also replaced once on the shared
-`MapEntry`, so both worlds always expose the same ordered gallery.
+`MapEntry`, so both worlds always expose the same ordered gallery. An
+unidentified portal can be identified later by submitting an `identified`
+identity with its final name and slug. Once identified, it cannot be reverted
+to the unidentified state.
+
+Any approved user can claim an unidentified portal through
+`PUT /portals/{slug}?world={world}&claim=true&mapEntryId={mapEntryId}`. The
+stable map-entry identifier keeps concurrent submissions addressable even when
+the first claimant changes the slug. The request reuses the complete portal
+update payload, but requires an `identified` identity and accepts the
+creation-shaped management object. The claimant becomes the primary manager;
+the submitted secondary managers and Minecraft owners replace the temporary
+management state. Identity, content, presentation, and management are committed
+in one transaction. A conditional database update ensures that only the first
+concurrent claim succeeds; later attempts return `409`.
 
 ### DELETE `/portals/{slug}`
 

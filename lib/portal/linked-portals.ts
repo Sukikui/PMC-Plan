@@ -12,7 +12,8 @@ interface PortalPairIdentity {
 interface PortalDisplayIdentity extends PortalPairIdentity {
   id: string;
   slug: string;
-  name: string;
+  name: string | null;
+  unidentified?: boolean;
 }
 
 interface PortalPairRecord extends PortalPairIdentity {
@@ -78,6 +79,7 @@ export function normalizeLinkedPortalIdentities<T extends PortalDisplayIdentity>
       id: pair.overworld.id,
       slug: pair.overworld.slug,
       name: pair.overworld.name,
+      unidentified: pair.overworld.unidentified,
     };
   });
 }

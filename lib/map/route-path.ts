@@ -23,11 +23,13 @@ export interface MapRouteSegment {
   source: {
     id?: string;
     label: string;
+    unidentified?: boolean;
   };
   target: {
     id?: string;
     label: string;
     kind: MapRouteTargetKind;
+    unidentified?: boolean;
   };
 }
 
@@ -80,11 +82,13 @@ export const buildMapRoutePath = (route: RouteData): MapRoutePath | null => {
       source: {
         id: sourceLocation.id,
         label: getRouteLocationText(sourceLocation, segment.sequence === 0),
+        unidentified: sourceLocation.unidentified,
       },
       target: {
         id: targetLocation.id,
         label: getRouteLocationText(targetLocation, false),
         kind: index === transportSegments.length - 1 ? 'destination' : 'portal',
+        unidentified: targetLocation.unidentified,
       },
     };
   });

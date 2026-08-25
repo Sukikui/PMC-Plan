@@ -50,12 +50,14 @@ export const toDestinationLocation = (point: RoutePoint) => ({
   name: point.name || 'Destination',
   coordinates: point.coordinates,
   address: point.address,
+  unidentified: point.unidentified,
 });
 
 export const toRoutePointStart = (point: RoutePoint) => ({
   name: point.name || 'Position de départ',
   coordinates: point.coordinates,
   address: point.address,
+  unidentified: point.unidentified,
 });
 
 export const toPortalLocation = (
@@ -65,6 +67,7 @@ export const toPortalLocation = (
   id: portal.id,
   name: portal.name,
   coordinates: portal.coordinates,
+  unidentified: portal.unidentified,
   ...options,
 });
 
@@ -75,6 +78,7 @@ export const toNetherEndpointLocation = (
   id: endpoint.linkedPortal?.id || '',
   name: endpoint.linkedPortal?.name || '',
   coordinates: endpoint.coordinates,
+  unidentified: endpoint.linkedPortal?.unidentified,
   ...(world ? { world } : {}),
   address: endpoint.address,
 });

@@ -11,7 +11,7 @@ export interface ContentSummaryIdentity {
 interface ContentSummaryRowProps {
   identity: ReactNode;
   metadata?: ReactNode;
-  name: string;
+  name: ReactNode;
   onOpen: () => void;
   person: ContentSummaryIdentity;
   reserveSecondaryColumn?: boolean;

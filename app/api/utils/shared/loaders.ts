@@ -8,6 +8,10 @@ import {
   normalizeLinkedPortalIdentities,
 } from '@/lib/portal/linked-portals';
 import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
+import {
   publicMapEntryInclude,
   toMapEntryAccess,
   toMapEntryColor,
@@ -113,7 +117,8 @@ function toPortal(portal: PortalRecord): Portal {
     color: toMapEntryColor(portal.mapEntry),
     id: portal.slug,
     slug: portal.slug,
-    name: portal.name,
+    name: getPortalDisplayName(portal.name),
+    unidentified: isPortalUnidentified(portal.name),
     world: portal.world,
     coordinates: {
       x: portal.coordX,

@@ -13,6 +13,8 @@ import { getMapEntryManagementPatch } from '@/lib/map-entry/client-updates';
 import type { Space, SpaceReference, SpaceSummary } from '@/lib/spaces/types';
 import {
   pushBoundedInfoLayer,
+  removeInfoLayersForContent,
+  type InfoOverlayContentTarget,
   type InfoOverlayType,
 } from '@/lib/ui/info-overlay-stack';
 import { OVERLAY_TRANSITION_MS } from '@/lib/ui/overlay';
@@ -131,14 +133,23 @@ export function useInfoOverlayStack() {
     }));
   }, [updateLayers]);
 
-  const removeSpace = useCallback((spaceId: string) => {
-    const removedLayers = layersRef.current.filter((layer) => (
-      layer.type === 'space' && layer.item.id === spaceId
+  const removeContent = useCallback((target: InfoOverlayContentTarget) => {
+    const retainedLayers = removeInfoLayersForContent(
+      layersRef.current,
+      target,
+    );
+    const retainedIds = new Set(retainedLayers.map(({ id }) => id));
+    const removedLayers = layersRef.current.filter(({ id }) => (
+      !retainedIds.has(id)
     ));
     removedLayers.forEach((layer) => clearClose(layer.id));
     updateLayers((current) => current.flatMap((layer) => {
-      if (layer.type === 'space' && layer.item.id === spaceId) return [];
-      if ('space' in layer.item && layer.item.space?.id === spaceId) {
+      if (!retainedIds.has(layer.id)) return [];
+      if (
+        target.kind === 'space'
+        && 'space' in layer.item
+        && layer.item.space?.id === target.id
+      ) {
         return [{ ...layer, item: { ...layer.item, space: null } }];
       }
       return [layer];
@@ -151,7 +162,7 @@ export function useInfoOverlayStack() {
     closeTop,
     layers,
     open,
-    removeSpace,
+    removeContent,
     updateMapEntry,
     updateSpace,
   };

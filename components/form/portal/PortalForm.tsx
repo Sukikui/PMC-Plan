@@ -29,7 +29,12 @@ import {
 } from '@/lib/map-entry/types';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
+import {
+  generateUnidentifiedPortalSlug,
+  UNIDENTIFIED_PORTAL_LABEL,
+} from '@/lib/portal/identity';
 import PortalLocationFields from './PortalLocationFields';
+import PortalIdentificationField from './PortalIdentificationField';
 import type {
   InitialPortalData,
   PortalFormPayload,
@@ -40,6 +45,7 @@ export type { InitialPortalData, PortalFormPayload } from './portal-form-types';
 const blankCoords = { x: '', y: '', z: '' };
 
 interface PortalFormProps {
+  intent?: 'claim';
   mode?: 'add' | 'edit';
   initialData?: InitialPortalData;
   onSubmit: (payload: PortalFormPayload) => Promise<void>;
@@ -48,6 +54,7 @@ interface PortalFormProps {
 }
 
 export default function PortalForm({
+  intent,
   mode = 'add',
   initialData,
   onSubmit,
@@ -55,13 +62,19 @@ export default function PortalForm({
   onDelete,
 }: PortalFormProps) {
   const fields = useEntityForm(
-    initialData?.name,
-    initialData?.id,
+    initialData?.unidentified ? '' : initialData?.name,
+    initialData?.unidentified && intent !== 'claim' ? '' : initialData?.id,
     initialData?.description,
   );
+  const [unidentified, setUnidentified] = useState(
+    intent === 'claim' ? false : initialData?.unidentified ?? false,
+  );
+  const [unidentifiedSlug] = useState(() => (
+    initialData?.unidentified ? initialData.id : generateUnidentifiedPortalSlug()
+  ));
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
   const contentImages = useContentImages(initialData?.images);
-  const [portalVariant, setPortalVariant] = useState(initialData?.variant || 'overworld');
+  const [portalVariant, setPortalVariant] = useState(initialData?.variant ?? 'linked');
   const [singleCoords, setSingleCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
 
   const [overworldCoords, setOverworldCoords] = useState<CoordinatesInput>(initialData?.overworldCoordinates ? { x: String(initialData.overworldCoordinates.x), y: String(initialData.overworldCoordinates.y), z: String(initialData.overworldCoordinates.z) } : blankCoords);
@@ -73,6 +86,7 @@ export default function PortalForm({
 
   const [managementDraft, setManagementDraft] = useState(emptyMapEntryDraft);
   const [managementReady, setManagementReady] = useState(mode === 'add');
+  const managementMode = intent === 'claim' ? 'add' : mode;
   const [selectedSpace, setSelectedSpace] = useState<SpaceReference | null>(
     initialData?.space ?? null,
   );
@@ -105,6 +119,8 @@ export default function PortalForm({
       slugSource: fields.input.slug,
       spaceId: selectedSpace?.id ?? null,
       variant: portalVariant,
+      unidentified,
+      unidentifiedSlug,
     }),
     management: getMapEntryDraftSnapshot(managementDraft),
   };
@@ -116,7 +132,7 @@ export default function PortalForm({
     : parsedSingleCoords !== null;
   const submission = useFormSubmission({
     isReady: managementReady,
-    isValid: fields.isValid
+    isValid: (unidentified || fields.isValid)
       && hasValidCoordinates
       && !contentImages.hasInvalidImage,
     mode,
@@ -131,15 +147,20 @@ export default function PortalForm({
         }
         const payload = {
           color,
+          identity: unidentified
+            ? { status: 'unidentified' as const, slug: unidentifiedSlug }
+            : {
+                status: 'identified' as const,
+                slug: fields.input.slug,
+                name: fields.input.name,
+              },
           images: contentImages.values,
           mode: 'single' as const,
-          management: mode === 'add'
+          management: managementMode === 'add'
             ? toMapEntryCreationPayload(managementDraft)
             : toMapEntryUpdatePayload(managementDraft),
           spaceId: selectedSpace?.id ?? null,
           portal: {
-            slug: fields.input.slug,
-            name: fields.input.name,
             world: singleWorld,
             coordinates: parsedSingleCoords,
             description: fields.input.description || undefined,
@@ -153,14 +174,19 @@ export default function PortalForm({
         }
         const payload = {
           color,
+          identity: unidentified
+            ? { status: 'unidentified' as const, slug: unidentifiedSlug }
+            : {
+                status: 'identified' as const,
+                slug: fields.input.slug,
+                name: fields.input.name,
+              },
           images: contentImages.values,
           mode: 'linked' as const,
-          management: mode === 'add'
+          management: managementMode === 'add'
             ? toMapEntryCreationPayload(managementDraft)
             : toMapEntryUpdatePayload(managementDraft),
           spaceId: selectedSpace?.id ?? null,
-          slug: fields.input.slug,
-          name: fields.input.name,
           overworld: {
             coordinates: parsedOverworldCoords,
             description: fields.input.description || undefined,
@@ -181,9 +207,28 @@ export default function PortalForm({
     await submission.execute(onDelete);
   };
 
+  const handleIdentificationChange = (nextUnidentified: boolean) => {
+    setUnidentified(nextUnidentified);
+    if (!nextUnidentified) {
+      setManagementDraft((current) => ({
+        ...current,
+        excludedOwnerUuids: [],
+      }));
+    }
+  };
+
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <FormSection title="Informations générales">
+        {(mode === 'add' || initialData?.unidentified) && intent !== 'claim' && (
+          <div className="mb-4">
+            <PortalIdentificationField
+              disabled={submission.isSubmitting}
+              onChange={handleIdentificationChange}
+              unidentified={unidentified}
+            />
+          </div>
+        )}
         <CommonFields
           afterSlug={(
             <SpaceAssociationField
@@ -195,33 +240,40 @@ export default function PortalForm({
           descriptionPlaceholder="Présentez rapidement ce portail et son accès."
           disabled={submission.isSubmitting}
           form={fields}
+          identityPreview={unidentified ? {
+            name: UNIDENTIFIED_PORTAL_LABEL,
+            slug: unidentifiedSlug,
+          } : undefined}
           namePlaceholder="Portail du marché impérial de Valnyfrost"
           slugPlaceholder="valny-portail-marche-imperial"
         />
       </FormSection>
 
-      <ContentPresentationSection>
-        <ContentColorField
-          color={color}
-          disabled={submission.isSubmitting}
-          entityLabel="portail"
-          onChange={setColor}
-          space={selectedSpace}
-        />
-        <ContentImagesField
-          controller={contentImages}
-          reorderable={mode === 'edit'}
-        />
-      </ContentPresentationSection>
+      {!unidentified && (
+        <ContentPresentationSection>
+          <ContentColorField
+            color={color}
+            disabled={submission.isSubmitting}
+            entityLabel="portail"
+            onChange={setColor}
+            space={selectedSpace}
+          />
+          <ContentImagesField
+            controller={contentImages}
+            reorderable={mode === 'edit'}
+          />
+        </ContentPresentationSection>
+      )}
 
       <FormSection title="Gestion">
         <MapEntryManagementFields
           disabled={submission.isSubmitting}
           mapEntryId={initialData?.mapEntryId}
-          mode={mode}
+          mode={managementMode}
           draft={managementDraft}
           onDraftChange={setManagementDraft}
           onReadyChange={setManagementReady}
+          ownersEnabled={!unidentified}
         />
       </FormSection>
 
@@ -231,8 +283,19 @@ export default function PortalForm({
           <div className="flex gap-1 flex-wrap">
             <button
               type="button"
+              onClick={() => setPortalVariant('linked')}
+              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
+                portalVariant === 'linked'
+                  ? themeColors.world.linked
+                  : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
+              }`}
+            >
+              overworld + nether
+            </button>
+            <button
+              type="button"
               onClick={() => setPortalVariant('overworld')}
-              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${ 
+              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                 portalVariant === 'overworld'
                   ? themeColors.world.overworld
                   : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
@@ -243,24 +306,13 @@ export default function PortalForm({
             <button
               type="button"
               onClick={() => setPortalVariant('nether')}
-              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${ 
+              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${
                 portalVariant === 'nether'
                   ? themeColors.world.nether
                   : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
               }`}
             >
               nether
-            </button>
-            <button
-              type="button"
-              onClick={() => setPortalVariant('linked')}
-              className={`px-3 py-1.5 text-sm ${themeColors.util.roundedFull} font-medium ${themeColors.transition} ${ 
-                portalVariant === 'linked'
-                  ? themeColors.world.linked
-                  : `${themeColors.button.ghost} ${themeColors.interactive.hover}`
-              }`}
-            >
-              overworld + nether
             </button>
           </div>
         </div>
@@ -286,6 +338,10 @@ export default function PortalForm({
         onDelete={mode === 'edit' && onDelete ? handlePortalDelete : undefined}
         entityType="portal"
         entitySlug={initialData?.id || ''}
+        confirmation={unidentified ? {
+          message: 'Pour confirmer la suppression définitive, écris SUPPRIMER.',
+          value: 'SUPPRIMER',
+        } : undefined}
       />
     </form>
   );

@@ -53,10 +53,9 @@ export async function createMapEntry(
       minecraftProfile ? [minecraftProfile] : []
     )),
   ].filter(({ uuid }) => !excludedOwnerUuids.has(uuid));
-  const owners = uniqueMinecraftOwners([
-    ...automaticOwners,
-    ...input.owners,
-  ]);
+  const owners = input.includeManagerOwners === false
+    ? []
+    : uniqueMinecraftOwners([...automaticOwners, ...input.owners]);
 
   return tx.mapEntry.create({
     data: {

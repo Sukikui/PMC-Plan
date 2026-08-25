@@ -30,19 +30,25 @@ interface MapEntryPresentationInput {
   spaceId?: string | null;
 }
 
+interface MapEntryPreparationOptions {
+  includeOwners?: boolean;
+}
+
 export async function prepareMapEntryCreation(
   payload?: MapEntryCreationPayload,
   presentation: MapEntryPresentationInput = {},
+  { includeOwners = true }: MapEntryPreparationOptions = {},
 ): Promise<MapEntryCreationInput> {
   const managerIds = Array.from(new Set(payload?.managerIds ?? []));
   const ownerNames = Array.from(new Set(payload?.ownerNames ?? []));
-  const owners = ownerNames.length
+  const owners = includeOwners && ownerNames.length
     ? await resolveMinecraftProfiles(ownerNames)
     : [];
 
   return {
     color: presentation.color ?? DEFAULT_CONTENT_COLOR,
     images: presentation.images ?? [],
+    includeManagerOwners: includeOwners,
     managerIds,
     owners,
     excludedOwnerUuids: Array.from(new Set(payload?.excludedOwnerUuids ?? [])),
@@ -52,8 +58,9 @@ export async function prepareMapEntryCreation(
 
 export async function prepareMapEntryUpdate(
   payload: MapEntryUpdatePayload,
+  { includeOwners = true }: MapEntryPreparationOptions = {},
 ): Promise<MapEntryUpdateInput> {
-  const submittedOwners = payload.owners ?? [];
+  const submittedOwners = includeOwners ? (payload.owners ?? []) : [];
   const storedOwners = await prisma.minecraftProfile.findMany({
     where: { uuid: { in: submittedOwners.map(({ uuid }) => uuid) } },
     select: { uuid: true, name: true },
@@ -79,6 +86,7 @@ export async function prepareMapEntryUpdate(
 
   return {
     managerIds: Array.from(new Set(payload.managerIds ?? [])),
+    includeManagerOwners: includeOwners,
     owners: submittedOwners.map(({ uuid }) => (
       storedByUuid.get(uuid) ?? resolvedByUuid.get(uuid)!
     )),

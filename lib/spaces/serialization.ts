@@ -5,6 +5,10 @@ import {
   toPublicDiscordIdentity,
 } from '@/lib/discord-user';
 import { prioritizePrimaryManagerOwner } from '@/lib/map-entry/owners';
+import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
 import type { Space } from './types';
 import { validTradeOfferWhere } from '@/lib/trade/query';
 
@@ -100,7 +104,8 @@ export function toSpace(record: SpaceRecord): Space {
       linked: entryPortals.some(({ world }) => world === 'overworld')
         && entryPortals.some(({ world }) => world === 'nether'),
       mapEntryId: id,
-      name: canonical.name,
+      name: getPortalDisplayName(canonical.name),
+      unidentified: isPortalUnidentified(canonical.name),
       owners: orderedOwners,
       slug: canonical.slug,
       world: canonical.world,

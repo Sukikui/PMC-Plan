@@ -5,6 +5,11 @@ import {
 } from '@/lib/portal/linked-portals';
 import { buildWorldMapPoints } from '@/components/map/hooks/useOverworldMapPoints';
 import { mockPortals } from './mock-data';
+import {
+  generateUnidentifiedPortalSlug,
+  getPortalDisplayName,
+  UNIDENTIFIED_PORTAL_LABEL,
+} from '@/lib/portal/identity';
 
 describe('linked portals', () => {
   it('uses the shared map entry instead of mutable names and slugs', () => {
@@ -98,5 +103,27 @@ describe('linked portals', () => {
     ];
 
     expect(indexLinkedPortalPairs(portals).size).toBe(0);
+  });
+
+  it('uses a generated technical slug and a public status label', () => {
+    expect(generateUnidentifiedPortalSlug())
+      .toMatch(/^portail-[abcdefghjkmnpqrstuvwxyz23456789]{5}$/);
+    expect(getPortalDisplayName(null)).toBe(UNIDENTIFIED_PORTAL_LABEL);
+  });
+
+  it('propagates the unidentified state across linked dimensions', () => {
+    const normalized = normalizeLinkedPortalIdentities([
+      {
+        ...mockPortals[0],
+        name: UNIDENTIFIED_PORTAL_LABEL,
+        unidentified: true,
+      },
+      mockPortals[1],
+    ]);
+
+    expect(normalized[1]).toMatchObject({
+      name: UNIDENTIFIED_PORTAL_LABEL,
+      unidentified: true,
+    });
   });
 });

@@ -18,6 +18,7 @@ import {
 import { MAX_TRADE_OFFER_DESCRIPTION_LENGTH } from '@/lib/trade-offers';
 import { discordUrlSchema } from '@/lib/validation/discord-url';
 import { slugSchema } from '@/lib/validation/slug';
+import { UNIDENTIFIED_PORTAL_SLUG_PATTERN } from '@/lib/portal/identity';
 
 const coordinateSchema = z.object({
   x: z.number(),
@@ -34,6 +35,18 @@ const contentImagesSchema = z.array(contentImageUrlSchema)
   .max(MAX_CONTENT_IMAGE_URLS)
   .optional();
 const mapEntrySpaceIdSchema = z.string().min(1).nullable().optional();
+const identifiedPortalIdentitySchema = z.object({
+  status: z.literal('identified'),
+  slug: slugSchema,
+  name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
+});
+const portalIdentitySchema = z.discriminatedUnion('status', [
+  z.object({
+    status: z.literal('unidentified'),
+    slug: z.string().regex(UNIDENTIFIED_PORTAL_SLUG_PATTERN),
+  }),
+  identifiedPortalIdentitySchema,
+]);
 
 const tradeItemSchema = z.object({
   kind: z.enum(['gives', 'wants']),
@@ -101,12 +114,11 @@ export const UpdatePlaceSchema = placeSchema.extend({
 
 const singlePortalSchema = z.object({
   color: contentColorSchema,
+  identity: portalIdentitySchema,
   images: contentImagesSchema,
   mode: z.literal('single'),
   spaceId: mapEntrySpaceIdSchema,
   portal: z.object({
-    slug: slugSchema,
-    name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
     world: z.enum(['overworld', 'nether']),
     coordinates: coordinateSchema,
     description: z.string()
@@ -118,11 +130,10 @@ const singlePortalSchema = z.object({
 
 const linkedPortalSchema = z.object({
   color: contentColorSchema,
+  identity: portalIdentitySchema,
   images: contentImagesSchema,
   mode: z.literal('linked'),
   spaceId: mapEntrySpaceIdSchema,
-  slug: slugSchema,
-  name: z.string().min(1).max(CONTENT_FIELD_LIMITS.name),
   overworld: z.object({
     coordinates: coordinateSchema,
     description: z.string()
@@ -157,5 +168,16 @@ export const UpdatePortalSchema = z.discriminatedUnion('mode', [
   linkedPortalSchema.extend({
     color: contentColorSchema.optional(),
     management: mapEntryUpdateSchema.optional(),
+  }),
+]);
+
+export const ClaimPortalSchema = z.discriminatedUnion('mode', [
+  singlePortalSchema.extend({
+    identity: identifiedPortalIdentitySchema,
+    management: mapEntryCreationSchema.optional(),
+  }),
+  linkedPortalSchema.extend({
+    identity: identifiedPortalIdentitySchema,
+    management: mapEntryCreationSchema.optional(),
   }),
 ]);

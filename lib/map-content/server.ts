@@ -5,6 +5,10 @@ import { publicMapEntryInclude } from '@/lib/map-entry/serialization';
 import {
   normalizeLinkedPortalIdentities,
 } from '@/lib/portal/linked-portals';
+import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
 import type {
   MapContentResponse,
   PlaceSummary,
@@ -82,7 +86,8 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
       color: portal.mapEntry.color,
       id: portal.slug,
       slug: portal.slug,
-      name: portal.name,
+      name: getPortalDisplayName(portal.name),
+      unidentified: isPortalUnidentified(portal.name),
       world: portal.world,
       coordinates: {
         x: portal.coordX,
@@ -103,7 +108,7 @@ export const loadMapContentUncached = async (): Promise<MapContentResponse> => {
 
 const loadCachedMapContent = cacheDatabaseQuery(
   loadMapContentUncached,
-  ['public-map-content-v3'],
+  ['public-map-content-v4'],
   { revalidate: 300, tags: [contentCacheTags.map] },
 );
 
