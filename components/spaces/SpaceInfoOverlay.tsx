@@ -83,6 +83,7 @@ export default function SpaceInfoOverlay({
             mode: 'edit',
           })}
           title={displaySpace.name}
+          titleText={displaySpace.name}
         />
       )}
       shadowClass={themeColors.shadow.overlay.place}

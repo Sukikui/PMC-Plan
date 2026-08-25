@@ -10,6 +10,7 @@ export interface RouteLocation {
   coordinates?: RouteCoordinates;
   world?: string;
   address?: string;
+  unidentified?: boolean;
 }
 
 export interface RouteStep {

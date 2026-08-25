@@ -29,6 +29,7 @@ export type PortalSummary = Pick<
   | 'nether-associate'
   | 'slug'
   | 'space'
+  | 'unidentified'
   | 'world'
 > & {
   previewImage: string | null;

@@ -96,6 +96,7 @@ describe('data-loading projections', () => {
         previewImage: 'portal-preview.png',
         slug: 'portail',
         space: null,
+        unidentified: false,
         world: 'overworld',
       }],
     });

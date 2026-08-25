@@ -6,7 +6,7 @@ import {
 } from '@/lib/content-permissions';
 import { upsertMinecraftProfile } from '@/lib/minecraft/profiles';
 import { MapEntryError, type MapEntryActor } from './service';
-import type { MapEntryUpdateInput } from './types';
+import type { MapEntryCreationInput, MapEntryUpdateInput } from './types';
 import { uniqueMinecraftOwners } from './types';
 
 export async function updateMapEntryManagement(
@@ -90,7 +90,9 @@ export async function updateMapEntryManagement(
   const automaticOwners = users
     .flatMap(({ minecraftProfile }) => minecraftProfile ? [minecraftProfile] : [])
     .filter(({ uuid }) => !excludedOwnerUuids.has(uuid));
-  const owners = uniqueMinecraftOwners([...automaticOwners, ...input.owners]);
+  const owners = input.includeManagerOwners === false
+    ? []
+    : uniqueMinecraftOwners([...automaticOwners, ...input.owners]);
 
   if (teamChanged) {
     await tx.mapEntryManager.deleteMany({ where: { mapEntryId } });
@@ -116,6 +118,22 @@ export async function updateMapEntryManagement(
       ...(teamChanged ? { primaryManagerId } : {}),
       lastEditorId: actor.userId,
     },
+  });
+}
+
+export async function claimMapEntryManagement(
+  tx: Prisma.TransactionClient,
+  mapEntryId: string,
+  actor: MapEntryActor,
+  input: MapEntryCreationInput,
+) {
+  await tx.mapEntry.update({
+    where: { id: mapEntryId },
+    data: { primaryManagerId: actor.userId },
+  });
+  await updateMapEntryManagement(tx, mapEntryId, actor, {
+    ...input,
+    primaryManagerId: actor.userId,
   });
 }
 

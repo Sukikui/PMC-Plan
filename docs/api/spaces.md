@@ -36,7 +36,9 @@ contain the public content identity, world metadata, and ordered Minecraft
 owners. When the primary Discord manager has a linked Minecraft profile present
 among the owners, that profile is returned first. Remaining owners keep their
 configured order. Linked Overworld and Nether portals produce one canonical
-portal summary.
+portal summary. Unidentified portal summaries expose
+`name: "Portail inconnu"` and `unidentified: true`; their generated slug
+remains technical metadata.
 
 The logo and Discord URLs are metadata only. The application does not upload
 or proxy the logo image. The client accepts PNG, JPEG, and WebP images and
@@ -104,6 +106,7 @@ characters.
       "linked": true,
       "mapEntryId": "portal-map-entry-id",
       "name": "Portail central",
+      "unidentified": false,
       "owners": [],
       "slug": "portail-central",
       "world": "overworld"

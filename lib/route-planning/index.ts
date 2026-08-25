@@ -14,6 +14,7 @@ import type {
   RouteStep,
   RouteWorldCoordinates,
 } from './types';
+import { UNIDENTIFIED_PORTAL_LABEL } from '@/lib/portal/identity';
 
 export type {
   ManualRouteCoordinates,
@@ -109,6 +110,9 @@ export const getRouteLocationText = (
   location: RouteLocation,
   isFirstStep: boolean
 ) => {
+  if (location.unidentified) {
+    return UNIDENTIFIED_PORTAL_LABEL;
+  }
   if (isUnknownRouteLocation(location)) {
     return 'Portail inconnu';
   }

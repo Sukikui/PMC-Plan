@@ -15,6 +15,7 @@ import {
 } from './map-tooltip';
 import { getMapTooltipLayout, getVisiblePanelRects, getVisibleTooltipLabelRects } from './map-tooltip-layout';
 import type { MapTooltip, TooltipFixedStyle } from '../core/map-types';
+import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
 
 interface MapTooltipPortalProps {
   tooltips: MapTooltip[];
@@ -170,10 +171,12 @@ function MapTooltipItem({
             />
           )}
           <div
-            className={`break-words px-2.5 py-1 text-center text-xs font-medium leading-snug ${themeColors.util.roundedXl} ${themeColors.map.tooltip}`}
+            className={`break-words px-2.5 py-1 text-center text-xs font-medium leading-snug ${tooltip.unidentified ? 'flex items-center justify-center' : ''} ${themeColors.util.roundedXl} ${themeColors.map.tooltip}`}
             style={tooltipLabelStyle}
           >
-            {tooltip.label}
+            {tooltip.unidentified
+              ? <PortalIdentityLabel iconClassName="h-[1em] w-[1em] scale-[1.17]" />
+              : tooltip.label}
           </div>
         </div>
       </div>

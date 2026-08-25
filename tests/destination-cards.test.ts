@@ -29,6 +29,7 @@ const portal: PortalSummary = {
   mapEntryId: 'entry-portal-1',
   slug: 'portail-test',
   name: 'Portail test',
+  unidentified: false,
   world: 'overworld',
   coordinates: { x: 30, y: 70, z: 40 },
   description: 'Description du portail.',
@@ -76,6 +77,23 @@ describe('destination card actions', () => {
 
     expect(markup).toContain('aria-label="Fermer"');
     expect(markup).not.toContain('Plus d');
+  });
+
+  it('presents an unidentified portal as a status', () => {
+    const markup = renderToStaticMarkup(createElement(
+      PortalDestinationCard,
+      {
+        portal: {
+          ...portal,
+          name: 'Portail inconnu',
+          unidentified: true,
+        },
+        actions: createActions(),
+      },
+    ));
+
+    expect(markup).toContain('Portail inconnu');
+    expect(markup).toContain('<circle');
   });
 
   it('keeps mouse and keyboard activation behaviors distinct', () => {

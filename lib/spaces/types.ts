@@ -53,6 +53,7 @@ export interface SpacePortalSummary {
   linked: boolean;
   mapEntryId: string;
   name: string;
+  unidentified: boolean;
   owners: MinecraftOwner[];
   slug: string;
   world: 'overworld' | 'nether';

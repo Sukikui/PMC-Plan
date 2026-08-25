@@ -12,7 +12,7 @@ interface PlaceCategorySelectorProps {
 
 export default function PlaceCategorySelector({ value, onChange }: PlaceCategorySelectorProps) {
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2.5">
       <label className={`text-xs font-medium ${themeColors.text.secondary}`}>Catégorie</label>
       <div className="grid gap-2 md:grid-cols-2">
         {placeCategoryOptions.map((category) => (
@@ -44,4 +44,3 @@ export default function PlaceCategorySelector({ value, onChange }: PlaceCategory
     </div>
   );
 }
-

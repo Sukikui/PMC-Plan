@@ -30,6 +30,7 @@ export interface RoutePoint {
   name?: string;
   id?: string;
   address?: string;
+  unidentified?: boolean;
 }
 
 export interface RouteEntity {
@@ -42,6 +43,7 @@ export interface RouteEntity {
     z: number;
   };
   address?: string | null;
+  unidentified?: boolean;
 }
 
 export interface RoutePortal extends RouteEntity {

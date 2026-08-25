@@ -1,14 +1,16 @@
 import type { Place, Portal } from '@/lib/api/types';
 import { themeColors } from '@/lib/theme-colors';
+import ActionButton from '@/components/ui/ActionButton';
 import InfoDescriptionSection from './InfoDescriptionSection';
 import MapEntryOwners from './MapEntryOwners';
 
 interface InfoOverlayDetailsProps {
   item: Place | Portal;
+  onClaim?: () => void;
   type: 'place' | 'portal';
 }
 
-export default function InfoOverlayDetails({ item, type }: InfoOverlayDetailsProps) {
+export default function InfoOverlayDetails({ item, onClaim, type }: InfoOverlayDetailsProps) {
   const place = type === 'place' ? item as Place : null;
 
   return (
@@ -16,6 +18,14 @@ export default function InfoOverlayDetails({ item, type }: InfoOverlayDetailsPro
       <MapEntryOwners owners={item.owners} />
 
       <InfoDescriptionSection description={item.description} />
+
+      {type === 'portal' && (item as Portal).unidentified && onClaim && (
+        <div className="flex justify-center pt-6">
+          <ActionButton variant="primaryOutline" onClick={onClaim}>
+            Revendiquer ce portail
+          </ActionButton>
+        </div>
+      )}
 
       {place && Array.isArray(place.tags) && place.tags.length > 0 && (
         <div>

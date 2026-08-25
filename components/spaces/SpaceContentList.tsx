@@ -10,6 +10,7 @@ import type {
   SpacePortalSummary,
 } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
+import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
 
 interface SpaceContentListProps {
   items: Array<SpacePlaceSummary | SpacePortalSummary>;
@@ -56,7 +57,9 @@ export default function SpaceContentList({
                 world={item.world}
               />
             )}
-            name={item.name}
+            name={'unidentified' in item && item.unidentified
+              ? <PortalIdentityLabel />
+              : item.name}
             onOpen={() => onOpen(item.mapEntryId)}
             person={{
               avatar: owner ? (

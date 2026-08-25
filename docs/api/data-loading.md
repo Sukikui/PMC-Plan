@@ -27,8 +27,17 @@ Returns the complete lightweight projection required by the map and destination
 panel. Places include identity, world, coordinates, description, address,
 category, tags, canonical color, associated space, and their first preview
 image. Portals expose the equivalent map fields, linked-portal identity, and
-their first preview image. The response deliberately omits managers, owners,
+their first preview image. An unidentified portal exposes the French status
+label through `name`, sets `unidentified` to `true`, and retains its generated
+technical slug only for identity and mutations. The response deliberately
+omits managers, owners,
 trade offers, complete image collections, and audit metadata.
+
+The complete detail response lets any approved user open the standard portal
+editor in claim mode. Claiming keeps the generated slug as the editable
+starting value, requires a final public name, and atomically replaces the
+temporary management team with the claimant and the team submitted by that
+editor. No separate claim-request resource is cached or persisted.
 
 ```json
 {
@@ -42,6 +51,10 @@ while sharing their canonical name, slug, and color. Map points resolve their
 effective color as `space.color` when associated, then fall back to the
 map-entry `color`. Linked endpoints also share the preview selected from their
 common map-entry gallery.
+
+Complete portal details follow the same boundary. `name` is always a renderable
+string, while `unidentified` determines whether clients present it as a status
+rather than as player-authored content.
 
 ## GET `/api/map-entries/{id}/detail`
 

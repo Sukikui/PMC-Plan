@@ -27,6 +27,7 @@ interface MapEntryManagementFieldsProps {
   onReadyChange?: (ready: boolean) => void;
   ownerRemovalGroup?: string;
   ownerTitle?: string;
+  ownersEnabled?: boolean;
 }
 
 export default function MapEntryManagementFields({
@@ -38,6 +39,7 @@ export default function MapEntryManagementFields({
   onReadyChange,
   ownerRemovalGroup,
   ownerTitle,
+  ownersEnabled = true,
 }: MapEntryManagementFieldsProps) {
   const { data: session } = useSession();
   const { effectiveRole } = useAdminMode();
@@ -80,6 +82,7 @@ export default function MapEntryManagementFields({
         onChange={onDraftChange}
         ownerRemovalGroup={ownerRemovalGroup}
         ownerTitle={ownerTitle}
+        ownersEnabled={ownersEnabled}
       />
     );
   }
@@ -112,6 +115,7 @@ export default function MapEntryManagementFields({
       onChange={onDraftChange}
       ownerRemovalGroup={ownerRemovalGroup}
       ownerTitle={ownerTitle}
+      ownersEnabled={ownersEnabled}
     />
   );
 }

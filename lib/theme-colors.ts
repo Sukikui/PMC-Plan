@@ -114,10 +114,10 @@ export const themeColors = {
   // Buttons - all types used
   button: {
     actionBase: 'rounded-lg px-3 py-2 text-sm font-medium transition-all duration-300 active:scale-95',
-    primary: 'bg-blue-500 text-white hover:bg-blue-600',
+    primary: 'border border-blue-500 bg-blue-500 text-white hover:border-blue-600 hover:bg-blue-600',
     primaryOutline: 'border border-blue-300 bg-transparent text-blue-600 hover:border-blue-400 hover:bg-blue-50/60 dark:border-blue-600 dark:text-blue-300 dark:hover:border-blue-500 dark:hover:bg-blue-900/20',
     primaryOutlineDisabled: 'cursor-not-allowed border border-blue-200 bg-transparent text-blue-300 dark:border-blue-900/70 dark:text-blue-700',
-    primaryDisabled: 'bg-blue-400 text-white cursor-not-allowed',
+    primaryDisabled: 'cursor-not-allowed border border-blue-400 bg-blue-400 text-white',
     danger: 'bg-red-500 text-white hover:bg-red-600',
     dangerFilled: 'border border-red-500 bg-red-500 text-white hover:border-red-600 hover:bg-red-600 dark:border-red-500 dark:bg-red-500 dark:hover:border-red-400 dark:hover:bg-red-400',
     dangerOutline: 'border border-red-300 bg-transparent text-red-600 hover:border-red-400 hover:bg-red-50/60 dark:border-red-600 dark:text-red-300 dark:hover:border-red-500 dark:hover:bg-red-900/20',
@@ -208,6 +208,7 @@ export const themeColors = {
   // Form-specific controls
   form: {
     dashedAction: 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 bg-white/30 dark:bg-gray-900/70 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-100/20 dark:hover:bg-blue-500/10',
+    readOnlyInput: 'bg-gray-100/80 dark:bg-gray-800/70 text-gray-500 dark:text-gray-400 border-gray-300/80 dark:border-gray-700/80',
     colorRange: '[--color-range-accent:rgb(59_130_246_/_0.8)] [--color-range-accent-solid:rgb(59_130_246)] [--color-range-neutral:rgb(17_24_39_/_0.14)] [--color-range-edge:rgb(17_24_39_/_0.2)] [--color-range-handle:rgb(255_255_255_/_0.52)] [--color-range-handle-border:rgb(17_24_39_/_0.42)] [--color-range-focus:rgb(59_130_246_/_0.45)] dark:[--color-range-accent:rgb(96_165_250_/_0.8)] dark:[--color-range-accent-solid:rgb(96_165_250)] dark:[--color-range-neutral:rgb(255_255_255_/_0.16)] dark:[--color-range-edge:rgb(255_255_255_/_0.22)] dark:[--color-range-handle:rgb(17_24_39_/_0.52)] dark:[--color-range-handle-border:rgb(255_255_255_/_0.42)] dark:[--color-range-focus:rgb(96_165_250_/_0.5)]',
     imageThumbnailInactive: formOptionColors.inactive,
     categoryOption: {

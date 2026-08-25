@@ -4,6 +4,10 @@ import {
   revalidateDatabaseCacheTag,
 } from '@/lib/cache/database-cache';
 import { normalizeLinkedPortalIdentities } from '@/lib/portal/linked-portals';
+import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
 import type { RouteDataSet, RouteEntity, RoutePortal } from '../route-types';
 
 const ROUTE_DATA_CACHE_TAG = 'route-data';
@@ -44,7 +48,8 @@ const queryRouteData = async (): Promise<RouteDataSet> => {
   const portals = portalRecords.map((portal): RoutePortal => ({
     id: portal.slug,
     slug: portal.slug,
-    name: portal.name,
+    name: getPortalDisplayName(portal.name),
+    unidentified: isPortalUnidentified(portal.name),
     world: portal.world,
     coordinates: {
       x: portal.coordX,

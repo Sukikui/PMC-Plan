@@ -92,6 +92,7 @@ export function buildWorldMapPoints(
           ? item.previewImage ?? undefined
           : item.images[0],
         spaceLogo: toMapTooltipSpaceLogo(item.space),
+        unidentified: item.unidentified,
         item,
         itemType: 'portal',
       };

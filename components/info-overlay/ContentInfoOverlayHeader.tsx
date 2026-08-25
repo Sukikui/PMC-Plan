@@ -17,7 +17,8 @@ interface ContentInfoOverlayHeaderProps {
   onClose: () => void;
   onEdit: () => void;
   secondaryIdentity?: ReactNode;
-  title: string;
+  title: ReactNode;
+  titleText: string;
 }
 
 export default function ContentInfoOverlayHeader({
@@ -30,6 +31,7 @@ export default function ContentInfoOverlayHeader({
   onEdit,
   secondaryIdentity,
   title,
+  titleText,
 }: ContentInfoOverlayHeaderProps) {
   return (
     <OverlayHeaderFrame className="z-10">
@@ -48,7 +50,7 @@ export default function ContentInfoOverlayHeader({
                 <h2 className={`min-w-0 text-2xl font-bold [word-spacing:0.25rem] ${themeColors.text.primary} ${themeColors.transition}`}>
                   {discordUrl ? (
                     <a
-                      aria-label={`Ouvrir le serveur Discord de ${title}`}
+                      aria-label={`Ouvrir le serveur Discord de ${titleText}`}
                       className={`${themeColors.interactive.hoverAccentText} ${themeColors.interactive.focusRing} ${themeColors.transition}`}
                       href={discordUrl}
                       rel="noopener noreferrer"

@@ -21,6 +21,7 @@ import {
 import { themeColors } from '@/lib/theme-colors';
 import {
   canAdministerContent,
+  canContribute,
   canManageContent,
 } from '@/lib/content-permissions';
 import { toMapWorld } from '@/lib/destination/selection';
@@ -50,6 +51,38 @@ export default function InfoOverlay({
   const { contentRef, showBottomBlur } = useBottomScrollFade(
     `${showTradeView}:${item.id}`,
   );
+
+  const openPortalForm = (
+    portal: Portal,
+    canDelete: boolean,
+    intent?: 'claim',
+  ) => {
+    openFormOverlay({
+      intent,
+      mode: 'edit',
+      initialData: {
+        type: 'portal',
+        color: portal.color,
+        variant: portal['nether-associate'] ? 'linked' : portal.world as 'overworld' | 'nether',
+        name: portal.name,
+        id: portal.id,
+        unidentified: portal.unidentified,
+        canDelete,
+        lastEditor: portal.lastEditor,
+        managerIds: portal.managerIds,
+        mapEntryId: portal.mapEntryId,
+        primaryManagerId: portal.primaryManagerId,
+        space: portal.space,
+        images: portal.images,
+        coordinates: portal['nether-associate'] ? undefined : portal.coordinates,
+        address: portal.world === 'nether' && !portal['nether-associate'] ? portal.address : undefined,
+        overworldCoordinates: portal['nether-associate'] ? portal.coordinates : undefined,
+        netherCoordinates: portal['nether-associate']?.coordinates,
+        description: portal.description ?? undefined,
+        netherAddress: portal['nether-associate']?.address,
+      },
+    });
+  };
 
   const handleEditClick = () => {
     if (!detail) return;
@@ -103,30 +136,7 @@ export default function InfoOverlay({
       return;
     }
 
-    const portal = detail as Portal;
-    openFormOverlay({
-      mode: 'edit',
-      initialData: {
-        type: 'portal',
-        color: portal.color,
-        variant: portal['nether-associate'] ? 'linked' : portal.world as 'overworld' | 'nether',
-        name: portal.name,
-        id: portal.id,
-        canDelete,
-        lastEditor: portal.lastEditor,
-        managerIds: portal.managerIds,
-        mapEntryId: portal.mapEntryId,
-        primaryManagerId: portal.primaryManagerId,
-        space: portal.space,
-        images: portal.images,
-        coordinates: portal['nether-associate'] ? undefined : portal.coordinates,
-        address: portal.world === 'nether' && !portal['nether-associate'] ? portal.address : undefined,
-        overworldCoordinates: portal['nether-associate'] ? portal.coordinates : undefined,
-        netherCoordinates: portal['nether-associate']?.coordinates,
-        description: portal.description ?? undefined,
-        netherAddress: portal['nether-associate']?.address,
-      },
-    });
+    openPortalForm(detail as Portal, canDelete);
   };
 
   useEffect(() => {
@@ -138,6 +148,13 @@ export default function InfoOverlay({
     session?.user?.id,
     detail,
   ) : false;
+  const canClaim = Boolean(
+    session?.user?.id
+    && detail
+    && type === 'portal'
+    && (detail as Portal).unidentified
+    && canContribute(effectiveRole),
+  );
   const displayItem = detail ?? item;
   const itemNetherAddress = displayItem.world === 'nether'
     ? displayItem.address
@@ -181,6 +198,9 @@ export default function InfoOverlay({
             <InfoOverlayContent
               contentRef={contentRef}
               item={detail}
+              onClaim={canClaim
+                ? () => openPortalForm(detail as Portal, false, 'claim')
+                : undefined}
               showBottomBlur={showBottomBlur}
               showTradeView={showTradeView}
               tradeSearchQuery={tradeSearchQuery}

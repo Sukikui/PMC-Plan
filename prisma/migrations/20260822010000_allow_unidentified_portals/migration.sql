@@ -1,0 +1,2 @@
+ALTER TABLE "portals"
+ALTER COLUMN "name" DROP NOT NULL;

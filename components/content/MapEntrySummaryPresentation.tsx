@@ -26,12 +26,13 @@ export function MapEntrySummaryIcon({
     : placeCategory;
 
   return (
-    <img
-      alt=""
-      aria-hidden="true"
-      className="h-8 w-8 shrink-0 object-contain"
-      src={getMapIconSrc(resolvedCategory)}
-    />
+    <span className="h-8 w-8 shrink-0" aria-hidden="true">
+      <img
+        alt=""
+        className="h-8 w-8 object-contain"
+        src={getMapIconSrc(resolvedCategory)}
+      />
+    </span>
   );
 }
 

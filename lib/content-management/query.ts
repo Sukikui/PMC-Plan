@@ -14,6 +14,10 @@ import { toPublicDiscordIdentity } from '@/lib/discord-user';
 import { DEFAULT_PLACE_CATEGORY, isPlaceCategory } from '@/lib/place/categories';
 import { getMapEntryWhere, getSpaceWhere } from './filters';
 import { validTradeOfferWhere } from '@/lib/trade/query';
+import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
 
 interface ListContentManagementOptions {
   filter: ContentManagementFilter;
@@ -128,9 +132,10 @@ function toMapEntrySummary(
     linked: hasWorld(record.portals, 'overworld')
       && hasWorld(record.portals, 'nether'),
     mapEntryId: record.id,
-    name: canonical.name,
+    name: getPortalDisplayName(canonical.name),
     slug: canonical.slug,
     space: record.space,
+    unidentified: isPortalUnidentified(canonical.name),
     world: canonical.world,
   }];
 }

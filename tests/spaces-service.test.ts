@@ -108,6 +108,7 @@ describe('space service', () => {
         name: 'Portail central',
         owners: [{ uuid: 'member-b', name: 'Suki' }],
         slug: 'portail-central',
+        unidentified: false,
         world: 'overworld',
       },
     ]);

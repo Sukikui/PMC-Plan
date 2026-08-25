@@ -22,6 +22,7 @@ export interface InteractiveMapPoint {
   markerColor?: string;
   previewImageSrc?: string;
   spaceLogo?: MapTooltipSpaceLogo;
+  unidentified?: boolean;
 }
 
 export type MapTooltip = {
@@ -34,6 +35,7 @@ export type MapTooltip = {
   previewImageSrc?: string;
   previewImageAspectRatio?: number;
   spaceLogo?: MapTooltipSpaceLogo;
+  unidentified?: boolean;
   expanded: boolean;
 };
 

@@ -45,7 +45,6 @@ export const useMapTooltip = (
     const previewImageAspectRatio = previewImageSrc
       ? preloadedPreviewImageAspectRatiosRef.current.get(previewImageSrc)
       : undefined;
-
     return {
       pointId: point.id,
       pointLeft: point.screen.left,
@@ -56,6 +55,7 @@ export const useMapTooltip = (
       previewImageSrc,
       previewImageAspectRatio,
       spaceLogo: point.spaceLogo,
+      unidentified: point.unidentified,
       expanded: expanded && Boolean(previewImageSrc),
     };
   }, [getTooltipOffset, previewEnabled]);

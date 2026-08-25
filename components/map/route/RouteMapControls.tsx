@@ -6,8 +6,9 @@ import MapIcon from '@/components/icons/MapIcon';
 import IconButtonRound from '@/components/ui/IconButtonRound';
 import type { DestinationType } from '@/lib/destination/selection';
 import type { MapRoutePath, MapRouteSegment } from '@/lib/map/route-path';
-import { DEFAULT_PLACE_CATEGORY, getMapIconSrc } from '@/lib/place/categories';
+import { DEFAULT_PLACE_CATEGORY } from '@/lib/place/categories';
 import { themeColors } from '@/lib/theme-colors';
+import { MapEntrySummaryIcon } from '@/components/content/MapEntrySummaryPresentation';
 
 interface RouteMapControlsProps {
   routePath: MapRoutePath | null;
@@ -117,12 +118,12 @@ function RouteStepButton({
       title={segment.target.label}
       onClick={onClick}
     >
-      <img
-        src={getMapIconSrc(iconCategory)}
-        alt=""
-        aria-hidden="true"
-        className="h-7 w-7 shrink-0 object-contain"
-      />
+      <span className="scale-[0.875]">
+        <MapEntrySummaryIcon
+          category={iconCategory === 'portail' ? undefined : iconCategory}
+          type={iconCategory === 'portail' ? 'portal' : 'place'}
+        />
+      </span>
       <span
         className={`overflow-hidden whitespace-nowrap text-sm font-medium transition-[max-width,margin,opacity] duration-300 ease-out ${active ? 'map-route-step-label-fade ml-2 max-w-48 opacity-100' : 'ml-0 max-w-0 opacity-0'}`}
       >

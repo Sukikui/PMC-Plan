@@ -6,21 +6,33 @@ import { z } from 'zod';
 import { Prisma, World } from '@/generated/prisma/client';
 import { resolveNetherAddressForWorld } from '../../utils/shared';
 import { handleError } from '../../utils/api-utils';
-import {
-  canAdministerContent,
-  canManageContent,
-} from '@/lib/content-permissions';
+import { canContribute, canManageContent } from '@/lib/content-permissions';
 import { MapEntryError } from '@/lib/map-entry/service';
 import { updateMapEntryPresentation } from '@/lib/map-entry/presentation';
 import { indexLinkedPortalPairs } from '@/lib/portal/linked-portals';
-import { prepareMapEntryUpdate } from '@/lib/map-entry/creation';
-import { updateMapEntryManagement } from '@/lib/map-entry/management-update';
+import {
+  prepareMapEntryCreation,
+  prepareMapEntryUpdate,
+} from '@/lib/map-entry/creation';
+import {
+  claimMapEntryManagement,
+  updateMapEntryManagement,
+} from '@/lib/map-entry/management-update';
 import { MinecraftProfileError } from '@/lib/minecraft/profiles';
 import { invalidateRouteData } from '../../route/service/route-data';
 import { invalidateMapEntryPublicData } from '@/lib/content/cache-tags';
 import { normalizeContentImages } from '@/lib/content/images';
+import {
+  claimPortalIdentity,
+  updatePortalIdentity,
+} from '@/lib/portal/identity.server';
+import {
+  getPortalDisplayName,
+  isPortalUnidentified,
+} from '@/lib/portal/identity';
 
-import { UpdatePortalSchema } from '../../utils/schemas';
+import { ClaimPortalSchema, UpdatePortalSchema } from '../../utils/schemas';
+import { deletePortal } from './delete-portal';
 
 type PortalRouteContext = {
   params: Promise<{ id: string }>;
@@ -35,15 +47,25 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
 
     const { id: portalId } = await context.params;
     const worldParam = request.nextUrl.searchParams.get('world');
+    const isClaim = request.nextUrl.searchParams.get('claim') === 'true';
+    const claimMapEntryId = request.nextUrl.searchParams.get('mapEntryId');
 
     if (!worldParam || !(worldParam === 'overworld' || worldParam === 'nether')) {
       return NextResponse.json({ error: 'World parameter is missing or invalid.' }, { status: 400 });
     }
 
     const world = worldParam as World;
+    if (isClaim && !claimMapEntryId) {
+      return NextResponse.json(
+        { error: 'Le portail à revendiquer est introuvable.' },
+        { status: 400 },
+      );
+    }
 
-    const portal = await prisma.portal.findUnique({
-      where: { slug_world: { slug: portalId, world: world } },
+    const portal = await prisma.portal.findFirst({
+      where: isClaim
+        ? { mapEntryId: claimMapEntryId!, world }
+        : { slug: portalId, world },
       include: {
         mapEntry: {
           include: {
@@ -59,23 +81,30 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
     }
 
     const actorRole = getEffectiveRequestRole(request, session.user.role);
-    if (!canManageContent(actorRole, session.user.id, {
+    const access = {
       primaryManagerId: portal.mapEntry.primaryManagerId,
       managerIds: portal.mapEntry.managers.map(({ userId }) => userId),
-    })) {
+    };
+    if (isClaim && !canContribute(actorRole)) {
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
+    }
+    if (isClaim && !isPortalUnidentified(portal.name)) {
+      return NextResponse.json(
+        { error: 'Ce portail ne peut pas être revendiqué.' },
+        { status: 409 },
+      );
+    }
+    if (!isClaim && !canManageContent(actorRole, session.user.id, access)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const json = await request.json();
-    const payload = UpdatePortalSchema.parse(json);
+    const mutation = await preparePortalMutation(isClaim, json);
+    const { payload } = mutation;
     const images = normalizeContentImages(payload.images);
-    const management = payload.management
-      ? await prepareMapEntryUpdate(payload.management)
-      : null;
 
 
     if (payload.mode === 'single') {
-      const slugValue = payload.portal.slug.toLowerCase();
       const address = await resolveNetherAddressForWorld(
         payload.portal.world,
         payload.portal.coordinates,
@@ -83,11 +112,18 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
       );
 
       const updated = await prisma.$transaction(async (tx) => {
+        const identity = mutation.intent === 'claim'
+          ? await claimPortalIdentity(
+              tx,
+              portal.mapEntryId,
+              mutation.payload.identity,
+              1,
+            )
+          : updatePortalIdentity(portal, mutation.payload.identity);
         const updatedPortal = await tx.portal.update({
           where: { uid: portal.uid },
           data: {
-            slug: slugValue,
-            name: payload.portal.name,
+            ...identity,
             world: payload.portal.world,
             coordX: payload.portal.coordinates.x,
             coordY: payload.portal.coordinates.y,
@@ -96,16 +132,10 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
             address,
           },
         });
-        await updateMapEntryPresentation(tx, portal.mapEntryId, {
+        await applySharedPortalUpdate(tx, portal.mapEntryId, {
           userId: session.user.id,
           role: actorRole,
-        }, { color: payload.color, images, spaceId: payload.spaceId });
-        if (management) {
-          await updateMapEntryManagement(tx, portal.mapEntryId, {
-            userId: session.user.id,
-            role: actorRole,
-          }, management);
-        }
+        }, mutation, { color: payload.color, images, spaceId: payload.spaceId });
         return updatedPortal;
       });
       invalidateRouteData();
@@ -117,7 +147,8 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
             {
               slug: updated.slug,
               world: updated.world,
-              name: updated.name,
+              name: getPortalDisplayName(updated.name),
+              unidentified: isPortalUnidentified(updated.name),
               images,
             },
           ],
@@ -127,7 +158,6 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
     }
 
     // linked portals
-    const slugValue = payload.slug.toLowerCase();
     const netherAddress = await resolveNetherAddressForWorld(
       'nether',
       payload.nether.coordinates,
@@ -141,12 +171,17 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
       if (!pair) {
         throw new MapEntryError('La paire de portails liée est incomplète.', 409);
       }
+      const identity = mutation.intent === 'claim'
+        ? await claimPortalIdentity(
+            tx,
+            portal.mapEntryId,
+            mutation.payload.identity,
+            2,
+          )
+        : updatePortalIdentity(pair.overworld, mutation.payload.identity);
       await tx.portal.updateMany({
         where: { mapEntryId: portal.mapEntryId },
-        data: {
-          slug: slugValue,
-          name: payload.name,
-        },
+        data: identity,
       });
       const overworldPortal = await tx.portal.update({
         where: { uid: pair.overworld.uid },
@@ -170,16 +205,10 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
         },
       });
 
-      await updateMapEntryPresentation(tx, portal.mapEntryId, {
+      await applySharedPortalUpdate(tx, portal.mapEntryId, {
         userId: session.user.id,
         role: actorRole,
-      }, { color: payload.color, images, spaceId: payload.spaceId });
-      if (management) {
-        await updateMapEntryManagement(tx, portal.mapEntryId, {
-          userId: session.user.id,
-          role: actorRole,
-        }, management);
-      }
+      }, mutation, { color: payload.color, images, spaceId: payload.spaceId });
       return { overworldPortal, netherPortal };
     });
     invalidateRouteData();
@@ -191,13 +220,15 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
             {
               slug: result.overworldPortal.slug,
               world: result.overworldPortal.world,
-              name: result.overworldPortal.name,
+              name: getPortalDisplayName(result.overworldPortal.name),
+              unidentified: isPortalUnidentified(result.overworldPortal.name),
               images,
             },
             {
               slug: result.netherPortal.slug,
               world: result.netherPortal.world,
-              name: result.netherPortal.name,
+              name: getPortalDisplayName(result.netherPortal.name),
+              unidentified: isPortalUnidentified(result.netherPortal.name),
               images,
             },
         ],
@@ -218,104 +249,45 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: PortalRouteContext,
+async function preparePortalMutation(isClaim: boolean, json: unknown) {
+  if (isClaim) {
+    const payload = ClaimPortalSchema.parse(json);
+    return {
+      intent: 'claim' as const,
+      payload,
+      management: await prepareMapEntryCreation(payload.management),
+    };
+  }
+  const payload = UpdatePortalSchema.parse(json);
+  return {
+    intent: 'edit' as const,
+    payload,
+    management: payload.management
+      ? await prepareMapEntryUpdate(payload.management, {
+          includeOwners: payload.identity.status === 'identified',
+        })
+      : null,
+  };
+}
+
+async function applySharedPortalUpdate(
+  tx: Prisma.TransactionClient,
+  mapEntryId: string,
+  actor: { userId: string; role?: string },
+  mutation: Awaited<ReturnType<typeof preparePortalMutation>>,
+  presentation: {
+    color?: string;
+    images: string[];
+    spaceId: string | null | undefined;
+  },
 ) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
-    }
-
-    const { id: portalSlug } = await context.params;
-    const worldParam = request.nextUrl.searchParams.get('world');
-
-    // If worldParam is not provided, assume it's a linked portal deletion attempt
-    if (!worldParam) {
-      // Attempt to delete linked portals (both overworld and nether)
-      const linkedPortals = await prisma.portal.findMany({
-        where: { slug: portalSlug },
-        include: {
-          mapEntry: {
-            select: { primaryManagerId: true },
-          },
-        },
-      });
-
-      if (linkedPortals.length === 0) {
-        return NextResponse.json({ error: 'Portal not found' }, { status: 404 });
-      }
-
-      const actorRole = getEffectiveRequestRole(request, session.user.role);
-      const canDeleteAll = linkedPortals.every(({ mapEntry }) => (
-        canAdministerContent(
-          actorRole,
-          session.user.id,
-          mapEntry.primaryManagerId,
-        )
-      ));
-      if (!canDeleteAll) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
-      const mapEntryIds = Array.from(new Set(
-        linkedPortals.map(({ mapEntryId }) => mapEntryId),
-      ));
-      await prisma.mapEntry.deleteMany({
-        where: {
-          id: { in: mapEntryIds },
-        },
-      });
-      invalidateRouteData();
-      mapEntryIds.forEach((mapEntryId) => {
-        invalidateMapEntryPublicData('portal', mapEntryId);
-      });
-
-      return NextResponse.json({ message: 'Portails liés supprimés avec succès.' }, { status: 200 });
-
-    } else { // Single portal deletion
-      if (!(worldParam === 'overworld' || worldParam === 'nether')) {
-        return NextResponse.json({ error: 'World parameter is invalid.' }, { status: 400 });
-      }
-      const world = worldParam as World;
-
-      const portal = await prisma.portal.findUnique({
-        where: { slug_world: { slug: portalSlug, world: world } },
-        include: {
-          mapEntry: {
-            select: {
-              primaryManagerId: true,
-              _count: { select: { portals: true } },
-            },
-          },
-        },
-      });
-
-      if (!portal) {
-        return NextResponse.json({ error: 'Portal not found' }, { status: 404 });
-      }
-
-      const actorRole = getEffectiveRequestRole(request, session.user.role);
-      if (!canAdministerContent(
-        actorRole,
-        session.user.id,
-        portal.mapEntry.primaryManagerId,
-      )) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-
-      if (portal.mapEntry._count.portals === 1) {
-        await prisma.mapEntry.delete({ where: { id: portal.mapEntryId } });
-      } else {
-        await prisma.portal.delete({ where: { uid: portal.uid } });
-      }
-      invalidateRouteData();
-      invalidateMapEntryPublicData('portal', portal.mapEntryId);
-
-      return NextResponse.json({ message: 'Portail supprimé avec succès.' }, { status: 200 });
-    }
-  } catch (error: unknown) {
-    return NextResponse.json({ error: (error instanceof Error ? error.message : 'An unknown error occurred') || 'Impossible de supprimer le portail' }, { status: 500 });
+  if (mutation.intent === 'claim') {
+    await claimMapEntryManagement(tx, mapEntryId, actor, mutation.management);
+  }
+  await updateMapEntryPresentation(tx, mapEntryId, actor, presentation);
+  if (mutation.intent === 'edit' && mutation.management) {
+    await updateMapEntryManagement(tx, mapEntryId, actor, mutation.management);
   }
 }
+
+export const DELETE = deletePortal;

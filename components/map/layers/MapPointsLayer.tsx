@@ -175,7 +175,7 @@ function IconPoint({
   return (
     <span
       aria-hidden="true"
-      className={`${shouldAnimate ? 'map-icon-reveal' : ''} block`}
+      className={`${shouldAnimate ? 'map-icon-reveal' : ''} relative block`}
       style={{
         ...getIconBoxStyle(MAP_ICON_BASE_SIZE_PX, iconScale),
         '--map-reveal-delay': `${revealDelay}ms`,
