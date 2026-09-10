@@ -20,7 +20,7 @@
     "test:coverage": "jest --coverage",
     "check:unused": "knip && knip --production --config knip.production.json",
     "check:security": "npm audit --audit-level=high",
-    "check:quality": "npm run lint && npm run type-check && npm run check:unused && npm run test:coverage",
+    "check:quality": "npm run check:security && npm run lint && npm run type-check && npm run check:unused && npm run test:coverage",
     "db:start": "docker compose up -d --wait database",
     "db:stop": "docker compose stop database",
     "db:generate": "dotenv -e .env.development.local -o -- node scripts/database/run-local-prisma.mjs generate",
@@ -35,8 +35,8 @@
     "db:studio": "dotenv -e .env.development.local -o -- node scripts/database/run-local-prisma.mjs studio"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.9.1",
-    "@prisma/client": "^7.9.1",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "@tanstack/react-query": "^5.101.4",
     "@vercel/analytics": "^2.0.1",
     "next": "^16.3.0",
@@ -69,11 +69,14 @@
     "typescript-eslint": "^8.67.0"
   },
   "overrides": {
-    "deepmerge-ts": "8.0.2"
+    "deepmerge-ts": "8.0.2",
+    "prisma": {
+      "mysql2": "3.24.4"
+    }
   },
   "allowScripts": {
-    "prisma@7.9.1": true,
-    "@prisma/engines@7.9.1": true,
+    "prisma@7.10.0": true,
+    "@prisma/engines@7.10.0": true,
     "esbuild@0.28.2": true,
     "unrs-resolver@1.12.2": true,
     "fsevents@2.3.3": true

@@ -571,12 +571,12 @@ npm run check:quality
 npm run build
 ```
 
-`check:quality` runs ESLint, TypeScript checking, Knip dead-code and dependency
+`check:quality` runs the dependency security audit, ESLint, TypeScript checking, Knip dead-code and dependency
 analysis, the complete Jest suite, and the enforced coverage thresholds. The
 HTML coverage report is generated under `coverage/`; the repository baseline
 must not decrease.
 
-When dependencies change, also audit them locally:
+To run only the dependency security audit:
 
 ```bash
 npm run check:security

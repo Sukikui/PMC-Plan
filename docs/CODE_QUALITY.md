@@ -31,7 +31,8 @@ hidden inside otherwise referenced modules.
 ## Dependency security
 
 `npm run check:security` audits production and development dependencies and
-fails on high or critical vulnerabilities. GitHub Actions runs this check for
+fails on high or critical vulnerabilities. It runs first in `check:quality`,
+so the complete local gate cannot skip it. GitHub Actions runs this check for
 every pull request. Dependency updates must be reviewed and committed with the
 resulting lockfile rather than applied through a forced major upgrade.
 
