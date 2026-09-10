@@ -33,11 +33,11 @@ technical slug only for identity and mutations. The response deliberately
 omits managers, owners,
 trade offers, complete image collections, and audit metadata.
 
-The complete detail response lets any approved user open the standard portal
-editor in claim mode. Claiming keeps the generated slug as the editable
-starting value, requires a final public name, and atomically replaces the
+The complete detail response lets any approved user open the same portal editor
+used for regular updates. The API infers a claim when a non-manager submits a
+final public identity for an unidentified portal, then atomically replaces the
 temporary management team with the claimant and the team submitted by that
-editor. No separate claim-request resource is cached or persisted.
+editor. No separate claim mode, request resource, or cache entry is persisted.
 
 ```json
 {
@@ -92,9 +92,9 @@ Parameters:
 contains the public space identity, preview image, first member, distinct member
 count, and place, portal, and offer counts. It accepts `page`, `pageSize`, and
 `q`; search covers the name, description, and Minecraft members. The optional
-`sort` parameter accepts `name-asc` (default), `name-desc`, `content-asc`, or
-`content-desc`. Content ordering uses the combined place and portal count, then
-the space name.
+`sort` parameter accepts `name-asc`, `name-desc`, `content-asc`, or
+`content-desc` (default). Content ordering uses the combined place and portal
+count, then the space name.
 
 `GET /api/spaces?view=reference` returns only the spaces manageable by the
 authenticated effective role. It is used by content forms and contains the

@@ -7,6 +7,7 @@ import { worldToMapPercent, type MapMetadata } from '@/lib/map/metadata';
 import type { MapLineOverlay } from '@/lib/map/overlays';
 import { BLOCK_GRID_MIN_PIXEL_SIZE } from '../core/map-constants';
 import { getMapDrawRect } from '../core/map-geometry';
+import { getMapBlockPixelSize } from '../core/map-grid';
 import { mapPercentToScreenPoint, type MapPan, type MapSize, type MapViewport } from '../core/map-view';
 import type { LoadedMapTile } from '../hooks/useMapTiles';
 import { drawMapRaster } from './map-raster';
@@ -63,9 +64,7 @@ export default function MapCanvas({
     ctx.clearRect(0, 0, viewport.width, viewport.height);
     const drawRect = getMapDrawRect(viewport, baseSize, zoom, pan);
     const { left: drawX, top: drawY, width: drawWidth, height: drawHeight } = drawRect;
-    const blockPixelSize = (
-      drawWidth / metadata.overview.width / metadata.overview.cellSize
-    );
+    const blockPixelSize = getMapBlockPixelSize(metadata, drawRect);
 
     if (!drawMapRaster(ctx, { mapImage, mapTiles, metadata, drawRect, viewport })) {
       return;

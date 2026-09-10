@@ -7,18 +7,23 @@ import { useSettingsOverlay } from '@/components/settings/SettingsOverlayProvide
 import { PillActionButton } from '@/components/ui/PillAction';
 import { canContribute } from '@/lib/content-permissions';
 import { useOverlay } from './overlay/OverlayProvider';
+import type { OpenFormOverlayOptions } from './form/FormOverlay';
 
 
 interface AddContentButtonProps {
   className?: string;
   children: React.ReactNode;
+  formOptions?: Omit<OpenFormOverlayOptions, 'mode'>;
   fullWidth?: boolean;
+  onAction?: () => void;
 }
 
 export default function AddContentButton({
   className,
   children,
+  formOptions,
   fullWidth,
+  onAction,
 }: AddContentButtonProps) {
   const { data: session, status } = useSession();
   const { effectiveRole } = useAdminMode();
@@ -29,9 +34,11 @@ export default function AddContentButton({
 
   const handleClick = () => {
     if (status === 'authenticated' && session?.user && !awaitingApproval) {
-      openFormOverlay({ mode: 'add' });
+      openFormOverlay({ ...formOptions, mode: 'add' });
+      onAction?.();
     } else if (status === 'unauthenticated') {
       openSettings('account');
+      onAction?.();
     }
   };
 

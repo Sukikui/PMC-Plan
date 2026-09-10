@@ -8,6 +8,7 @@ import {
 } from '../core/map-constants';
 import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
 import type { InteractiveMapPoint, ScreenMapPoint } from '../core/map-types';
+import type { MapScreenPosition } from '../core/map-grid';
 
 type MapZoomDirection = 'in' | 'out' | null;
 
@@ -23,7 +24,7 @@ interface UseMapInteractionsParams {
   scheduleView: (nextZoom: number, nextPan: MapPan) => void;
   cancelAnimation: () => void;
   onMapMoveStart: () => void;
-  onMapClick?: () => void;
+  onMapClick?: (position: MapScreenPosition) => void;
   onPointSelect?: (point: InteractiveMapPoint) => void;
 }
 
@@ -108,11 +109,20 @@ export const useMapInteractions = ({
     if (zoomEndTimeoutRef.current) clearTimeout(zoomEndTimeoutRef.current);
   }, []);
 
+  useEffect(() => {
+    const node = viewportRef.current;
+    if (!node) return;
+
+    const preventScroll = (event: WheelEvent) => event.preventDefault();
+    node.addEventListener('wheel', preventScroll, { passive: false });
+    return () => node.removeEventListener('wheel', preventScroll);
+  }, [viewportRef]);
+
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (isBlocked || event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
-    startMapInteraction();
+    cancelAnimation();
 
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
@@ -130,8 +140,7 @@ export const useMapInteractions = ({
       ? screenPointById.get(pointElement.dataset.mapPointId) ?? null
       : null;
     hasDraggedRef.current = false;
-    setIsPanning(true);
-  }, [isBlocked, screenPointById, startMapInteraction]);
+  }, [cancelAnimation, isBlocked, screenPointById]);
 
   const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== event.pointerId || !lastPointerRef.current) return;
@@ -142,15 +151,22 @@ export const useMapInteractions = ({
     if (pointerDownRef.current) {
       const totalDx = event.clientX - pointerDownRef.current.x;
       const totalDy = event.clientY - pointerDownRef.current.y;
-      hasDraggedRef.current = hasDraggedRef.current || Math.hypot(totalDx, totalDy) > CLICK_DRAG_TOLERANCE_PX;
+      const dragStarted = Math.hypot(totalDx, totalDy) > CLICK_DRAG_TOLERANCE_PX;
+      if (dragStarted && !hasDraggedRef.current) {
+        hasDraggedRef.current = true;
+        startMapInteraction();
+        setIsPanning(true);
+      }
     }
 
-    commitPan(clampPan({
-      x: panRef.current.x + dx,
-      y: panRef.current.y + dy,
-    }, zoomRef.current));
+    if (hasDraggedRef.current) {
+      commitPan(clampPan({
+        x: panRef.current.x + dx,
+        y: panRef.current.y + dy,
+      }, zoomRef.current));
+    }
     lastPointerRef.current = { x: event.clientX, y: event.clientY };
-  }, [clampPan, commitPan, panRef, zoomRef]);
+  }, [clampPan, commitPan, panRef, startMapInteraction, zoomRef]);
 
   const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     const pointToSelect = pendingPointSelectRef.current;
@@ -160,7 +176,11 @@ export const useMapInteractions = ({
     if (pointToSelect && !hasDragged) {
       onPointSelect?.(pointToSelect);
     } else if (!pointToSelect && !hasDragged) {
-      onMapClick?.();
+      const rect = event.currentTarget.getBoundingClientRect();
+      onMapClick?.({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      });
     }
   }, [onMapClick, onPointSelect, stopPanning]);
 

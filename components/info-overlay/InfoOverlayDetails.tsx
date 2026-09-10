@@ -17,8 +17,6 @@ export default function InfoOverlayDetails({ item, onClaim, type }: InfoOverlayD
     <>
       <MapEntryOwners owners={item.owners} />
 
-      <InfoDescriptionSection description={item.description} />
-
       {type === 'portal' && (item as Portal).unidentified && onClaim && (
         <div className="flex justify-center pt-6">
           <ActionButton variant="primaryOutline" onClick={onClaim}>
@@ -26,6 +24,8 @@ export default function InfoOverlayDetails({ item, onClaim, type }: InfoOverlayD
           </ActionButton>
         </div>
       )}
+
+      <InfoDescriptionSection description={item.description} />
 
       {place && Array.isArray(place.tags) && place.tags.length > 0 && (
         <div>

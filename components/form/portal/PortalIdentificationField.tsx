@@ -21,7 +21,7 @@ export default function PortalIdentificationField({
         {unidentified ? 'Renseigner les informations' : 'Marquer comme inconnu'}
       </ActionButton>
       <FormHint>
-        Utilise ce mode pour enregistrer un portail rencontré dont tu ignores
+        À utiliser si tu rencontres un portail dont tu ignores
         le nom ou le propriétaire. Ses informations seront limitées et
         n’importe quel utilisateur approuvé pourra ensuite le revendiquer pour
         les compléter.

@@ -10,7 +10,7 @@
 - Cleaning: When removing or refactoring features, also remove obsolete helpers, submodules, exports, dependencies, and tests. Confirm cleanup with `npm run check:unused`.
 - Features: When I'm asking you to implement or refactor features, always check for existing helpers, utilities, or components that can be reused. Avoid creating new files unless necessary.
 - Don't hesitate to propose codebase refactoring or improvements if two or more modules should share common frontend or backend logic but currently implement it differently.
-- Verification: After substantial code changes, run `npm run check:quality`. Also run `npm run build` whenever production behavior, dependencies, configuration, routing, or bundling may be affected.
+- Verification: After substantial code changes, run `npm run check:quality`, including its mandatory dependency security audit. Also run `npm run build` whenever production behavior, dependencies, configuration, routing, or bundling may be affected. Before declaring a PR ready, compare local checks with `.github/workflows/ci.yml` and report any checks that could not run. Use Node.js 24 LTS for installation and verification.
 - Database safety: Local development and Prisma commands must target only `pmc_plan_dev` on localhost. Production-derived data may enter development only through the private snapshot workflow; never commit snapshots, use them in CI, weaken the local guard, or run remote migration commands without explicit user approval.
 - No source files with more than 350 lines; split into focused modules if needed. This limit does not apply to docs, data files, generated files, lockfiles, or binary assets.
 - No need to run `npm run dev` because I already have a dev server running. You can run tests and linting without starting the dev server.
@@ -33,7 +33,7 @@
 - `npm test` | `npm run test:watch` | `npm run test:coverage`: Run unit/integration tests and coverage.
 - `npm run check:unused`: Detect unused code and dependencies in both repository and production graphs.
 - `npm run check:security`: Audit all dependencies for high or critical vulnerabilities.
-- `npm run check:quality`: Run linting, type checking, dead-code analysis, tests, and coverage thresholds.
+- `npm run check:quality`: Run dependency security auditing, linting, type checking, dead-code analysis, tests, and coverage thresholds.
 - Database: `npm run db:start`, `npm run db:stop`, `npm run db:pull`, `npm run db:reset`, `npm run db:migrate`, `npm run db:check`, and `npm run db:studio`.
 
 ## Coding Style & Naming Conventions

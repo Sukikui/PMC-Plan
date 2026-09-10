@@ -3,6 +3,7 @@ import {
   normalizeEntityFields,
 } from '@/components/form/common/entity-fields';
 import {
+  getDefaultMapY,
   moveArrayItemById,
   parseCoordinateTriplet,
 } from '@/components/form/common/form-values';
@@ -56,6 +57,11 @@ describe('content form foundation', () => {
     });
   });
 
+  it('provides the map creation height for each world', () => {
+    expect(getDefaultMapY('overworld')).toBe(64);
+    expect(getDefaultMapY('nether')).toBe(71);
+  });
+
   it('reorders form items by their stable identifiers', () => {
     const items = [{ id: 'first' }, { id: 'second' }, { id: 'third' }];
 
@@ -94,12 +100,9 @@ describe('content form foundation', () => {
     })).toBe('/api/portals/spawn?world=overworld');
     expect(getMapEntrySaveEndpoint('portal', 'edit', {
       id: 'portail-a7k9x',
-      mapEntryId: 'entry-1',
       type: 'portal',
       variant: 'nether',
-    }, 'claim')).toBe(
-      '/api/portals/portail-a7k9x?world=nether&claim=true&mapEntryId=entry-1',
-    );
+    })).toBe('/api/portals/portail-a7k9x?world=nether');
     expect(getMapEntryDeleteEndpoint({
       id: 'spawn',
       type: 'portal',

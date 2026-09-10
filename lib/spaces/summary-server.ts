@@ -3,10 +3,11 @@ import { prisma } from '@/lib/prisma';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
 import { contentCacheTags } from '@/lib/content/cache-tags';
-import type {
-  SpaceReference,
-  SpaceSummary,
-  SpaceSummarySort,
+import {
+  DEFAULT_SPACE_SUMMARY_SORT,
+  type SpaceReference,
+  type SpaceSummary,
+  type SpaceSummarySort,
 } from './types';
 import { isAdministrationRole } from '@/lib/admin/roles';
 import { validTradeOfferWhere } from '@/lib/trade/query';
@@ -106,7 +107,7 @@ export function parseSpaceSummarySort(value: string | null): SpaceSummarySort {
   ) {
     return value;
   }
-  return 'name-asc';
+  return DEFAULT_SPACE_SUMMARY_SORT;
 }
 
 export async function listManageableSpaceReferences(

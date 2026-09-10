@@ -55,10 +55,8 @@ export default function InfoOverlay({
   const openPortalForm = (
     portal: Portal,
     canDelete: boolean,
-    intent?: 'claim',
   ) => {
     openFormOverlay({
-      intent,
       mode: 'edit',
       initialData: {
         type: 'portal',
@@ -199,7 +197,7 @@ export default function InfoOverlay({
               contentRef={contentRef}
               item={detail}
               onClaim={canClaim
-                ? () => openPortalForm(detail as Portal, false, 'claim')
+                ? () => openPortalForm(detail as Portal, false)
                 : undefined}
               showBottomBlur={showBottomBlur}
               showTradeView={showTradeView}

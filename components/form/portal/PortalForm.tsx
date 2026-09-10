@@ -5,7 +5,6 @@ import { themeColors } from '@/lib/theme-colors';
 import { createPortalSnapshot } from '../common/form-change-detection';
 import {
   parseCoordinateTriplet,
-  type CoordinatesInput,
 } from '../common/form-utils';
 import { useEntityForm } from '../common/useEntityForm';
 import { useFormSubmission } from '../common/useFormSubmission';
@@ -16,10 +15,6 @@ import ContentImagesField from '../common/ContentImagesField';
 import { useContentImages } from '../common/useContentImages';
 import FormSection from '../common/FormSection';
 import SpaceAssociationField from '../association/SpaceAssociationField';
-import { useNetherAddress } from '../nether/NetherAddressField';
-import {
-  useNetherCoordinates,
-} from '../nether/NetherCoordinatesField';
 import MapEntryManagementFields from '../management/MapEntryManagementFields';
 import {
   emptyMapEntryDraft,
@@ -39,13 +34,14 @@ import type {
   InitialPortalData,
   PortalFormPayload,
 } from './portal-form-types';
+import type { InitialMapPosition } from '../common/form-values';
+import { usePortalLocationState } from './usePortalLocationState';
 
 export type { InitialPortalData, PortalFormPayload } from './portal-form-types';
 
-const blankCoords = { x: '', y: '', z: '' };
-
 interface PortalFormProps {
-  intent?: 'claim';
+  initialPosition?: InitialMapPosition;
+  managementMode?: 'add' | 'edit';
   mode?: 'add' | 'edit';
   initialData?: InitialPortalData;
   onSubmit: (payload: PortalFormPayload) => Promise<void>;
@@ -54,55 +50,49 @@ interface PortalFormProps {
 }
 
 export default function PortalForm({
-  intent,
+  managementMode: requestedManagementMode,
   mode = 'add',
   initialData,
+  initialPosition,
   onSubmit,
   onCancel,
   onDelete,
 }: PortalFormProps) {
   const fields = useEntityForm(
     initialData?.unidentified ? '' : initialData?.name,
-    initialData?.unidentified && intent !== 'claim' ? '' : initialData?.id,
+    initialData?.id,
     initialData?.description,
   );
   const [unidentified, setUnidentified] = useState(
-    intent === 'claim' ? false : initialData?.unidentified ?? false,
+    initialData?.unidentified ?? false,
   );
   const [unidentifiedSlug] = useState(() => (
     initialData?.unidentified ? initialData.id : generateUnidentifiedPortalSlug()
   ));
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
   const contentImages = useContentImages(initialData?.images);
-  const [portalVariant, setPortalVariant] = useState(initialData?.variant ?? 'linked');
-  const [singleCoords, setSingleCoords] = useState<CoordinatesInput>(initialData?.coordinates ? { x: String(initialData.coordinates.x), y: String(initialData.coordinates.y), z: String(initialData.coordinates.z) } : blankCoords);
-
-  const [overworldCoords, setOverworldCoords] = useState<CoordinatesInput>(initialData?.overworldCoordinates ? { x: String(initialData.overworldCoordinates.x), y: String(initialData.overworldCoordinates.y), z: String(initialData.overworldCoordinates.z) } : blankCoords);
-  const netherCoordinates = useNetherCoordinates({
-    initialValue: initialData?.netherCoordinates,
-    overworldCoordinates: overworldCoords,
-  });
+  const {
+    netherAddress,
+    netherCoordinates,
+    overworldCoords,
+    portalVariant,
+    setOverworldCoords,
+    setPortalVariant,
+    setSingleCoords,
+    singleAddress,
+    singleCoords,
+  } = usePortalLocationState(initialData, initialPosition);
   const netherCoords = netherCoordinates.value;
 
+  const managementMode = requestedManagementMode ?? mode;
   const [managementDraft, setManagementDraft] = useState(emptyMapEntryDraft);
-  const [managementReady, setManagementReady] = useState(mode === 'add');
-  const managementMode = intent === 'claim' ? 'add' : mode;
+  const [managementReady, setManagementReady] = useState(managementMode === 'add');
   const [selectedSpace, setSelectedSpace] = useState<SpaceReference | null>(
     initialData?.space ?? null,
   );
 
   const isLinkedVariant = portalVariant === 'linked';
   const singleWorld: 'overworld' | 'nether' = portalVariant === 'nether' ? 'nether' : 'overworld';
-  const singleAddress = useNetherAddress({
-    enabled: portalVariant === 'nether',
-    coords: singleCoords,
-    initialValue: initialData?.address,
-  });
-  const netherAddress = useNetherAddress({
-    enabled: portalVariant === 'linked',
-    coords: netherCoords,
-    initialValue: initialData?.netherAddress,
-  });
   const snapshot = {
     ...createPortalSnapshot({
       color,
@@ -132,7 +122,8 @@ export default function PortalForm({
     : parsedSingleCoords !== null;
   const submission = useFormSubmission({
     isReady: managementReady,
-    isValid: (unidentified || fields.isValid)
+    isValid: (managementMode !== 'add' || mode !== 'edit' || !unidentified)
+      && (unidentified || fields.isValid)
       && hasValidCoordinates
       && !contentImages.hasInvalidImage,
     mode,
@@ -220,15 +211,13 @@ export default function PortalForm({
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <FormSection title="Informations générales">
-        {(mode === 'add' || initialData?.unidentified) && intent !== 'claim' && (
-          <div className="mb-4">
-            <PortalIdentificationField
-              disabled={submission.isSubmitting}
-              onChange={handleIdentificationChange}
-              unidentified={unidentified}
-            />
-          </div>
-        )}
+        <div className="mb-4">
+          <PortalIdentificationField
+            disabled={submission.isSubmitting}
+            onChange={handleIdentificationChange}
+            unidentified={unidentified}
+          />
+        </div>
         <CommonFields
           afterSlug={(
             <SpaceAssociationField
@@ -249,8 +238,8 @@ export default function PortalForm({
         />
       </FormSection>
 
-      {!unidentified && (
-        <ContentPresentationSection>
+      <ContentPresentationSection>
+        {!unidentified && (
           <ContentColorField
             color={color}
             disabled={submission.isSubmitting}
@@ -258,12 +247,12 @@ export default function PortalForm({
             onChange={setColor}
             space={selectedSpace}
           />
-          <ContentImagesField
-            controller={contentImages}
-            reorderable={mode === 'edit'}
-          />
-        </ContentPresentationSection>
-      )}
+        )}
+        <ContentImagesField
+          controller={contentImages}
+          reorderable={mode === 'edit'}
+        />
+      </ContentPresentationSection>
 
       <FormSection title="Gestion">
         <MapEntryManagementFields

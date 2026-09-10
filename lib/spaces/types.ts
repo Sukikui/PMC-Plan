@@ -20,6 +20,7 @@ export type SpaceSummarySort =
   | 'name-desc'
   | 'content-asc'
   | 'content-desc';
+export const DEFAULT_SPACE_SUMMARY_SORT: SpaceSummarySort = 'content-desc';
 
 export interface SpaceReference {
   id: string;
