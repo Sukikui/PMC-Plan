@@ -22,3 +22,21 @@ export default function FormHint({
     </div>
   );
 }
+
+export function ImageHostingHint({ className = '' }: { className?: string }) {
+  return (
+    <FormHint className={className}>
+      N&apos;utilisez pas les liens CDN Discord : ils sont temporaires. Préférez un
+      hébergeur d&apos;images gratuit comme{' '}
+      <a
+        href="https://postimages.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${themeColors.text.accent} ${themeColors.interactive.hoverAccentText}`}
+      >
+        Postimages
+      </a>
+      .
+    </FormHint>
+  );
+}

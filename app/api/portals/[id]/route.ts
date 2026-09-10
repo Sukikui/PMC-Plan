@@ -47,25 +47,14 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
 
     const { id: portalId } = await context.params;
     const worldParam = request.nextUrl.searchParams.get('world');
-    const isClaim = request.nextUrl.searchParams.get('claim') === 'true';
-    const claimMapEntryId = request.nextUrl.searchParams.get('mapEntryId');
 
     if (!worldParam || !(worldParam === 'overworld' || worldParam === 'nether')) {
       return NextResponse.json({ error: 'World parameter is missing or invalid.' }, { status: 400 });
     }
 
     const world = worldParam as World;
-    if (isClaim && !claimMapEntryId) {
-      return NextResponse.json(
-        { error: 'Le portail à revendiquer est introuvable.' },
-        { status: 400 },
-      );
-    }
-
     const portal = await prisma.portal.findFirst({
-      where: isClaim
-        ? { mapEntryId: claimMapEntryId!, world }
-        : { slug: portalId, world },
+      where: { slug: portalId, world },
       include: {
         mapEntry: {
           include: {
@@ -85,16 +74,11 @@ export async function PUT(request: NextRequest, context: PortalRouteContext) {
       primaryManagerId: portal.mapEntry.primaryManagerId,
       managerIds: portal.mapEntry.managers.map(({ userId }) => userId),
     };
-    if (isClaim && !canContribute(actorRole)) {
-      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
-    }
-    if (isClaim && !isPortalUnidentified(portal.name)) {
-      return NextResponse.json(
-        { error: 'Ce portail ne peut pas être revendiqué.' },
-        { status: 409 },
-      );
-    }
-    if (!isClaim && !canManageContent(actorRole, session.user.id, access)) {
+    const canManage = canManageContent(actorRole, session.user.id, access);
+    const isClaim = !canManage
+      && isPortalUnidentified(portal.name)
+      && canContribute(actorRole);
+    if (!canManage && !isClaim) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

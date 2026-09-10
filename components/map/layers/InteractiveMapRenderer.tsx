@@ -1,23 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { themeColors } from '@/lib/theme-colors';
-import { OVERWORLD_MAP_WORLD, type MapMetadata, type MapWorld } from '@/lib/map/metadata';
-import type { MapLineOverlay } from '@/lib/map/overlays';
-import type { MapRoutePath } from '@/lib/map/route-path';
+import { OVERWORLD_MAP_WORLD } from '@/lib/map/metadata';
 import MapCanvas from './MapCanvas';
 import MapEdgeHalo from './MapEdgeHalo';
 import MapPointsLayer from './MapPointsLayer';
-import MapStatus from './MapStatus';
+import MapRendererStatus from './MapRendererStatus';
+import MapGridInteractionLayer from './MapGridInteractionLayer';
 import RouteMapCanvas from './RouteMapCanvas';
 import MapTooltipPortal from '../tooltip/MapTooltipPortal';
 import {
   ICON_MIN_MAP_CELL_PIXEL_SIZE,
+  ICON_MAX_MAP_CELL_PIXEL_SIZE,
   MAP_ICON_MAX_SCALE,
   MAP_ICON_MIN_SCALE,
   MAP_TILE_MIN_OVERVIEW_PIXEL_SIZE,
+  BLOCK_GRID_MIN_PIXEL_SIZE,
 } from '../core/map-constants';
 import { getMapDrawRect } from '../core/map-geometry';
+import { getMapBlockPixelSize } from '../core/map-grid';
 import { useMapFocus } from '../hooks/useMapFocus';
 import { useMapImage } from '../hooks/useMapImage';
 import { useMapInteractions } from '../hooks/useMapInteractions';
@@ -27,29 +29,11 @@ import { useMapRoutePoints } from '../hooks/useMapRoutePoints';
 import { useMapTiles } from '../hooks/useMapTiles';
 import { useMapTooltip } from '../hooks/useMapTooltip';
 import { useMapView } from '../hooks/useMapView';
+import { useMapGridInteraction } from '../hooks/useMapGridInteraction';
+import { useMapWorldViewPersistence } from '../hooks/useMapWorldViewPersistence';
 import { usePointRenderMode, useViewportPointIcons } from '../hooks/usePointRenderMode';
-import { MIN_ZOOM, clamp, type MapPan } from '../core/map-view';
-import type { InteractiveMapPoint, ScreenMapPoint } from '../core/map-types';
-interface InteractiveMapRendererProps {
-  metadata: MapMetadata;
-  points: InteractiveMapPoint[];
-  loading?: boolean;
-  error?: string | null;
-  variant?: 'panel' | 'background';
-  world?: MapWorld;
-  lineOverlays?: MapLineOverlay[];
-  focusedPointId?: string;
-  routePath?: MapRoutePath | null;
-  activeRouteSegmentId?: string | null;
-  syncedPlayerUuid?: string | null;
-  linkedMinecraftUuid?: string | null;
-  onMapClick?: () => void;
-  onPointSelect?: (point: InteractiveMapPoint) => void;
-}
-type MapViewSnapshot = {
-  zoom: number;
-  pan: MapPan;
-};
+import { MIN_ZOOM, clamp, getZoomForMapCellPixelSize } from '../core/map-view';
+import type { InteractiveMapRendererProps, ScreenMapPoint } from '../core/map-types';
 export default function InteractiveMapRenderer({
   metadata,
   points,
@@ -63,14 +47,22 @@ export default function InteractiveMapRenderer({
   activeRouteSegmentId,
   syncedPlayerUuid,
   linkedMinecraftUuid,
+  enableGridContentCreation = false,
   onMapClick,
   onPointSelect,
 }: InteractiveMapRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const previousWorldRef = useRef(world);
-  const viewByWorldRef = useRef<Partial<Record<MapWorld, MapViewSnapshot>>>({});
   const { imageFailed, mapImage } = useMapImage(metadata.overview.image);
   const view = useMapView(metadata);
+  const isWorldSwitching = useMapWorldViewPersistence({
+    cancelAnimation: view.cancelAnimation,
+    clampPan: view.clampPan,
+    commitView: view.commitView,
+    maxZoom: view.maxZoom,
+    panRef: view.panRef,
+    world,
+    zoomRef: view.zoomRef,
+  });
   const mapTiles = useMapTiles({
     metadata,
     viewport: view.viewport,
@@ -81,16 +73,38 @@ export default function InteractiveMapRenderer({
   });
   const showPointIcons = view.mapCellPixelSize >= ICON_MIN_MAP_CELL_PIXEL_SIZE;
   const { pointRenderMode, animatePointTransitions } = usePointRenderMode(showPointIcons, world);
-  const isWorldSwitching = previousWorldRef.current !== world;
   const effectivePointRenderMode = isWorldSwitching
     ? (showPointIcons ? 'icons' : 'points')
     : pointRenderMode;
   const iconScale = useMemo(() => {
-    const zoomRange = view.maxZoom - MIN_ZOOM;
+    const iconMaxZoom = getZoomForMapCellPixelSize(
+      view.baseSize.width,
+      metadata,
+      ICON_MAX_MAP_CELL_PIXEL_SIZE,
+    );
+    const zoomRange = iconMaxZoom - MIN_ZOOM;
     const zoomProgress = zoomRange > 0 ? clamp((view.zoom - MIN_ZOOM) / zoomRange, 0, 1) : 0;
     return MAP_ICON_MIN_SCALE + (MAP_ICON_MAX_SCALE - MAP_ICON_MIN_SCALE) * zoomProgress;
-  }, [view.maxZoom, view.zoom]);
+  }, [metadata, view.baseSize.width, view.zoom]);
   const isBlocked = loading || !!error || (imageFailed && !metadata.fallbackBackground);
+  const mapDrawRect = useMemo(() => getMapDrawRect(
+    view.viewport,
+    view.baseSize,
+    view.zoom,
+    view.pan,
+  ), [view.baseSize, view.pan, view.viewport, view.zoom]);
+  const gridEnabled = enableGridContentCreation
+    && !isBlocked
+    && getMapBlockPixelSize(metadata, mapDrawRect) >= BLOCK_GRID_MIN_PIXEL_SIZE;
+  const gridInteraction = useMapGridInteraction({
+    baseSize: view.baseSize,
+    enabled: gridEnabled,
+    metadata,
+    pan: view.pan,
+    resetKey: world,
+    viewport: view.viewport,
+    zoom: view.zoom,
+  });
   const pointsState = useMapPoints({
     points,
     metadata,
@@ -154,8 +168,14 @@ export default function InteractiveMapRenderer({
   ), [effectiveFocusedPointId, pointsState.positionedPoints]);
   const handleMapMoveStart = useCallback(() => {
     collapseFocusedPreview();
+    gridInteraction.clearHover();
+    gridInteraction.clearSelection();
     hidePointTooltip();
-  }, [collapseFocusedPreview, hidePointTooltip]);
+  }, [collapseFocusedPreview, gridInteraction, hidePointTooltip]);
+  const handleMapClick = useCallback((position: { x: number; y: number }) => {
+    onMapClick?.();
+    gridInteraction.selectCell(position);
+  }, [gridInteraction, onMapClick]);
   const interactions = useMapInteractions({
     isBlocked,
     viewportRef: view.viewportRef,
@@ -168,7 +188,7 @@ export default function InteractiveMapRenderer({
     scheduleView: view.scheduleView,
     cancelAnimation: view.cancelAnimation,
     onMapMoveStart: handleMapMoveStart,
-    onMapClick,
+    onMapClick: handleMapClick,
     onPointSelect,
   });
   const iconPointIds = useViewportPointIcons({
@@ -179,44 +199,14 @@ export default function InteractiveMapRenderer({
     pointRenderMode: effectivePointRenderMode,
     resetKey: world,
   });
-  useLayoutEffect(() => {
-    const previousWorld = previousWorldRef.current;
-    if (previousWorld === world) {
-      return;
-    }
-
-    view.cancelAnimation();
-    viewByWorldRef.current[previousWorld] = {
-      zoom: view.zoomRef.current,
-      pan: view.panRef.current,
-    };
-
-    const savedView = viewByWorldRef.current[world] ?? {
-      zoom: 1,
-      pan: { x: 0, y: 0 },
-    };
-    const nextZoom = clamp(savedView.zoom, MIN_ZOOM, view.maxZoom);
-    view.commitView(nextZoom, view.clampPan(savedView.pan, nextZoom));
+  const blockGridVisible = gridEnabled && !interactions.isZooming;
+  useEffect(() => {
     clearPointTooltip();
-    previousWorldRef.current = world;
-  }, [clearPointTooltip, view, world]);
+  }, [clearPointTooltip, world]);
 
   useEffect(() => {
     updateScreenPointLookup(pointsState.screenPointById);
   }, [pointsState.screenPointById, updateScreenPointLookup]);
-
-  useEffect(() => {
-    const node = view.viewportRef.current;
-    if (!node) return;
-
-    const preventScroll = (event: WheelEvent) => {
-      event.preventDefault();
-    };
-    node.addEventListener('wheel', preventScroll, { passive: false });
-    return () => {
-      node.removeEventListener('wheel', preventScroll);
-    };
-  }, [view.viewportRef]);
 
   useMapFocus({
     enabled: activeRoute.segments.length === 0,
@@ -235,18 +225,12 @@ export default function InteractiveMapRenderer({
     onFocusComplete: handleFocusComplete,
   });
 
-  const mapBounds = useMemo(() => {
-    if (!view.viewport.width || !view.viewport.height || !view.baseSize.width || !view.baseSize.height) {
-      return null;
-    }
-
-    return getMapDrawRect(
-      view.viewport,
-      view.baseSize,
-      view.zoom,
-      view.pan
-    );
-  }, [view.baseSize, view.pan, view.viewport, view.zoom]);
+  const mapBounds = view.viewport.width
+    && view.viewport.height
+    && view.baseSize.width
+    && view.baseSize.height
+    ? mapDrawRect
+    : null;
 
   const rendererClassName = variant === 'background'
     ? 'relative h-full w-full min-h-0 overflow-hidden select-none'
@@ -260,34 +244,36 @@ export default function InteractiveMapRenderer({
         style={{
           overscrollBehavior: 'contain',
           touchAction: 'none',
-          cursor: interactions.isPanning ? 'grabbing' : 'grab',
+          cursor: interactions.isPanning
+            ? 'grabbing'
+            : blockGridVisible
+              ? 'crosshair'
+              : 'grab',
         }}
         aria-label={`Carte interactive ${world === OVERWORLD_MAP_WORLD ? "de l'Overworld" : 'du Nether'}`}
         role="application"
         onWheel={interactions.handleWheel}
         onPointerDown={interactions.handlePointerDown}
-        onPointerMove={interactions.handlePointerMove}
+        onPointerMove={(event) => {
+          if (blockGridVisible && !interactions.isPanning) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            gridInteraction.updateHover({
+              x: event.clientX - rect.left,
+              y: event.clientY - rect.top,
+            });
+          }
+          interactions.handlePointerMove(event);
+        }}
+        onPointerLeave={gridInteraction.clearHover}
         onPointerUp={interactions.handlePointerUp}
         onPointerCancel={(event) => interactions.handlePointerCancel(event.currentTarget, event.pointerId)}
         onLostPointerCapture={interactions.handleLostPointerCapture}
       >
-        {loading && (
-          <MapStatus className={themeColors.text.tertiary}>
-            Chargement...
-          </MapStatus>
-        )}
-
-        {error && (
-          <MapStatus className={themeColors.feedback.errorText}>
-            {error}
-          </MapStatus>
-        )}
-
-        {imageFailed && !metadata.fallbackBackground && (
-          <MapStatus className={themeColors.feedback.errorText}>
-            Image de carte indisponible.
-          </MapStatus>
-        )}
+        <MapRendererStatus
+          error={error}
+          imageUnavailable={imageFailed && !metadata.fallbackBackground}
+          loading={loading}
+        />
 
         <MapCanvas
           canvasRef={canvasRef}
@@ -299,8 +285,17 @@ export default function InteractiveMapRenderer({
           pan={view.pan}
           metadata={metadata}
           lineOverlays={lineOverlays}
-          showBlockGrid={!interactions.isZooming}
+          showBlockGrid={blockGridVisible}
         />
+        {blockGridVisible && (
+          <MapGridInteractionLayer
+            hoveredCell={gridInteraction.hoveredCell}
+            onDismiss={gridInteraction.clearSelection}
+            selectedCell={gridInteraction.selectedCell}
+            viewport={view.viewport}
+            world={world}
+          />
+        )}
         {!isBlocked && activeRoute.focusKey && (
           <RouteMapCanvas
             animationKey={activeRoute.focusKey}

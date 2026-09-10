@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import WrenchIcon from '@/components/icons/WrenchIcon';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
 import AdminModeSelector from '@/components/admin/AdminModeSelector';
-import FloatingStatusBubble from '@/components/ui/FloatingStatusBubble';
+import FloatingStatusBubble, {
+  floatingStatusBubbleCompactClassName,
+} from '@/components/ui/FloatingStatusBubble';
 import { themeColors } from '@/lib/theme-colors';
 import { GLOBAL_FOREGROUND_Z_INDEX } from '@/lib/ui/overlay';
 
@@ -56,10 +58,10 @@ export default function AdminModeIndicator() {
             scheduleExpansion(false, COLLAPSE_DELAY_MS);
           }
         }}
-        className="flex items-center gap-1.5 py-1 pl-2 pr-1"
+        className={`flex items-center gap-1.5 pl-2 pr-1 ${floatingStatusBubbleCompactClassName}`}
       >
         <WrenchIcon className={`h-4 w-4 ${themeColors.text.tertiary}`} />
-        <span className={`text-xs font-medium ${themeColors.text.tertiary}`}>
+        <span className={themeColors.text.tertiary}>
           Mode
         </span>
         <AdminModeSelector collapsed={!expanded} />

@@ -198,7 +198,7 @@ describe('data-loading projections', () => {
     expect(parseSpaceSummarySort('name-desc')).toBe('name-desc');
     expect(parseSpaceSummarySort('content-asc')).toBe('content-asc');
     expect(parseSpaceSummarySort('content-desc')).toBe('content-desc');
-    expect(parseSpaceSummarySort('unsupported')).toBe('name-asc');
-    expect(parseSpaceSummarySort(null)).toBe('name-asc');
+    expect(parseSpaceSummarySort('unsupported')).toBe('content-desc');
+    expect(parseSpaceSummarySort(null)).toBe('content-desc');
   });
 });

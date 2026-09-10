@@ -22,7 +22,7 @@ export interface MapPan {
 
 const MIN_MAP_FIT_RATIO = 0.85;
 export const MIN_ZOOM = MIN_MAP_FIT_RATIO;
-const MAX_MAP_CELL_PIXEL_SIZE = 128;
+const MAX_MAP_BLOCK_PIXEL_SIZE = 16;
 
 export const clamp = (value: number, min: number, max: number) => (
   Math.min(Math.max(value, min), max)
@@ -65,8 +65,10 @@ export const getMaxZoom = (baseWidth: number, metadata: MapMetadata) => {
     return MIN_ZOOM;
   }
 
-  const cellPixelSizeAtFit = baseWidth / metadata.overview.width;
-  return Math.max(MIN_ZOOM, MAX_MAP_CELL_PIXEL_SIZE / cellPixelSizeAtFit);
+  const blockPixelSizeAtFit = (
+    baseWidth / metadata.overview.width / metadata.overview.cellSize
+  );
+  return Math.max(MIN_ZOOM, MAX_MAP_BLOCK_PIXEL_SIZE / blockPixelSizeAtFit);
 };
 
 export const getZoomForMapCellPixelSize = (

@@ -66,6 +66,7 @@ export default function MainMapBackground({
         focusedPointId={focusedPointId}
         routePath={routePath}
         activeRouteSegmentId={activeRouteSegmentId}
+        enableGridContentCreation
         syncedPlayerUuid={syncedPlayerUuid}
         linkedMinecraftUuid={linkedMinecraftUuid}
         onMapClick={onClearSelection}

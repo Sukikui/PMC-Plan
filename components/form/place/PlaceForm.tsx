@@ -48,12 +48,14 @@ import {
   type PlaceFormPayload,
   type UpdateTradeOffer,
 } from './place-form-types';
+import type { InitialMapPosition } from '../common/form-values';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { DEFAULT_CONTENT_COLOR } from '@/lib/content/colors';
 
 export type { InitialPlaceData, PlaceFormPayload } from './place-form-types';
 
 interface PlaceFormProps {
+  initialPosition?: InitialMapPosition;
   mode?: 'add' | 'edit';
   initialData?: InitialPlaceData;
   onSubmit: (payload: PlaceFormPayload) => Promise<void>;
@@ -64,6 +66,7 @@ interface PlaceFormProps {
 export default function PlaceForm({
   mode = 'add',
   initialData,
+  initialPosition,
   onSubmit,
   onCancel,
   onDelete,
@@ -74,17 +77,32 @@ export default function PlaceForm({
     initialData?.description,
   );
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_CONTENT_COLOR);
-  const [placeWorld, setPlaceWorld] = useState<'overworld' | 'nether'>(initialData?.world === 'nether' ? 'nether' : 'overworld');
+  const [placeWorld, setPlaceWorld] = useState<'overworld' | 'nether'>(
+    initialData?.world === 'nether' || (!initialData && initialPosition?.world === 'nether')
+      ? 'nether'
+      : 'overworld',
+  );
   const [placeCategory, setPlaceCategory] = useState<PlaceCategory>(
     initialData?.category && isPlaceCategory(initialData.category)
       ? initialData.category
       : DEFAULT_PLACE_CATEGORY
   );
-  const [placeCoords, setPlaceCoords] = useState<CoordinatesInput>(initialData?.coordinates ? {
-    x: String(initialData.coordinates.x),
-    y: String(initialData.coordinates.y),
-    z: String(initialData.coordinates.z),
-  } : blankCoords);
+  const [placeCoords, setPlaceCoords] = useState<CoordinatesInput>(() => {
+    if (initialData?.coordinates) {
+      return {
+        x: String(initialData.coordinates.x),
+        y: String(initialData.coordinates.y),
+        z: String(initialData.coordinates.z),
+      };
+    }
+    return initialPosition
+      ? {
+          x: String(initialPosition.x),
+          y: String(initialPosition.y),
+          z: String(initialPosition.z),
+        }
+      : blankCoords;
+  });
   const placeAddress = useNetherAddress({
     enabled: placeWorld === 'nether',
     coords: placeCoords,

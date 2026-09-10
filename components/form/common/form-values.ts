@@ -1,4 +1,16 @@
 import { CONTENT_FIELD_LIMITS } from '@/lib/content/constraints';
+import type { MapWorld } from '@/lib/map/metadata';
+
+export interface InitialMapPosition {
+  world: MapWorld;
+  x: number;
+  y: number;
+  z: number;
+}
+
+export const getDefaultMapY = (world: MapWorld) => (
+  world === 'nether' ? 71 : 64
+);
 
 export const slugify = (value: string) => {
   return value

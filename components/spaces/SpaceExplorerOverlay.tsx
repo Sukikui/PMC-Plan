@@ -13,7 +13,11 @@ import InfiniteLoadSentinel from '@/components/ui/InfiniteLoadSentinel';
 import { useDebouncedValue } from '@/components/ui/useDebouncedValue';
 import { spaceSummariesQueryOptions } from '@/lib/spaces/client';
 import { formatSpaceContentSummary } from '@/lib/spaces/summary';
-import type { SpaceSummary, SpaceSummarySort } from '@/lib/spaces/types';
+import {
+  DEFAULT_SPACE_SUMMARY_SORT,
+  type SpaceSummary,
+  type SpaceSummarySort,
+} from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
 
 interface SpaceExplorerOverlayProps {
@@ -26,7 +30,7 @@ export default function SpaceExplorerOverlay({
   onOpenSpace,
 }: SpaceExplorerOverlayProps) {
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<SpaceSummarySort>('name-asc');
+  const [sort, setSort] = useState<SpaceSummarySort>(DEFAULT_SPACE_SUMMARY_SORT);
   const deferredQuery = useDebouncedValue(query.trim());
   const spacesQuery = useInfiniteQuery(
     spaceSummariesQueryOptions(deferredQuery, sort),
@@ -84,8 +88,6 @@ export default function SpaceExplorerOverlay({
 }
 
 const spaceSortOptions = [
-  { value: 'name-asc', label: 'A ↑' },
-  { value: 'name-desc', label: 'Z ↓' },
   {
     value: 'content-desc',
     label: 'Contenu ↑',
@@ -96,6 +98,8 @@ const spaceSortOptions = [
     label: 'Contenu ↓',
     title: 'Espaces avec le moins de lieux et de portails en premier',
   },
+  { value: 'name-asc', label: 'A ↑' },
+  { value: 'name-desc', label: 'Z ↓' },
 ] as const;
 
 function SpaceExplorerContent({

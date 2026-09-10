@@ -3,7 +3,7 @@
 import { useState, type DragEvent } from 'react';
 import CrossIcon from '@/components/icons/CrossIcon';
 import PlusIcon from '@/components/icons/PlusIcon';
-import FormHint from '@/components/form/common/FormHint';
+import { ImageHostingHint } from '@/components/form/common/FormHint';
 import { imageUrlPlaceholder } from '@/components/form/common/form-placeholders';
 import { formInputClassName } from '@/components/form/common/form-styles';
 import { themeColors } from '@/lib/theme-colors';
@@ -153,19 +153,7 @@ export default function ContentImagesField({
               : imageUrlPlaceholder('image-supplementaire')}
             inputMode="url"
           />
-          <FormHint className="mt-2">
-            N&apos;utilisez pas les liens CDN Discord : ils sont temporaires. Préférez un
-            hébergeur d&apos;images gratuit comme{' '}
-            <a
-              href="https://postimages.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${themeColors.text.accent} ${themeColors.interactive.hoverAccentText}`}
-            >
-              Postimages
-            </a>
-            .
-          </FormHint>
+          <ImageHostingHint className="mt-2" />
           {previewErrors[selectedImage.id] && (
             <p className={`mt-1 text-xs ${themeColors.feedback.errorText}`}>
               Impossible de charger cette image. Vérifiez son URL ou retirez-la.

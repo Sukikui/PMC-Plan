@@ -108,11 +108,11 @@ describe('portal schemas', () => {
       .toEqual(created);
   });
 
-  it('prevents an identified portal from becoming unidentified again', () => {
-    expect(() => updatePortalIdentity(
+  it('lets an identified portal become unidentified with a generated slug', () => {
+    expect(updatePortalIdentity(
       { name: 'Portail central', slug: 'portail-central' },
       { status: 'unidentified', slug: 'portail-a7k9x' },
-    )).toThrow('Un portail identifié ne peut pas redevenir inconnu.');
+    )).toEqual({ name: null, slug: 'portail-a7k9x' });
   });
 
   it('preserves an unidentified portal technical slug during updates', () => {

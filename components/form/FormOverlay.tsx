@@ -9,9 +9,7 @@ import { canManageContent } from '@/lib/content-permissions';
 import { themeColors } from '@/lib/theme-colors';
 import PlaceForm from './place/PlaceForm';
 import PortalForm from './portal/PortalForm';
-import ServiceForm, {
-  type InitialServiceData,
-} from './service/ServiceForm';
+import ServiceForm, { type InitialServiceData } from './service/ServiceForm';
 import SpaceForm from '@/components/spaces/SpaceForm';
 import { useSession } from 'next-auth/react';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
@@ -22,7 +20,6 @@ import {
   transferSpaceRequest,
   updateSpaceRequest,
 } from '@/lib/spaces/client';
-
 import type { InitialPlaceData, PlaceFormPayload } from './place/PlaceForm';
 import type { InitialPortalData, PortalFormPayload } from './portal/PortalForm';
 import type { Space, SpaceInput } from '@/lib/spaces/types';
@@ -39,7 +36,7 @@ import {
   getMapEntrySaveEndpoint,
 } from './form-endpoints';
 import type { InfoOverlayContentTarget } from '@/lib/ui/info-overlay-stack';
-
+import type { InitialMapPosition } from './common/form-values';
 type FormInitialData = (
   (InitialPlaceData & { type: 'place' })
   | (InitialPortalData & { type: 'portal' })
@@ -50,9 +47,9 @@ type FormInitialData = (
 export type FormCategory = 'portal' | 'place' | 'service' | 'space';
 
 export interface OpenFormOverlayOptions {
-  intent?: 'claim';
   initialCategory?: FormCategory;
   initialData?: FormInitialData;
+  initialPosition?: InitialMapPosition;
   mode: 'add' | 'edit';
   onSpaceSaved?: (space: Space) => void;
 }
@@ -76,7 +73,7 @@ const categoryTabs = [
 export default function FormOverlay({
   initialCategory,
   initialData,
-  intent,
+  initialPosition,
   mode,
   onClose,
   onDeleted,
@@ -104,13 +101,19 @@ export default function FormOverlay({
     && initialData
     && canManageContent(effectiveRole, session?.user?.id, initialData),
   );
+  const isPortalClaim = Boolean(
+    mode === 'edit'
+    && initialData?.type === 'portal'
+    && initialData.unidentified
+    && !canManageContent(effectiveRole, session?.user?.id, initialData),
+  );
 
   const handleSubmit = async (entityType: 'place' | 'portal', payload: PlaceFormPayload | PortalFormPayload) => {
     const mapEntryData = initialData?.type === 'place'
       || initialData?.type === 'portal'
       ? initialData
       : undefined;
-    const url = getMapEntrySaveEndpoint(entityType, mode, mapEntryData, intent);
+    const url = getMapEntrySaveEndpoint(entityType, mode, mapEntryData);
     const method = mode === 'add' ? 'POST' : 'PUT';
     const entityLabel = entityType === 'place' ? 'lieu' : 'portail';
 
@@ -246,6 +249,7 @@ export default function FormOverlay({
         <PlaceForm
           mode={mode}
           initialData={initialData?.type === 'place' ? initialData : undefined}
+          initialPosition={initialPosition}
           onSubmit={handlePlaceSubmit}
           onCancel={onClose}
           onDelete={initialData?.type === 'place' && initialData.canDelete
@@ -259,9 +263,10 @@ export default function FormOverlay({
       className: 'pt-16',
       content: (
         <PortalForm
-          intent={intent}
+          managementMode={isPortalClaim ? 'add' : mode}
           mode={mode}
           initialData={initialData?.type === 'portal' ? initialData : undefined}
+          initialPosition={initialPosition}
           onSubmit={handlePortalSubmit}
           onCancel={onClose}
           onDelete={initialData?.type === 'portal' && initialData.canDelete

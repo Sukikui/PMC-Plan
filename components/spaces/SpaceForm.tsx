@@ -9,7 +9,7 @@ import ContentColorField, {
   ContentPresentationSection,
 } from '@/components/form/common/ContentColorField';
 import FormField from '@/components/form/common/FormField';
-import FormHint from '@/components/form/common/FormHint';
+import FormHint, { ImageHostingHint } from '@/components/form/common/FormHint';
 import FormSection from '@/components/form/common/FormSection';
 import LabeledRangeField, {
   rangeFieldSectionClassName,
@@ -155,6 +155,7 @@ export default function SpaceForm({
                   logoUrl: event.target.value,
                 }))}
               />
+              <ImageHostingHint className="mt-2" />
             </FormField>
           </div>
         </div>

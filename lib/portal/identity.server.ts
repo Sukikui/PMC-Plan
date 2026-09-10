@@ -59,20 +59,14 @@ export function updatePortalIdentity(
   if (input.status === 'identified') {
     return normalizeIdentifiedPortal(input);
   }
-  if (stored.name) {
-    throw new MapEntryError(
-      'Un portail identifié ne peut pas redevenir inconnu.',
-      400,
-    );
-  }
-  if (stored.slug !== input.slug) {
+  if (!stored.name && stored.slug !== input.slug) {
     throw new MapEntryError(
       'L’identifiant technique d’un portail inconnu ne peut pas être modifié.',
       400,
     );
   }
 
-  return { slug: stored.slug, name: null };
+  return { slug: stored.name ? input.slug : stored.slug, name: null };
 }
 
 function normalizeIdentifiedPortal(

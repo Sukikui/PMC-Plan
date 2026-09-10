@@ -1225,19 +1225,19 @@ once for the complete linked pair; an associated space color remains visually
 authoritative. The `images` array is also replaced once on the shared
 `MapEntry`, so both worlds always expose the same ordered gallery. An
 unidentified portal can be identified later by submitting an `identified`
-identity with its final name and slug. Once identified, it cannot be reverted
-to the unidentified state.
+identity with its final name and slug. An identified portal can also be marked
+as unidentified again by submitting an `unidentified` identity with a newly
+generated technical slug.
 
 Any approved user can claim an unidentified portal through
-`PUT /portals/{slug}?world={world}&claim=true&mapEntryId={mapEntryId}`. The
-stable map-entry identifier keeps concurrent submissions addressable even when
-the first claimant changes the slug. The request reuses the complete portal
-update payload, but requires an `identified` identity and accepts the
-creation-shaped management object. The claimant becomes the primary manager;
-the submitted secondary managers and Minecraft owners replace the temporary
-management state. Identity, content, presentation, and management are committed
-in one transaction. A conditional database update ensures that only the first
-concurrent claim succeeds; later attempts return `409`.
+`PUT /portals/{slug}?world={world}`. The API infers the claim when the caller is
+not a manager and the stored portal is still unidentified. The request reuses
+the complete portal update payload, requires an `identified` identity, and
+accepts the creation-shaped management object. The claimant becomes the
+primary manager; submitted secondary managers and Minecraft owners replace the
+temporary management state. Identity, content, presentation, and management
+are committed in one transaction. A conditional database update ensures that
+only the first concurrent claim succeeds; later attempts return `409`.
 
 ### DELETE `/portals/{slug}`
 
