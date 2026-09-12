@@ -8,8 +8,17 @@ import { mapMetadataByWorld, NETHER_MAP_WORLD, OVERWORLD_MAP_WORLD, type MapWorl
 import { netherAxisLineOverlays } from '@/lib/map/nether-overlays';
 import type { MapRoutePath } from '@/lib/map/route-path';
 import { themeColors } from '@/lib/theme-colors';
+import type { MapPreviewArea } from './core/map-view';
+import { useMapAppearance } from '@/components/preferences/PreferencesProvider';
+
+const previewAreas: Record<MapWorld, MapPreviewArea> = {
+  overworld: { x: 0, z: -2550, width: 1760, height: 1650 },
+  nether: { x: 0, z: 0, width: 1760, height: 1650 },
+};
 
 interface MainMapBackgroundProps {
+  preview?: boolean;
+  previewImagePortalRoot?: HTMLElement | null;
   world?: MapWorld;
   selectedId?: string;
   selectedType?: 'place' | 'portal';
@@ -21,6 +30,8 @@ interface MainMapBackgroundProps {
 }
 
 export default function MainMapBackground({
+  preview = false,
+  previewImagePortalRoot,
   world = OVERWORLD_MAP_WORLD,
   selectedId,
   selectedType,
@@ -31,17 +42,18 @@ export default function MainMapBackground({
   onClearSelection,
 }: MainMapBackgroundProps) {
   const { openPlaceInfo } = useOverlay();
+  const { netherAxesEnabled } = useMapAppearance();
   const { points, pointById, loading, error } = useWorldMapPoints(world);
   const metadata = mapMetadataByWorld[world];
   const lineOverlays = useMemo(() => (
-    world === NETHER_MAP_WORLD
+    world === NETHER_MAP_WORLD && netherAxesEnabled
       ? netherAxisLineOverlays.map((overlay) => ({
           ...overlay,
           strokeStyle: themeColors.map.transitionLineStroke,
           strokeOpacity: themeColors.map.transitionLineOpacity,
         }))
       : []
-  ), [world]);
+  ), [netherAxesEnabled, world]);
   const focusedPointId = useMemo(() => {
     if (!selectedId || !selectedType) {
       return undefined;
@@ -56,6 +68,8 @@ export default function MainMapBackground({
   return (
     <div className="absolute inset-0 z-0">
       <InteractiveMapRenderer
+        previewArea={preview ? previewAreas[world] : undefined}
+        previewImagePortalRoot={previewImagePortalRoot}
         metadata={metadata}
         points={points}
         loading={loading}
@@ -66,11 +80,11 @@ export default function MainMapBackground({
         focusedPointId={focusedPointId}
         routePath={routePath}
         activeRouteSegmentId={activeRouteSegmentId}
-        enableGridContentCreation
+        enableGridContentCreation={!preview}
         syncedPlayerUuid={syncedPlayerUuid}
         linkedMinecraftUuid={linkedMinecraftUuid}
-        onMapClick={onClearSelection}
-        onPointSelect={(point) => {
+        onMapClick={preview ? undefined : onClearSelection}
+        onPointSelect={preview ? undefined : (point) => {
           const selectedPoint = pointById.get(point.id);
           if (selectedPoint) {
             openPlaceInfo(selectedPoint.item, selectedPoint.itemType);

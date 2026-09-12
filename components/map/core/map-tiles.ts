@@ -13,12 +13,11 @@ export interface MapTileDescriptor extends MapTilePosition {
   height: number;
 }
 
-const TILE_OVERSCAN = 1;
-
 export const getVisibleMapTiles = (
   tiles: MapTilesMetadata,
   viewport: MapViewport,
-  drawRect: MapDrawRect
+  drawRect: MapDrawRect,
+  overscan = 1,
 ): MapTileDescriptor[] => {
   const visibleLeft = Math.max(0, drawRect.left);
   const visibleTop = Math.max(0, drawRect.top);
@@ -39,19 +38,19 @@ export const getVisibleMapTiles = (
   const sourceRight = ((visibleRight - drawRect.left) / drawRect.width) * tiles.width;
   const sourceBottom = ((visibleBottom - drawRect.top) / drawRect.height) * tiles.height;
   const firstColumn = clampTileIndex(
-    Math.floor(sourceLeft / tiles.tileSize) - TILE_OVERSCAN,
+    Math.floor(sourceLeft / tiles.tileSize) - overscan,
     tiles.columns
   );
   const lastColumn = clampTileIndex(
-    Math.ceil(sourceRight / tiles.tileSize) - 1 + TILE_OVERSCAN,
+    Math.ceil(sourceRight / tiles.tileSize) - 1 + overscan,
     tiles.columns
   );
   const firstRow = clampTileIndex(
-    Math.floor(sourceTop / tiles.tileSize) - TILE_OVERSCAN,
+    Math.floor(sourceTop / tiles.tileSize) - overscan,
     tiles.rows
   );
   const lastRow = clampTileIndex(
-    Math.ceil(sourceBottom / tiles.tileSize) - 1 + TILE_OVERSCAN,
+    Math.ceil(sourceBottom / tiles.tileSize) - 1 + overscan,
     tiles.rows
   );
   const visibleTiles: MapTileDescriptor[] = [];

@@ -5,8 +5,7 @@ import SunIcon from '@/components/icons/SunIcon';
 import MoonIcon from '@/components/icons/MoonIcon';
 import MonitorIcon from '@/components/icons/MonitorIcon';
 import { themeColors } from '@/lib/theme-colors';
-
-export type AppTheme = 'light' | 'dark' | 'system';
+import type { AppTheme } from '@/lib/preferences';
 
 interface ThemeSelectorProps {
   value: AppTheme;

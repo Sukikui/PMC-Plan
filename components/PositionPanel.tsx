@@ -119,7 +119,7 @@ export default function PositionPanel({
     } catch (err) {
       if (!isAutoSync && isMissingPlayerCoordsMod(err)) {
         setSyncError(null);
-        openSettings('appearance');
+        openSettings('integrations');
       } else {
         handleSyncError(err, isAutoSync, setSyncError, setIsShaking);
       }

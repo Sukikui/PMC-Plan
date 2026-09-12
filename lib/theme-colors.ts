@@ -307,6 +307,7 @@ export const themeColors = {
   map: {
     point: 'bg-blue-500',
     pointBorder: 'border-white/60',
+    pointBorderOpaque: 'border-white',
     blockGridStroke: 'rgba(255, 255, 255, 0.16)',
     gridCellHover: 'border border-blue-200/80 bg-blue-400/20',
     gridCellSelected: 'border-2 border-blue-200 bg-blue-400/30',

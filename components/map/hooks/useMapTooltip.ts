@@ -4,13 +4,14 @@ import type { MapTooltip, PointRenderMode, ScreenMapPoint } from '../core/map-ty
 
 export const useMapTooltip = (
   pointRenderMode: PointRenderMode,
-  previewEnabled = true
+  previewEnabled = true,
+  automaticLabelPoints?: ScreenMapPoint[],
+  offsets = { icon: ICON_TOOLTIP_OFFSET, point: POINT_TOOLTIP_OFFSET },
 ) => {
   const [focusTooltip, setFocusTooltip] = useState<MapTooltip | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<MapTooltip | null>(null);
   const [routeTooltips, setRouteTooltips] = useState<MapTooltip[]>([]);
   const [raisedPointId, setRaisedPointId] = useState<string | null>(null);
-  const [tooltipPortalRoot, setTooltipPortalRoot] = useState<HTMLElement | null>(null);
   const hoveredPointRef = useRef<{ id: string; startedAt: number } | null>(null);
   const focusedTooltipPointIdRef = useRef<string | null>(null);
   const routeTooltipPointIdsRef = useRef(new Set<string>());
@@ -19,7 +20,6 @@ export const useMapTooltip = (
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const preloadedPreviewImageAspectRatiosRef = useRef(new Map<string, number>());
   const preloadingPreviewImagesRef = useRef(new Map<string, HTMLImageElement>());
-  useEffect(() => { setTooltipPortalRoot(document.body); }, []);
 
   const clearPreviewTimeout = useCallback(() => {
     if (!previewTimeoutRef.current) return;
@@ -33,9 +33,9 @@ export const useMapTooltip = (
       routeTooltipPointIdsRef.current.has(point.id) ||
       pointRenderMode !== 'points'
     )
-      ? ICON_TOOLTIP_OFFSET
-      : POINT_TOOLTIP_OFFSET
-  ), [pointRenderMode]);
+      ? offsets.icon
+      : offsets.point
+  ), [offsets.icon, offsets.point, pointRenderMode]);
 
   const buildTooltip = useCallback((point: ScreenMapPoint, expanded: boolean): MapTooltip | null => {
     const label = point.label;
@@ -296,10 +296,17 @@ export const useMapTooltip = (
     setRaisedPointId(null);
   }, [clearPreviewTimeout]);
 
-  const tooltips = useMemo(() => (
-    [...routeTooltips, focusTooltip, hoverTooltip]
-      .filter((currentTooltip): currentTooltip is MapTooltip => Boolean(currentTooltip))
-  ), [focusTooltip, hoverTooltip, routeTooltips]);
+  const tooltips = useMemo(() => {
+    const explicit = [...routeTooltips, focusTooltip, hoverTooltip]
+      .filter((tooltip): tooltip is MapTooltip => Boolean(tooltip));
+    const ids = new Set(explicit.map((tooltip) => tooltip.pointId));
+    const automatic = (automaticLabelPoints ?? []).flatMap((point) => {
+      const tooltip = explicit.find((item) => item.pointId === point.id) ?? buildTooltip(point, false);
+      const automaticPriority = ids.delete(point.id);
+      return tooltip ? [{ ...tooltip, automatic: true, automaticPriority }] : [];
+    });
+    return [...automatic, ...explicit.filter((tooltip) => ids.has(tooltip.pointId))];
+  }, [automaticLabelPoints, buildTooltip, focusTooltip, hoverTooltip, routeTooltips]);
 
   useEffect(() => {
     if (previewEnabled) return;
@@ -330,21 +337,10 @@ export const useMapTooltip = (
   }, [clearPreviewTimeout]);
 
   return {
-    tooltips,
-    raisedPointId,
-    tooltipPortalRoot,
-    hoveredPointRef,
-    setRaisedPointId,
-    setRouteTooltipPoints,
-    updateScreenPointLookup,
-    preloadPreviewImage,
-    showPointTooltip,
-    updatePointTooltipPosition,
-    schedulePreview,
-    showFocusedPointTooltip,
-    collapseFocusedPreview,
-    hidePointTooltip,
-    hidePreviewTooltip,
-    clearPointTooltip,
+    tooltips, raisedPointId, hoveredPointRef,
+    setRaisedPointId, setRouteTooltipPoints, updateScreenPointLookup,
+    preloadPreviewImage, showPointTooltip, updatePointTooltipPosition,
+    schedulePreview, showFocusedPointTooltip, collapseFocusedPreview,
+    hidePointTooltip, hidePreviewTooltip, clearPointTooltip,
   };
 };

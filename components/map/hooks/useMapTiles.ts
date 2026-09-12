@@ -25,6 +25,7 @@ interface UseMapTilesOptions {
   zoom: number;
   pan: MapPan;
   enabled: boolean;
+  overscan?: number;
 }
 
 const tileCache = new Map<string, MapTileCacheEntry>();
@@ -37,6 +38,7 @@ export const useMapTiles = ({
   zoom,
   pan,
   enabled,
+  overscan = 1,
 }: UseMapTilesOptions) => {
   const [cacheRevision, setCacheRevision] = useState(0);
   const [animationTime, setAnimationTime] = useState(() => (
@@ -50,9 +52,10 @@ export const useMapTiles = ({
     return getVisibleMapTiles(
       metadata.tiles,
       viewport,
-      getMapDrawRect(viewport, baseSize, zoom, pan)
+      getMapDrawRect(viewport, baseSize, zoom, pan),
+      overscan,
     );
-  }, [baseSize, enabled, metadata.tiles, pan, viewport, zoom]);
+  }, [baseSize, enabled, metadata.tiles, overscan, pan, viewport, zoom]);
 
   useEffect(() => {
     const visibleSources = new Set(visibleTiles.map((tile) => tile.src));

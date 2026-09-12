@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import AddContentButton from '@/components/AddContentButton';
@@ -26,6 +26,7 @@ import SectionSeparator from '@/components/ui/SectionSeparator';
 import { useOverlayDisclosure } from '@/components/ui/useOverlayDisclosure';
 import { themeColors } from '@/lib/theme-colors';
 import { useTheme } from '@/lib/use-theme';
+import { usePreferences } from '@/components/preferences/PreferencesProvider';
 import {
   loadMinecraftLinkOverlay,
   loadSettingsOverlay,
@@ -59,6 +60,7 @@ export default function SettingsPanel({
   const settingsOverlay = useSettingsOverlay();
   const minecraftOverlay = useOverlayDisclosure();
   const { theme, changeTheme } = useTheme();
+  const { flushPreferences } = usePreferences();
   const { data: session } = useSession();
   const minecraftLink = useMinecraftLink(
     Boolean(session?.user),
@@ -67,6 +69,10 @@ export default function SettingsPanel({
   const linkedMinecraftUuid = minecraftLink.status.status === 'linked'
     ? minecraftLink.status.minecraftUuid ?? null
     : null;
+  const signOutFromSettings = useCallback(async () => {
+    await flushPreferences();
+    await signOut();
+  }, [flushPreferences]);
 
   useEffect(() => {
     onLinkedMinecraftUuidChange?.(linkedMinecraftUuid);
@@ -177,7 +183,7 @@ export default function SettingsPanel({
           onTabChange={settingsOverlay.setActiveTab}
           onLinkMinecraft={openMinecraftLink}
           onSignIn={signInFromSettings}
-          onSignOut={() => void signOut()}
+          onSignOut={() => void signOutFromSettings()}
           onThemeChange={changeTheme}
           onUnlinkMinecraft={() => void minecraftLink.unlinkAccount()}
         />

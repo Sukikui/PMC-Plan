@@ -3,7 +3,7 @@ import {
   getMapGridCellAtScreenPosition,
 } from '@/components/map/core/map-grid';
 import type { MapDrawRect } from '@/components/map/core/map-geometry';
-import { getMaxZoom } from '@/components/map/core/map-view';
+import { clampPreviewPan, getMaxZoom, getPreviewMinZoom } from '@/components/map/core/map-view';
 import type { MapMetadata } from '@/lib/map/metadata';
 
 const metadata: MapMetadata = {
@@ -36,6 +36,20 @@ const drawRect: MapDrawRect = {
 };
 
 describe('map grid geometry', () => {
+  it('fits preview bounds to the viewport aspect ratio', () => {
+    const area = { x: 0, z: 0, width: 10, height: 5 };
+    expect(getPreviewMinZoom({ width: 200, height: 100 }, { width: 200, height: 100 }, metadata, area)).toBe(2);
+    expect(getPreviewMinZoom({ width: 200, height: 100 }, { width: 100, height: 100 }, metadata, area)).toBe(1);
+  });
+
+  it('locks the fully zoomed-out preview and bounds panning when zoomed in', () => {
+    const viewport = { width: 200, height: 100 };
+    const center = { x: 30, y: -50 };
+    expect(clampPreviewPan({ x: 1000, y: -1000 }, center, viewport, 2, 2)).toEqual(center);
+    expect(clampPreviewPan({ x: 1000, y: -1000 }, center, viewport, 4, 2)).toEqual({ x: 130, y: -100 });
+    expect(clampPreviewPan({ x: 40, y: -30 }, center, viewport, 4, 2)).toEqual({ x: 40, y: -30 });
+  });
+
   it('derives the rendered size of one Minecraft block', () => {
     expect(getMapBlockPixelSize(metadata, drawRect)).toBe(10);
   });

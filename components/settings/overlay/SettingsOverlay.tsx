@@ -8,11 +8,12 @@ import {
 } from 'react';
 import type { Session } from 'next-auth';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
-import type { AppTheme } from '@/components/settings/ThemeSelector';
+import type { AppTheme } from '@/lib/preferences';
 import AccountSettings from '@/components/settings/account/AccountSettings';
 import AdminSettings from '@/components/settings/admin/AdminSettings';
 import AdminUserTransferOverlay from '@/components/settings/admin/AdminUserTransferOverlay';
 import AppearanceSettings from '@/components/settings/appearance/AppearanceSettings';
+import IntegrationSettings from '@/components/settings/integrations/IntegrationSettings';
 import CreditsSettings from '@/components/settings/credits/CreditsSettings';
 import OverlayPanel from '@/components/ui/OverlayPanel';
 import OverlaySlider from '@/components/ui/OverlaySlider';
@@ -79,6 +80,7 @@ export default function SettingsOverlay({
     () => [
       { id: 'account' as const, label: 'Compte' },
       { id: 'appearance' as const, label: 'Apparence' },
+      { id: 'integrations' as const, label: 'Intégrations' },
       { id: 'credits' as const, label: 'Crédits' },
       ...(hasAdminAccess
         ? [{ id: 'admin' as const, label: 'Administration' }]
@@ -124,11 +126,12 @@ export default function SettingsOverlay({
                   />
                 )}
                 {tab.id === 'appearance' && (
-                  <AppearanceSettings theme={theme} onThemeChange={onThemeChange} />
+                  <AppearanceSettings theme={theme} onThemeChange={onThemeChange} active={isOpen && activeTab === 'appearance'} />
                 )}
                 {tab.id === 'credits' && (
                   <CreditsSettings active={activeTab === 'credits'} />
                 )}
+                {tab.id === 'integrations' && <IntegrationSettings />}
                 {tab.id === 'admin' && (
                   <AdminSettings
                     onTransferRequired={openTransfer}

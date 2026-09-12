@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapMetadata } from '@/lib/map/metadata';
 import { getMapDrawRect } from '../core/map-geometry';
 import {
@@ -10,63 +10,76 @@ import type { MapPan, MapSize, MapViewport } from '../core/map-view';
 
 interface UseMapGridInteractionOptions {
   baseSize: MapSize;
-  enabled: boolean;
+  hoverEnabled: boolean;
   metadata: MapMetadata;
   pan: MapPan;
   resetKey: string;
+  selectionEnabled: boolean;
   viewport: MapViewport;
   zoom: number;
 }
 
 export function useMapGridInteraction({
   baseSize,
-  enabled,
+  hoverEnabled,
   metadata,
   pan,
   resetKey,
+  selectionEnabled,
   viewport,
   zoom,
 }: UseMapGridInteractionOptions) {
   const [hoveredCell, setHoveredCell] = useState<MapGridCell | null>(null);
   const [selectedCell, setSelectedCell] = useState<MapGridCell | null>(null);
+  const hoverPositionRef = useRef<MapScreenPosition | null>(null);
   const drawRect = useMemo(
     () => getMapDrawRect(viewport, baseSize, zoom, pan),
     [baseSize, pan, viewport, zoom],
   );
   const resolveCell = useCallback((position: MapScreenPosition) => (
-    enabled
-      ? getMapGridCellAtScreenPosition(metadata, drawRect, position)
-      : null
-  ), [drawRect, enabled, metadata]);
+    getMapGridCellAtScreenPosition(metadata, drawRect, position)
+  ), [drawRect, metadata]);
   const updateHover = useCallback((position: MapScreenPosition | null) => {
-    const nextCell = position ? resolveCell(position) : null;
+    hoverPositionRef.current = position;
+    const nextCell = hoverEnabled && position ? resolveCell(position) : null;
     setHoveredCell((currentCell) => (
       currentCell?.coordinates.x === nextCell?.coordinates.x
       && currentCell?.coordinates.z === nextCell?.coordinates.z
         ? currentCell
         : nextCell
     ));
-  }, [resolveCell]);
+  }, [hoverEnabled, resolveCell]);
   const selectCell = useCallback((position: MapScreenPosition) => {
+    if (!selectionEnabled) return null;
     const cell = resolveCell(position);
     setHoveredCell(cell);
     setSelectedCell(cell);
     return cell;
-  }, [resolveCell]);
-  const clearHover = useCallback(() => setHoveredCell(null), []);
+  }, [resolveCell, selectionEnabled]);
+  const clearHover = useCallback(() => {
+    hoverPositionRef.current = null;
+    setHoveredCell(null);
+  }, []);
   const clearSelection = useCallback(() => setSelectedCell(null), []);
 
   useEffect(() => {
+    hoverPositionRef.current = null;
     setHoveredCell(null);
     setSelectedCell(null);
   }, [resetKey]);
 
   useEffect(() => {
-    if (!enabled) {
+    const position = hoverPositionRef.current;
+    if (!hoverEnabled || !position) {
       setHoveredCell(null);
-      setSelectedCell(null);
+      return;
     }
-  }, [enabled]);
+    setHoveredCell(resolveCell(position));
+  }, [hoverEnabled, resolveCell]);
+
+  useEffect(() => {
+    if (!selectionEnabled) setSelectedCell(null);
+  }, [selectionEnabled]);
 
   return {
     clearHover,

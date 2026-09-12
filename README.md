@@ -2,7 +2,7 @@
 
 <h1>
 <img src="public/branding/pmc/mark.png" width="48" height="48" alt="PMC Plan icon" align="absbottom">
-<a href="https://pmc-plan.vercel.app">PMC Plan</a>
+PMC Plan
 </h1>
 
 <p>

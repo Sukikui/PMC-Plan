@@ -7,6 +7,8 @@ import styles from './RangeSlider.module.css';
 export interface RangeSliderProps {
   accentHandle?: boolean;
   ariaLabel: string;
+  valueText?: string;
+  markers?: readonly string[];
   className?: string;
   disabled?: boolean;
   gradient?: string;
@@ -20,6 +22,8 @@ export interface RangeSliderProps {
 export default function RangeSlider({
   accentHandle = false,
   ariaLabel,
+  valueText,
+  markers,
   className = '',
   disabled = false,
   gradient,
@@ -30,6 +34,7 @@ export default function RangeSlider({
   value,
 }: RangeSliderProps) {
   const progress = max === min ? 0 : (value - min) / (max - min) * 100;
+  const selectedMarkerIndex = markers ? Math.round(progress / 100 * (markers.length - 1)) : -1;
   const track = gradient ?? [
     'linear-gradient(to right,',
     'var(--color-range-accent) 0%,',
@@ -38,12 +43,14 @@ export default function RangeSlider({
     'var(--color-range-neutral) 100%)',
   ].join(' ');
 
-  return (
+  const input = (
     <input
       aria-label={ariaLabel}
-      className={`${styles.range} ${
+      aria-valuetext={valueText}
+      title={valueText}
+      className={`${styles.range} ${markers ? styles.discrete : ''} ${
         accentHandle ? styles.accentHandle : ''
-      } ${themeColors.form.colorRange} ${className}`}
+      } ${themeColors.form.colorRange} ${markers ? 'w-full' : className}`}
       disabled={disabled}
       max={max}
       min={min}
@@ -53,5 +60,21 @@ export default function RangeSlider({
       value={value}
       onChange={(event) => onChange(Number(event.target.value))}
     />
+  );
+  if (!markers) return input;
+  return (
+    <div className={`${styles.discreteContainer} ${themeColors.form.colorRange} ${themeColors.text.secondary} ${className}`}>
+      <div className={styles.markers} aria-hidden="true" style={{ '--range-progress': `${progress}%` } as CSSProperties}>
+        {markers.map((label, index) => (
+          <span key={label} className={styles.marker} data-active={index <= selectedMarkerIndex} />
+        ))}
+      </div>
+      {input}
+      <div className={`${styles.markerLabels} text-xs ${themeColors.text.secondary}`} aria-hidden="true">
+        {markers.map((label, index) => (
+          <span key={label} style={{ left: `${index * 100 / Math.max(1, markers.length - 1)}%`, width: `${100 / markers.length}%` }}>{label}</span>
+        ))}
+      </div>
+    </div>
   );
 }

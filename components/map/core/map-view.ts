@@ -20,6 +20,29 @@ export interface MapPan {
   y: number;
 }
 
+export interface MapPreviewArea {
+  x: number;
+  z: number;
+  width: number;
+  height: number;
+}
+
+export function getPreviewMinZoom(baseSize: MapSize, viewport: MapViewport, metadata: MapMetadata, area: MapPreviewArea) {
+  if (!baseSize.height || !viewport.width || !viewport.height) return MIN_ZOOM;
+  const height = Math.max(area.height, area.width * viewport.height / viewport.width);
+  return viewport.height * metadata.overview.height * metadata.overview.cellSize / (height * baseSize.height);
+}
+
+export function clampPreviewPan(pan: MapPan, center: MapPan, viewport: MapViewport, zoom: number, minZoom: number): MapPan {
+  const extent = Math.max(0, zoom / minZoom - 1);
+  const maxX = viewport.width * extent / 2;
+  const maxY = viewport.height * extent / 2;
+  return {
+    x: clamp(pan.x, center.x - maxX, center.x + maxX),
+    y: clamp(pan.y, center.y - maxY, center.y + maxY),
+  };
+}
+
 const MIN_MAP_FIT_RATIO = 0.85;
 export const MIN_ZOOM = MIN_MAP_FIT_RATIO;
 const MAX_MAP_BLOCK_PIXEL_SIZE = 16;

@@ -19,6 +19,7 @@ model User {
   discordDisplayName String?  @map("discord_display_name")
   discordAvatarUrl   String?  @map("discord_avatar_url")
   role               Role     @default(pending)
+  preferences        Json?
   createdAt          DateTime @default(now()) @map("created_at")
 
   minecraftLinkRequests MinecraftLinkRequest[]

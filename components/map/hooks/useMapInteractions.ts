@@ -19,6 +19,7 @@ interface UseMapInteractionsParams {
   panRef: React.MutableRefObject<MapPan>;
   zoomRef: React.MutableRefObject<number>;
   maxZoom: number;
+  minZoom?: number;
   clampPan: (nextPan: MapPan, nextZoom: number) => MapPan;
   commitPan: (nextPan: MapPan) => void;
   scheduleView: (nextZoom: number, nextPan: MapPan) => void;
@@ -35,6 +36,7 @@ export const useMapInteractions = ({
   panRef,
   zoomRef,
   maxZoom,
+  minZoom = MIN_ZOOM,
   clampPan,
   commitPan,
   scheduleView,
@@ -78,7 +80,7 @@ export const useMapInteractions = ({
     const currentZoom = zoomRef.current;
     const nextZoom = clamp(
       currentZoom * Math.exp(-delta * WHEEL_ZOOM_INTENSITY),
-      MIN_ZOOM,
+      minZoom,
       maxZoom
     );
     if (nextZoom === currentZoom) return;
@@ -103,7 +105,7 @@ export const useMapInteractions = ({
       x: pointer.x - mapX * nextZoom,
       y: pointer.y - mapY * nextZoom,
     }, nextZoom));
-  }, [clampPan, isBlocked, maxZoom, panRef, scheduleView, startMapInteraction, viewportRef, zoomRef]);
+  }, [clampPan, isBlocked, maxZoom, minZoom, panRef, scheduleView, startMapInteraction, viewportRef, zoomRef]);
 
   useEffect(() => () => {
     if (zoomEndTimeoutRef.current) clearTimeout(zoomEndTimeoutRef.current);
@@ -169,6 +171,7 @@ export const useMapInteractions = ({
   }, [clampPan, commitPan, panRef, startMapInteraction, zoomRef]);
 
   const handlePointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
     const pointToSelect = pendingPointSelectRef.current;
     const hasDragged = hasDraggedRef.current;
     stopPanning(event.currentTarget, event.pointerId);

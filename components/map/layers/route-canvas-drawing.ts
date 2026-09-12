@@ -41,6 +41,25 @@ export const getScreenSegmentsLength = (segments: ScreenRouteSegment[]) => segme
   0
 );
 
+export const clipRouteSegmentsToViewport = (
+  segments: ScreenRouteSegment[],
+  viewport: MapViewport,
+  margin = 0,
+) => segments.flatMap((segment) => {
+  const visiblePolylines = clipPolylineToBounds(segment.points, {
+    left: -margin,
+    right: viewport.width + margin,
+    top: -margin,
+    bottom: viewport.height + margin,
+  });
+
+  return visiblePolylines.map((points, index) => ({
+    ...segment,
+    id: `${segment.id}-visible-${index}`,
+    points,
+  }));
+});
+
 export const drawRoutePath = (
   context: CanvasRenderingContext2D,
   segments: ScreenRouteSegment[],
@@ -201,3 +220,76 @@ const strokePolyline = (
   points.slice(1).forEach((point) => context.lineTo(point.left, point.top));
   context.stroke();
 };
+
+interface ClipBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+const clipPolylineToBounds = (
+  points: RouteScreenPoint[],
+  bounds: ClipBounds,
+) => {
+  const polylines: RouteScreenPoint[][] = [];
+
+  for (let index = 1; index < points.length; index += 1) {
+    const clipped = clipLineToBounds(points[index - 1], points[index], bounds);
+    if (!clipped) continue;
+
+    const current = polylines.at(-1);
+    if (current && pointsMatch(current.at(-1)!, clipped[0])) {
+      current.push(clipped[1]);
+    } else {
+      polylines.push(clipped);
+    }
+  }
+
+  return polylines;
+};
+
+const clipLineToBounds = (
+  start: RouteScreenPoint,
+  end: RouteScreenPoint,
+  bounds: ClipBounds,
+): [RouteScreenPoint, RouteScreenPoint] | null => {
+  const deltaX = end.left - start.left;
+  const deltaY = end.top - start.top;
+  let minimum = 0;
+  let maximum = 1;
+  const edges = [
+    [-deltaX, start.left - bounds.left],
+    [deltaX, bounds.right - start.left],
+    [-deltaY, start.top - bounds.top],
+    [deltaY, bounds.bottom - start.top],
+  ] as const;
+
+  for (const [direction, distance] of edges) {
+    if (direction === 0) {
+      if (distance < 0) return null;
+      continue;
+    }
+
+    const ratio = distance / direction;
+    if (direction < 0) minimum = Math.max(minimum, ratio);
+    else maximum = Math.min(maximum, ratio);
+    if (minimum > maximum) return null;
+  }
+
+  return [
+    {
+      left: start.left + minimum * deltaX,
+      top: start.top + minimum * deltaY,
+    },
+    {
+      left: start.left + maximum * deltaX,
+      top: start.top + maximum * deltaY,
+    },
+  ];
+};
+
+const pointsMatch = (first: RouteScreenPoint, second: RouteScreenPoint) => (
+  Math.abs(first.left - second.left) < 0.01
+  && Math.abs(first.top - second.top) < 0.01
+);

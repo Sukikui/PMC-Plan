@@ -32,7 +32,14 @@ interface MapPointsLayerProps {
   updatePointTooltipPosition: (point: ScreenMapPoint) => void;
   schedulePreview: (point: ScreenMapPoint) => void;
   hidePointTooltip: () => void;
+  pointAppearance: PointAppearance;
   onPointSelect?: (point: InteractiveMapPoint) => void;
+}
+
+interface PointAppearance {
+  borderWidth: number;
+  size: number;
+  translucentBorder: boolean;
 }
 
 export default function MapPointsLayer({
@@ -51,6 +58,7 @@ export default function MapPointsLayer({
   updatePointTooltipPosition,
   schedulePreview,
   hidePointTooltip,
+  pointAppearance,
   onPointSelect,
 }: MapPointsLayerProps) {
   return (
@@ -138,6 +146,7 @@ export default function MapPointsLayer({
                 iconScale={iconScale}
                 markerColor={point.markerColor}
                 pointShape={pointShape}
+                pointAppearance={pointAppearance}
                 revealDelay={revealDelay}
                 animateExit={animatePointTransitions}
               />
@@ -146,6 +155,7 @@ export default function MapPointsLayer({
                 markerColor={point.markerColor}
                 pointShape={pointShape}
                 isRaised={isPointRaised}
+                pointAppearance={pointAppearance}
               />
             )}
           </button>
@@ -195,6 +205,7 @@ function IconToPoint({
   iconScale,
   markerColor,
   pointShape,
+  pointAppearance,
   revealDelay,
   animateExit,
 }: {
@@ -202,6 +213,7 @@ function IconToPoint({
   iconScale: number;
   markerColor?: string;
   pointShape: MapPointShape;
+  pointAppearance: PointAppearance;
   revealDelay: number;
   animateExit: boolean;
 }) {
@@ -217,7 +229,7 @@ function IconToPoint({
         '--map-icon-to-point-duration': `${MAP_ICON_TO_POINT_DURATION_MS}ms`,
       } as React.CSSProperties}
     >
-      <PointMarker color={markerColor} shape={pointShape} />
+      <PointMarker color={markerColor} shape={pointShape} appearance={pointAppearance} />
       <span
         className={`${shouldAnimate ? 'map-icon-to-point' : 'opacity-0'} absolute inset-0 block bg-contain bg-center bg-no-repeat`}
         style={{ backgroundImage: `url(${iconSrc})` }}
@@ -235,14 +247,21 @@ function DotPoint({
   markerColor,
   pointShape,
   isRaised,
+  pointAppearance,
 }: {
   markerColor?: string;
   pointShape: MapPointShape;
   isRaised: boolean;
+  pointAppearance: PointAppearance;
 }) {
   return (
     <span className="relative block h-4 w-4">
-      <PointMarker color={markerColor} shape={pointShape} isRaised={isRaised} />
+      <PointMarker
+        appearance={pointAppearance}
+        color={markerColor}
+        shape={pointShape}
+        isRaised={isRaised}
+      />
     </span>
   );
 }
@@ -250,10 +269,12 @@ function DotPoint({
 type MapPointShape = 'circle' | 'diamond';
 
 function PointMarker({
+  appearance,
   color,
   shape,
   isRaised,
 }: {
+  appearance: PointAppearance;
   color?: string;
   shape: MapPointShape;
   isRaised?: boolean;
@@ -267,8 +288,13 @@ function PointMarker({
 
   return (
     <span
-      className={`absolute left-1/2 top-1/2 block h-2 w-2 -translate-x-1/2 -translate-y-1/2 border ${themeColors.map.pointBorder} ${themeColors.map.point} ${shapeClass} transition-transform duration-150 ease-out ${raisedClass}`}
-      style={color ? { backgroundColor: color } : undefined}
+      className={`absolute left-1/2 top-1/2 block h-2 w-2 -translate-x-1/2 -translate-y-1/2 border ${appearance.translucentBorder ? themeColors.map.pointBorder : themeColors.map.pointBorderOpaque} ${themeColors.map.point} ${shapeClass} transition-transform duration-150 ease-out ${raisedClass}`}
+      style={{
+        backgroundColor: color,
+        borderWidth: appearance.borderWidth,
+        width: appearance.size,
+        height: appearance.size,
+      }}
     />
   );
 }
