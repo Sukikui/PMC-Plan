@@ -282,7 +282,8 @@ export default function InteractiveMapRenderer({
           lineOverlays={lineOverlays}
           showBlockGrid={blockGridVisible}
         />
-        <MapDominantSpaceIndicator space={!isBlocked && effectivePointRenderMode === 'icons' ? appearance.dominantSpace : null} />
+        <MapDominantSpaceIndicator interactive={!previewArea}
+          space={!isBlocked && effectivePointRenderMode === 'icons' ? appearance.dominantSpace : null} />
         {pointerTrackingEnabled && (
           <MapGridInteractionLayer
             hoveredCell={gridInteraction.hoveredCell}
