@@ -56,10 +56,10 @@ export function useMapRenderingPreferences({
     ? (preview ? visiblePoints : renderedPoints)
     : undefined;
   const dominantSpace = useMemo(() => (
-    preferences.dominantSpaceIndicatorEnabled && showPointIcons && !preview
+    preferences.dominantSpaceIndicatorEnabled && showPointIcons
       ? findDominantMapSpace(visiblePoints, viewport)
       : null
-  ), [preferences.dominantSpaceIndicatorEnabled, preview, showPointIcons, viewport, visiblePoints]);
+  ), [preferences.dominantSpaceIndicatorEnabled, showPointIcons, viewport, visiblePoints]);
   const pointAppearance = useMemo(() => ({
     borderWidth: preferences.pointBorderWidth,
     size: preferences.pointSizePx,
