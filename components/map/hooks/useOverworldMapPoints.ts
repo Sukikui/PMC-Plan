@@ -3,13 +3,9 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Place, Portal } from '@/lib/api/types';
-import type {
-  InteractiveMapPoint,
-  MapTooltipSpaceLogo,
-} from '@/components/map/core/map-types';
+import type { InteractiveMapPoint } from '@/components/map/core/map-types';
 import { NETHER_MAP_WORLD, type MapWorld } from '@/lib/map/metadata';
 import { DEFAULT_PLACE_CATEGORY, getMapIconSrc, isPlaceCategory } from '@/lib/place/categories';
-import type { SpaceReference } from '@/lib/spaces/types';
 import {
   indexLinkedPortalPairs,
   mergeLinkedPortalPair,
@@ -68,7 +64,7 @@ export function buildWorldMapPoints(
       previewImageSrc: 'previewImage' in place
         ? place.previewImage ?? undefined
         : place.images[0],
-      spaceLogo: toMapTooltipSpaceLogo(place.space),
+      spaceLogo: place.space ?? undefined,
       item: place,
       itemType: 'place',
     }));
@@ -91,7 +87,7 @@ export function buildWorldMapPoints(
         previewImageSrc: 'previewImage' in item
           ? item.previewImage ?? undefined
           : item.images[0],
-        spaceLogo: toMapTooltipSpaceLogo(item.space),
+        spaceLogo: item.space ?? undefined,
         unidentified: item.unidentified,
         item,
         itemType: 'portal',
@@ -99,18 +95,4 @@ export function buildWorldMapPoints(
     });
 
   return [...placePoints, ...portalPoints];
-}
-
-function toMapTooltipSpaceLogo(
-  space: SpaceReference | null,
-): MapTooltipSpaceLogo | undefined {
-  if (!space) return undefined;
-
-  return {
-    color: space.color,
-    logoBackground: space.logoBackground,
-    logoSrc: space.logoUrl,
-    logoZoom: space.logoZoom,
-    name: space.name,
-  };
 }

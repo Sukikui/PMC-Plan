@@ -12,7 +12,7 @@ import {
 import { useSession } from 'next-auth/react';
 import { useOverlayDisclosure } from '@/components/ui/useOverlayDisclosure';
 
-export type SettingsTab = 'account' | 'appearance' | 'credits' | 'admin';
+export type SettingsTab = 'account' | 'appearance' | 'integrations' | 'credits' | 'admin';
 
 interface SettingsOverlayContextValue {
   activeTab: SettingsTab;

@@ -1,19 +1,28 @@
 import AddContentButton from '@/components/AddContentButton';
 import { getDefaultMapY } from '@/components/form/common/form-values';
 import PlusIcon from '@/components/icons/PlusIcon';
-import {
+import FloatingStatusBubble, {
+  FloatingStatusBubblePresence,
   floatingStatusBubbleCompactClassName,
   getFloatingStatusBubbleClassName,
+  useFloatingStatusBubblePresence,
 } from '@/components/ui/FloatingStatusBubble';
 import type { MapWorld } from '@/lib/map/metadata';
 import { themeColors } from '@/lib/theme-colors';
 import type { MapGridCell } from '../core/map-grid';
 import type { MapViewport } from '../core/map-view';
+import {
+  MAP_CONTENT_CREATION_Z_INDEX,
+  MAP_STATUS_BUBBLE_Z_INDEX,
+} from '../core/map-constants';
 
 interface MapGridInteractionLayerProps {
   hoveredCell: MapGridCell | null;
   onDismiss: () => void;
+  routeControlsVisible: boolean;
   selectedCell: MapGridCell | null;
+  showCoordinates: boolean;
+  showHighlights: boolean;
   viewport: MapViewport;
   world: MapWorld;
 }
@@ -24,7 +33,10 @@ const BUBBLE_MARGIN_PX = 8;
 export default function MapGridInteractionLayer({
   hoveredCell,
   onDismiss,
+  routeControlsVisible,
   selectedCell,
+  showCoordinates,
+  showHighlights,
   viewport,
   world,
 }: MapGridInteractionLayerProps) {
@@ -37,13 +49,14 @@ export default function MapGridInteractionLayer({
 
   return (
     <>
-      {hoveredCell && !selectedMatchesHover && (
+      {showHighlights && hoveredCell && !selectedMatchesHover && (
         <GridCellHighlight cell={hoveredCell} selected={false} />
       )}
-      {hoveredCell && (
-        <GridCoordinatesBubble cell={hoveredCell} />
-      )}
-      {selectedCell && (
+      <GridCoordinatesBubble
+        cell={showCoordinates ? hoveredCell : null}
+        raised={routeControlsVisible}
+      />
+      {showHighlights && selectedCell && (
         <>
           <GridCellHighlight cell={selectedCell} selected />
           <ContentCreationBubble
@@ -60,21 +73,28 @@ export default function MapGridInteractionLayer({
 
 function GridCoordinatesBubble({
   cell,
+  raised,
 }: {
-  cell: MapGridCell;
+  cell: MapGridCell | null;
+  raised: boolean;
 }) {
+  const { displayedValue: displayedCell, visible } = useFloatingStatusBubblePresence(cell);
+
   return (
-    <div
-      aria-hidden="true"
-      className={getFloatingStatusBubbleClassName({
-        className: `pointer-events-none absolute left-1/2 top-4 z-[1090] flex -translate-x-1/2 whitespace-nowrap px-3 tabular-nums ${floatingStatusBubbleCompactClassName} ${themeColors.text.secondary}`,
-        highlightOnHover: false,
-      })}
+    <FloatingStatusBubblePresence
+      visible={visible}
+      className={`pointer-events-none absolute left-1/2 -translate-x-1/2 ${raised ? 'bottom-20' : 'bottom-4'}`}
+      style={{ zIndex: MAP_STATUS_BUBBLE_Z_INDEX }}
     >
-      X <span className={`ml-1 ${themeColors.text.accent}`}>{cell.coordinates.x}</span>
-      <span className="mx-2">·</span>
-      Z <span className={`ml-1 ${themeColors.text.accent}`}>{cell.coordinates.z}</span>
-    </div>
+      {displayedCell && <FloatingStatusBubble
+        highlightOnHover={false}
+        className={`flex whitespace-nowrap px-3 tabular-nums ${floatingStatusBubbleCompactClassName} ${themeColors.text.secondary}`}
+      >
+        X <span className={`ml-1 ${themeColors.text.accent}`}>{displayedCell.coordinates.x}</span>
+        <span className="mx-2">·</span>
+        Z <span className={`ml-1 ${themeColors.text.accent}`}>{displayedCell.coordinates.z}</span>
+      </FloatingStatusBubble>}
+    </FloatingStatusBubblePresence>
   );
 }
 
@@ -121,11 +141,12 @@ function ContentCreationBubble({
 
   return (
     <div
-      className="pointer-events-auto absolute z-[1100] w-max max-w-[calc(100%-1rem)]"
+      className="pointer-events-auto absolute w-max max-w-[calc(100%-1rem)]"
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
       onPointerUp={(event) => event.stopPropagation()}
       style={{
+        zIndex: MAP_CONTENT_CREATION_Z_INDEX,
         left: getBubbleLeft(cell, viewport, BUBBLE_HALF_WIDTH_PX),
         top: placeAbove
           ? cell.screen.top - BUBBLE_MARGIN_PX

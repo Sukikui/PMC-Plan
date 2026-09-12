@@ -13,6 +13,7 @@ Domain-specific endpoint documentation:
 - [Spaces API](api/spaces.md)
 - [Services API](api/services.md)
 - [Public data loading API](api/data-loading.md)
+- [Account preferences API](api/preferences.md)
 
 Space responses include dynamically derived place and portal summaries and an
 aggregate trade-offer count for their associated map entries. These summaries

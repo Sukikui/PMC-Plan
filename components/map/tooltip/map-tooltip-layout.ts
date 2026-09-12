@@ -82,11 +82,12 @@ export const getVisiblePanelRects = () => {
   return getVisibleMapPanelRects();
 };
 
-export const getVisibleTooltipLabelRects = (excludedPointId: string) => {
+export const getVisibleTooltipLabelRects = (excludedPointId: string, includeAutomatic = true) => {
   if (typeof document === 'undefined') return [];
 
   return Array.from(document.body.querySelectorAll<HTMLElement>('[data-map-tooltip-label-root]')).flatMap((element) => {
     if (element.dataset.mapTooltipPointId === excludedPointId) return [];
+    if (!includeAutomatic && element.dataset.mapTooltipAutomatic === 'true') return [];
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0 ? [rect] : [];
   });

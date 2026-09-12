@@ -1,4 +1,4 @@
-import { isAppTheme, shouldUseDarkTheme } from '@/lib/use-theme';
+import { isAppTheme, shouldUseDarkTheme } from '@/lib/preferences';
 
 describe('theme resolution', () => {
   it('validates only supported persisted themes', () => {

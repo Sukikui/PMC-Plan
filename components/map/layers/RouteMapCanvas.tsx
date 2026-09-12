@@ -16,6 +16,7 @@ import {
   getScaledMapIconSizePx,
 } from '../core/map-constants';
 import {
+  clipRouteSegmentsToViewport,
   drawRouteMarkers,
   drawRoutePath,
   getScreenSegmentsLength,
@@ -39,6 +40,8 @@ interface RouteMapCanvasProps {
 const MIN_DRAW_DURATION_MS = 650;
 const MAX_DRAW_DURATION_MS = 1100;
 const DRAW_DURATION_PER_PIXEL = 0.65;
+const IDLE_FRAME_INTERVAL_MS = 1000 / 30;
+const ROUTE_CLIP_MARGIN_PX = 24;
 
 export default function RouteMapCanvas({
   animationKey,
@@ -66,15 +69,25 @@ export default function RouteMapCanvas({
     ...segment,
     points: segment.points.map(projectPoint),
   })), [projectPoint, segments]);
+  const visibleScreenSegments = useMemo(
+    () => clipRouteSegmentsToViewport(screenSegments, viewport, ROUTE_CLIP_MARGIN_PX),
+    [screenSegments, viewport],
+  );
   const screenMarkers = useMemo(() => markers.map((marker) => ({
     ...marker,
     point: projectPoint(marker.point),
   })), [markers, projectPoint]);
-  const playerMarker = screenMarkers.find((marker) => marker.kind === 'start');
   const playerMarkerSize = getScaledMapIconSizePx(ROUTE_PLAYER_MARKER_SIZE_PX, iconScale);
+  const playerMarker = screenMarkers.find((marker) => (
+    marker.kind === 'start'
+    && isPositionNearViewport(marker.point, viewport, playerMarkerSize)
+  ));
   const canvasMarkers = useMemo(
-    () => screenMarkers.filter((marker) => marker.kind !== 'start'),
-    [screenMarkers]
+    () => screenMarkers.filter((marker) => (
+      marker.kind !== 'start'
+      && isPositionNearViewport(marker.point, viewport, ROUTE_CLIP_MARGIN_PX)
+    )),
+    [screenMarkers, viewport]
   );
 
   useEffect(() => {
@@ -94,7 +107,7 @@ export default function RouteMapCanvas({
     const context = canvas.getContext('2d');
     if (!context) return;
 
-    const totalLength = getScreenSegmentsLength(screenSegments);
+    const totalLength = getScreenSegmentsLength(visibleScreenSegments);
     if (!totalLength) {
       context.clearRect(0, 0, viewport.width, viewport.height);
       return;
@@ -110,26 +123,37 @@ export default function RouteMapCanvas({
       Math.max(MIN_DRAW_DURATION_MS, totalLength * DRAW_DURATION_PER_PIXEL)
     );
     let animationFrameId = 0;
+    let lastIdleFrameAt = 0;
 
     const drawFrame = (timestamp: number) => {
       const rawProgress = reduceMotion
         ? 1
         : Math.min(Math.max((timestamp - startedAt) / duration, 0), 1);
       const progress = easeInOutSine(rawProgress);
+      const complete = rawProgress >= 1;
+      if (
+        complete
+        && lastIdleFrameAt
+        && timestamp - lastIdleFrameAt < IDLE_FRAME_INTERVAL_MS
+      ) {
+        animationFrameId = window.requestAnimationFrame(drawFrame);
+        return;
+      }
+      if (complete) lastIdleFrameAt = timestamp;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       context.clearRect(0, 0, viewport.width, viewport.height);
       drawRoutePath(
         context,
-        screenSegments,
+        visibleScreenSegments,
         totalLength * progress,
         timestamp,
-        rawProgress >= 1 && !reduceMotion
+        complete && !reduceMotion
       );
       drawRouteMarkers(
         context,
         canvasMarkers,
         timestamp,
-        rawProgress >= 1
+        complete
       );
 
       if (!reduceMotion) {
@@ -143,7 +167,7 @@ export default function RouteMapCanvas({
     animationKey,
     baseSize,
     canvasMarkers,
-    screenSegments,
+    visibleScreenSegments,
     viewport,
   ]);
 
@@ -179,4 +203,15 @@ export default function RouteMapCanvas({
       )}
     </>
   );
+}
+
+function isPositionNearViewport(
+  point: { left: number; top: number },
+  viewport: MapViewport,
+  margin: number,
+) {
+  return point.left >= -margin
+    && point.left <= viewport.width + margin
+    && point.top >= -margin
+    && point.top <= viewport.height + margin;
 }

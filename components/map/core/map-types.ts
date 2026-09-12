@@ -6,11 +6,14 @@ import type {
 } from '@/lib/map/metadata';
 import type { MapLineOverlay } from '@/lib/map/overlays';
 import type { MapRoutePath } from '@/lib/map/route-path';
-import type { SpaceLogoBackground } from '@/lib/spaces/types';
+import type { SpaceReference } from '@/lib/spaces/types';
+import type { MapPreviewArea } from './map-view';
 
 type InteractiveMapPointKind = 'place' | 'portal-overworld' | 'portal-nether' | 'route';
 
 export interface InteractiveMapRendererProps {
+  previewArea?: MapPreviewArea;
+  previewImagePortalRoot?: HTMLElement | null;
   activeRouteSegmentId?: string | null;
   enableGridContentCreation?: boolean;
   error?: string | null;
@@ -28,14 +31,6 @@ export interface InteractiveMapRendererProps {
   world?: MapWorld;
 }
 
-export interface MapTooltipSpaceLogo {
-  color: string;
-  logoBackground: SpaceLogoBackground;
-  logoSrc: string | null;
-  logoZoom: number;
-  name: string;
-}
-
 export interface InteractiveMapPoint {
   id: string;
   x: number;
@@ -45,7 +40,7 @@ export interface InteractiveMapPoint {
   iconSrc?: string;
   markerColor?: string;
   previewImageSrc?: string;
-  spaceLogo?: MapTooltipSpaceLogo;
+  spaceLogo?: SpaceReference;
   unidentified?: boolean;
 }
 
@@ -58,9 +53,11 @@ export type MapTooltip = {
   markerColor?: string;
   previewImageSrc?: string;
   previewImageAspectRatio?: number;
-  spaceLogo?: MapTooltipSpaceLogo;
+  spaceLogo?: SpaceReference;
   unidentified?: boolean;
   expanded: boolean;
+  automatic?: boolean;
+  automaticPriority?: boolean;
 };
 
 export type ScreenMapPoint = InteractiveMapPoint & {

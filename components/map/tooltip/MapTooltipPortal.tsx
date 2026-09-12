@@ -11,41 +11,83 @@ import {
   MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM,
   MAP_TOOLTIP_LABEL_MAX_WIDTH_REM,
   getMapTooltipPreviewImageHeightRem,
+  hideDominantSpaceLogos,
   measureMapTooltipLabelWidth,
 } from './map-tooltip';
-import { getMapTooltipLayout, getVisiblePanelRects, getVisibleTooltipLabelRects } from './map-tooltip-layout';
+import { getMapTooltipLayout, getVisiblePanelRects, getVisibleTooltipLabelRects, type MapTooltipRect } from './map-tooltip-layout';
 import type { MapTooltip, TooltipFixedStyle } from '../core/map-types';
 import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
+import { usePermanentLabelLayout } from '../hooks/usePermanentLabelLayout';
+import { MAP_TOOLTIP_LABEL_Z_INDEX } from '../core/map-constants';
+import type { MapViewport } from '../core/map-view';
 
 interface MapTooltipPortalProps {
+  compact?: boolean;
+  dominantSpaceId?: string;
   tooltips: MapTooltip[];
-  tooltipPortalRoot: HTMLElement | null;
   viewportRef: React.RefObject<HTMLDivElement | null>;
+  viewport: MapViewport;
   onPreviewMouseLeave: (pointId: string) => void;
+  zoom: number;
+  iconScale: number;
+  pointSizePx: number;
+  previewImagePortalRoot?: HTMLElement | null;
 }
 
 export default function MapTooltipPortal({
+  compact = false,
+  dominantSpaceId,
   tooltips,
-  tooltipPortalRoot,
   viewportRef,
+  viewport,
   onPreviewMouseLeave,
+  zoom,
+  iconScale,
+  pointSizePx,
+  previewImagePortalRoot,
 }: MapTooltipPortalProps) {
-  if (!tooltipPortalRoot || tooltips.length === 0) {
+  const displayedTooltips = useMemo(
+    () => hideDominantSpaceLogos(tooltips, dominantSpaceId),
+    [dominantSpaceId, tooltips],
+  );
+  const permanent = usePermanentLabelLayout(
+    displayedTooltips,
+    viewportRef,
+    viewport,
+    zoom,
+    iconScale,
+    pointSizePx,
+    compact,
+  );
+  const renderedTooltips = compact
+    ? displayedTooltips.filter((tooltip) => (
+      !tooltip.automatic
+      || tooltip.automaticPriority
+      || permanent.styles.has(tooltip.pointId)
+    ))
+    : displayedTooltips;
+  if (renderedTooltips.length === 0) {
     return null;
   }
 
-  return createPortal(
-    <>
-      {tooltips.map((tooltip, index) => (
+  return (
+    <div
+      ref={permanent.containerRef}
+      className="pointer-events-none absolute inset-0"
+      style={{ zIndex: MAP_TOOLTIP_LABEL_Z_INDEX }}
+    >
+      {renderedTooltips.map((tooltip) => (
         <MapTooltipItem
-          key={`${tooltip.pointId}-${index}`}
+          key={tooltip.pointId}
           tooltip={tooltip}
+          permanentStyle={tooltip.automatic ? permanent.styles.get(tooltip.pointId) : undefined}
+          hideWithoutPermanentStyle={Boolean(tooltip.automatic && !tooltip.automaticPriority)}
           viewportRef={viewportRef}
+          previewImagePortalRoot={previewImagePortalRoot}
           onPreviewMouseLeave={onPreviewMouseLeave}
         />
       ))}
-    </>,
-    tooltipPortalRoot
+    </div>
   );
 }
 
@@ -53,10 +95,16 @@ function MapTooltipItem({
   tooltip,
   viewportRef,
   onPreviewMouseLeave,
+  permanentStyle,
+  hideWithoutPermanentStyle,
+  previewImagePortalRoot,
 }: {
   tooltip: MapTooltip;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   onPreviewMouseLeave: (pointId: string) => void;
+  permanentStyle?: React.CSSProperties;
+  hideWithoutPermanentStyle: boolean;
+  previewImagePortalRoot?: HTMLElement | null;
 }) {
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltipFixedStyle, setTooltipFixedStyle] = useState<TooltipFixedStyle | null>(null);
@@ -76,6 +124,7 @@ function MapTooltipItem({
   }, [tooltip.markerColor, tooltipLabel]);
 
   useLayoutEffect(() => {
+    if (tooltip.automatic && !tooltip.expanded && (permanentStyle || hideWithoutPermanentStyle)) return;
     const tooltipNode = tooltipRef.current;
     const viewportNode = viewportRef.current;
 
@@ -87,10 +136,15 @@ function MapTooltipItem({
 
     const mapRect = viewportNode.getBoundingClientRect();
     const tooltipRect = tooltipNode.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const anchorLeft = mapRect.left + tooltip.pointLeft;
-    const pointTop = mapRect.top + tooltip.pointTop;
+    const imagePortalRect = previewImagePortalRoot?.getBoundingClientRect();
+    const hasExternalImageLayer = Boolean(
+      imagePortalRect?.width && imagePortalRect.height,
+    );
+    const layoutRect = hasExternalImageLayer ? imagePortalRect! : mapRect;
+    const originLeft = mapRect.left - layoutRect.left;
+    const originTop = mapRect.top - layoutRect.top;
+    const anchorLeft = tooltip.pointLeft + originLeft;
+    const pointTop = tooltip.pointTop + originTop;
     const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize);
     const remSize = Number.isFinite(rootFontSize) ? rootFontSize : 16;
     const hasPreviewImage = Boolean(tooltip.previewImageSrc);
@@ -101,77 +155,105 @@ function MapTooltipItem({
       offset: tooltip.offset,
       labelWidth: tooltipRect.width,
       labelHeight: tooltipRect.height,
-      viewportWidth,
-      viewportHeight,
+      viewportWidth: layoutRect.width,
+      viewportHeight: layoutRect.height,
       imageWidth: hasPreviewImage ? MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM * remSize : undefined,
       imageHeight: hasPreviewImage ? (tooltipPreviewImageHeightRem ?? MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM) * remSize : undefined,
-      panelRects: hasPreviewImage ? getVisiblePanelRects() : [],
-      avoidLabelRects: getVisibleTooltipLabelRects(tooltip.pointId),
+      panelRects: hasPreviewImage ? localizeRects(getVisiblePanelRects(), layoutRect) : [],
+      avoidLabelRects: localizeRects(
+        getVisibleTooltipLabelRects(tooltip.pointId, tooltip.automatic),
+        layoutRect,
+      ),
     });
 
-    setTooltipFixedStyle(layout.labelStyle);
+    const labelLayout = hasExternalImageLayer
+      ? getMapTooltipLayout({
+          anchorLeft: tooltip.pointLeft,
+          pointTop: tooltip.pointTop,
+          offset: tooltip.offset,
+          labelWidth: tooltipRect.width,
+          labelHeight: tooltipRect.height,
+          viewportWidth: mapRect.width,
+          viewportHeight: mapRect.height,
+          panelRects: [],
+          avoidLabelRects: localizeRects(
+            getVisibleTooltipLabelRects(tooltip.pointId, tooltip.automatic),
+            mapRect,
+          ),
+        })
+      : layout;
+    setTooltipFixedStyle(labelLayout.labelStyle);
     setTooltipImageFixedStyle(shouldShowImage ? layout.imageStyle : null);
-  }, [tooltip, tooltipLabelStyle, tooltipPreviewImageHeightRem, viewportRef]);
+  }, [hideWithoutPermanentStyle, permanentStyle, previewImagePortalRoot, tooltip,
+    tooltipLabelStyle, tooltipPreviewImageHeightRem, viewportRef]);
+
+  const previewImage = tooltip.expanded && tooltip.previewImageSrc ? (
+    <div
+      className="pointer-events-auto absolute z-10"
+      data-map-tooltip-preview-root
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerMove={(event) => event.stopPropagation()}
+      onMouseLeave={() => onPreviewMouseLeave(tooltip.pointId)}
+      style={{
+        ...tooltipImageFixedStyle,
+        visibility: tooltipImageFixedStyle ? undefined : 'hidden',
+      }}
+    >
+      <div
+        className={`map-tooltip-preview-card-enter ${themeColors.util.rounded2Xl} ${themeColors.map.tooltipPreviewImageShadow}`}
+        data-map-tooltip-preview-image
+        style={{
+          width: `${MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM}rem`,
+          height: tooltipPreviewImageHeightRem ? `${tooltipPreviewImageHeightRem}rem` : undefined,
+          maxHeight: `${MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM}rem`,
+          '--map-tooltip-preview-duration': `${CONTENT_PREVIEW_ANIMATION_DURATION_MS}ms`,
+        } as React.CSSProperties}
+      >
+        <div className={`h-full overflow-hidden ${themeColors.util.rounded2Xl} ${themeColors.map.tooltipPreviewImageFrame}`}>
+          <img
+            src={tooltip.previewImageSrc}
+            alt=""
+            className="block h-full w-full object-contain"
+            style={{ maxHeight: `${MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM}rem` }}
+            draggable={false}
+            onError={(event) => {
+              const preview = event.currentTarget.closest<HTMLElement>('[data-map-tooltip-preview-image]');
+              if (preview) preview.style.display = 'none';
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
-      {tooltip.expanded && tooltip.previewImageSrc && (
-        <div
-          className="pointer-events-auto fixed z-[60]"
-          data-map-tooltip-preview-root
-          onPointerDown={(event) => event.stopPropagation()}
-          onPointerMove={(event) => event.stopPropagation()}
-          onMouseLeave={() => onPreviewMouseLeave(tooltip.pointId)}
-          style={tooltipImageFixedStyle ?? { left: 0, top: 0, transform: 'translate3d(-50%, 0, 0)', visibility: 'hidden' }}
-        >
-          <div
-            className={`map-tooltip-preview-card-enter ${themeColors.util.rounded2Xl} ${themeColors.map.tooltipPreviewImageShadow}`}
-            data-map-tooltip-preview-image
-            style={{
-              width: `${MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM}rem`,
-              height: tooltipPreviewImageHeightRem ? `${tooltipPreviewImageHeightRem}rem` : undefined,
-              maxHeight: `${MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM}rem`,
-              '--map-tooltip-preview-duration': `${CONTENT_PREVIEW_ANIMATION_DURATION_MS}ms`,
-            } as React.CSSProperties}
-          >
-            <div className={`h-full overflow-hidden ${themeColors.util.rounded2Xl} ${themeColors.map.tooltipPreviewImageFrame}`}>
-              <img
-                src={tooltip.previewImageSrc}
-                alt=""
-                className="block h-full w-full object-contain"
-                style={{ maxHeight: `${MAP_TOOLTIP_IMAGE_MAX_HEIGHT_REM}rem` }}
-                draggable={false}
-                onError={(event) => {
-                  const preview = event.currentTarget.closest<HTMLElement>('[data-map-tooltip-preview-image]');
-                  if (preview) {
-                    preview.style.display = 'none';
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {previewImagePortalRoot && previewImage
+        ? createPortal(previewImage, previewImagePortalRoot)
+        : previewImage}
       <div
         ref={tooltipRef}
-        className="pointer-events-none fixed z-30"
+        className="pointer-events-none absolute z-0 w-max"
         data-map-tooltip-label-root
         data-map-tooltip-point-id={tooltip.pointId}
-        style={tooltipFixedStyle ?? { left: 0, top: 0, transform: 'translate3d(-50%, -100%, 0)', visibility: 'hidden' }}
+        data-map-tooltip-automatic={tooltip.automatic ? 'true' : undefined}
+        style={permanentStyle ?? (hideWithoutPermanentStyle
+          ? { visibility: 'hidden' }
+          : { ...tooltipFixedStyle, visibility: tooltipFixedStyle ? undefined : 'hidden' })}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex w-max items-center gap-1.5">
           {tooltip.spaceLogo && (
             <SpaceLogo
               color={tooltip.spaceLogo.color}
               logoBackground={tooltip.spaceLogo.logoBackground}
-              logoUrl={tooltip.spaceLogo.logoSrc}
+              logoUrl={tooltip.spaceLogo.logoUrl}
               logoZoom={tooltip.spaceLogo.logoZoom}
               name={tooltip.spaceLogo.name}
               size="tooltip"
             />
           )}
           <div
-            className={`break-words px-2.5 py-1 text-center text-xs font-medium leading-snug ${tooltip.unidentified ? 'flex items-center justify-center' : ''} ${themeColors.util.roundedXl} ${themeColors.map.tooltip}`}
+            className={`shrink-0 break-words px-2.5 py-1 text-center text-xs font-medium leading-snug ${tooltip.unidentified ? 'flex items-center justify-center' : ''} ${themeColors.util.roundedXl} ${themeColors.map.tooltip}`}
             style={tooltipLabelStyle}
           >
             {tooltip.unidentified
@@ -182,4 +264,13 @@ function MapTooltipItem({
       </div>
     </>
   );
+}
+
+function localizeRects(rects: MapTooltipRect[], viewport: DOMRect): MapTooltipRect[] {
+  return rects.map((rect) => ({
+    left: rect.left - viewport.left,
+    right: rect.right - viewport.left,
+    top: rect.top - viewport.top,
+    bottom: rect.bottom - viewport.top,
+  }));
 }

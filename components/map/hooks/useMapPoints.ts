@@ -42,16 +42,18 @@ export const useMapPoints = ({
   const renderedScreenPoints = useMemo(() => screenPoints.filter((point) => (
     isPointWithinViewport(point, viewport, MAP_POINT_RENDER_OVERSCAN_PX)
   )), [screenPoints, viewport]);
+  const visibleScreenPoints = useMemo(() => screenPoints.filter((point) => (
+    isPointWithinViewport(point, viewport)
+  )), [screenPoints, viewport]);
   const visiblePointIds = useMemo(() => new Set(
-    screenPoints
-      .filter((point) => isPointWithinViewport(point, viewport))
-      .map((point) => point.id)
-  ), [screenPoints, viewport]);
+    visibleScreenPoints.map((point) => point.id)
+  ), [visibleScreenPoints]);
 
   return {
     positionedPoints,
     screenPoints,
     renderedScreenPoints,
+    visibleScreenPoints,
     screenPointById,
     visiblePointIds,
   };

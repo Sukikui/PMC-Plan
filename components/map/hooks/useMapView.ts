@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MapMetadata } from '@/lib/map/metadata';
+import { worldToMapPercent, type MapMetadata } from '@/lib/map/metadata';
 import { FOCUS_ANIMATION_DURATION_MS, PAN_OVERSCROLL_VISIBLE_RATIO } from '../core/map-constants';
 import {
   MIN_ZOOM,
   clamp,
+  clampPreviewPan,
   easeInOutSine,
   getFittedMapSize,
   getMaxZoom,
   lerp,
   type MapPan,
+  type MapPreviewArea,
+  getPreviewMinZoom,
+  getPanForMapPosition,
 } from '../core/map-view';
 
-export const useMapView = (metadata: MapMetadata) => {
+export const useMapView = (metadata: MapMetadata, previewArea?: MapPreviewArea) => {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState<MapPan>({ x: 0, y: 0 });
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
@@ -27,11 +31,15 @@ export const useMapView = (metadata: MapMetadata) => {
 
   const baseSize = useMemo(() => getFittedMapSize(viewport, metadata), [viewport, metadata]);
   const maxZoom = useMemo(() => getMaxZoom(baseSize.width, metadata), [baseSize.width, metadata]);
+  const minZoom = previewArea ? getPreviewMinZoom(baseSize, viewport, metadata, previewArea) : MIN_ZOOM;
   const mapCellPixelSize = baseSize.width > 0
     ? (baseSize.width * zoom) / metadata.overview.width
     : 0;
 
   const clampPan = useCallback((nextPan: MapPan, nextZoom: number) => {
+    if (previewArea) return clampPreviewPan(nextPan,
+      getPanForMapPosition(worldToMapPercent(metadata, previewArea), nextZoom, baseSize),
+      viewport, nextZoom, minZoom);
     if (!viewport.width || !viewport.height || !baseSize.width || !baseSize.height) {
       return nextPan;
     }
@@ -49,7 +57,7 @@ export const useMapView = (metadata: MapMetadata) => {
       x: clamp(nextPan.x, -maxX, maxX),
       y: clamp(nextPan.y, -maxY, maxY),
     };
-  }, [baseSize.height, baseSize.width, viewport.height, viewport.width]);
+  }, [baseSize, metadata, minZoom, previewArea, viewport]);
 
   const commitPan = useCallback((nextPan: MapPan) => {
     panRef.current = nextPan;
@@ -144,9 +152,9 @@ export const useMapView = (metadata: MapMetadata) => {
   }, []);
 
   useEffect(() => {
-    const nextZoom = clamp(zoomRef.current, MIN_ZOOM, maxZoom);
+    const nextZoom = clamp(zoomRef.current, minZoom, maxZoom);
     commitView(nextZoom, clampPan(panRef.current, nextZoom));
-  }, [clampPan, commitView, maxZoom]);
+  }, [clampPan, commitView, maxZoom, minZoom]);
 
   useEffect(() => () => {
     if (panFrameRef.current) {
@@ -165,6 +173,7 @@ export const useMapView = (metadata: MapMetadata) => {
     zoom,
     pan,
     maxZoom,
+    minZoom,
     mapCellPixelSize,
     panRef,
     zoomRef,

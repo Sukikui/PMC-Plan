@@ -13,6 +13,98 @@
   opacity: 0.5;
 }
 
+.discreteContainer {
+  position: relative;
+}
+
+.markers {
+  position: absolute;
+  inset: 0 0.75rem auto;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.markers::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right,
+    var(--color-range-accent-solid) 0%,
+    var(--color-range-accent-solid) var(--range-progress),
+    currentColor var(--range-progress),
+    currentColor 100%);
+}
+
+.marker {
+  position: relative;
+  flex: 0 0 0;
+}
+
+.markerLabels {
+  position: relative;
+  margin: 0.125rem 0.75rem 0;
+  min-height: 1rem;
+  line-height: 1rem;
+}
+
+.markerLabels span {
+  position: absolute;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.markerLabels span:first-child {
+  text-align: left;
+  transform: translateX(-0.75rem);
+}
+
+.markerLabels span:last-child {
+  text-align: right;
+  transform: translateX(calc(-100% + 0.75rem));
+}
+
+.marker[data-active='true'] {
+  color: var(--color-range-accent-solid);
+}
+
+.marker::after {
+  content: '';
+  position: absolute;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.range.discrete {
+  display: block;
+  position: relative;
+  height: 1.5rem;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (max-width: 639px) {
+  .markerLabels {
+    min-height: 2rem;
+  }
+}
+
+.discrete::-moz-range-progress {
+  background: transparent;
+}
+
+.discrete::-moz-range-thumb {
+  box-sizing: border-box;
+}
+
 .range::-webkit-slider-runnable-track {
   height: 1.125rem;
   border-radius: inherit;
