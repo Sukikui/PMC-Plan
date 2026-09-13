@@ -74,6 +74,70 @@ slug. Invalid types return `400`; missing content returns `404`.
 }
 ```
 
+## Public Content Pages
+
+`GET /lieux/{slug}`, `GET /portails/{slug}`, and `GET /espaces/{slug}` are
+shareable entry points to the main application. Each route validates the slug
+on the server, returns `404` for missing content, and opens the corresponding
+overlay after the startup screen has completed. The routes reuse the regular
+map and overlay components rather than maintaining a parallel public UI.
+
+Each page publishes its content name, canonical URL, and generated `1200 × 630`
+image through Open Graph and Twitter metadata. Discord and other compatible
+clients can therefore render a concise preview while browsers retain the normal
+interactive map experience.
+
+## GET `/lieux/{slug}/image`
+
+Generates the public `1200 × 630` PNG social preview for one place. The image
+uses the place's first image, associated space identity, world, coordinates,
+visible trade-offer count when non-zero, and ordered Minecraft owners. Missing
+or unavailable remote images fall back to local application assets without
+preventing the preview from rendering.
+
+During development, open this route directly in a browser to inspect the exact
+image that will later be referenced by the place's Open Graph metadata:
+
+```text
+http://localhost:3000/lieux/example-place/image
+```
+
+Unknown slugs return `404`. Development requests bypass the persistent database
+cache; production results use the shared public-detail invalidation contract.
+
+## GET `/portails/{slug}/image`
+
+Generates the public `1200 × 630` PNG social preview for one portal using the
+same identity, image, space, and owner presentation as place previews. A linked
+portal stacks its Overworld coordinates above its Nether coordinates and
+appends the Nether address to the second line. A standalone Nether portal
+appends its own Nether address, while a standalone Overworld portal displays
+coordinates only.
+
+```text
+http://localhost:3000/portails/example-portal/image
+```
+
+Unknown slugs return `404`. Linked sides resolve through their shared map entry
+so the preview remains canonical for the portal pair.
+
+## GET `/espaces/{slug}/image`
+
+Generates the public `1200 × 630` PNG social preview for one space. The header
+uses the space logo and name, the center uses the first image from an associated
+place when available, and the footer includes place, portal, and offer counts
+alongside the first derived Minecraft member. Missing remote assets fall back
+to the generated space identity or local player head without failing the image.
+
+During development, open this route directly to inspect the rendered preview:
+
+```text
+http://localhost:3000/espaces/example-space/image
+```
+
+Unknown slugs return `404`. The route reuses the lightweight explorer summary
+and the same cache invalidation contract as the public space collection.
+
 ## GET `/api/market/offers`
 
 Returns paginated global offers with their minimal place, space, and ordered

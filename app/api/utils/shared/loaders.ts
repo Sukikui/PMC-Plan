@@ -57,8 +57,16 @@ export async function loadPlaces(): Promise<Place[]> {
 }
 
 export async function loadPlaceByMapEntryId(mapEntryId: string) {
+  return loadPlace({ mapEntryId });
+}
+
+export async function loadPlaceBySlug(slug: string) {
+  return loadPlace({ slug });
+}
+
+async function loadPlace(where: Prisma.PlaceWhereUniqueInput) {
   const place = await prisma.place.findUnique({
-    where: { mapEntryId },
+    where,
     include: placeInclude,
   });
   return place ? toPlace(place) : null;
@@ -72,6 +80,15 @@ export async function loadPortalByMapEntryId(mapEntryId: string) {
   const portals = normalizeLinkedPortalIdentities(records.map(toPortal));
   const pair = indexLinkedPortalPairs(portals).get(mapEntryId);
   return pair ? mergeLinkedPortalPair(pair) : (portals[0] ?? null);
+}
+
+export async function loadPortalBySlug(slug: string) {
+  const portal = await prisma.portal.findFirst({
+    where: { slug },
+    orderBy: { world: 'asc' },
+    select: { mapEntryId: true },
+  });
+  return portal ? loadPortalByMapEntryId(portal.mapEntryId) : null;
 }
 
 function toPlace(place: PlaceRecord): Place {

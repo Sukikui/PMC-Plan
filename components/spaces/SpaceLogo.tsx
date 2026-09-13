@@ -5,8 +5,9 @@ import { getColorForeground } from '@/lib/content/colors';
 import {
   DEFAULT_SPACE_LOGO_BACKGROUND,
   DEFAULT_SPACE_LOGO_ZOOM,
-  MAX_SPACE_LOGO_ZOOM,
-  MIN_SPACE_LOGO_ZOOM,
+  SPACE_LOGO_IMAGE_SCALE,
+  clampSpaceLogoZoom,
+  getSpaceInitial,
 } from '@/lib/spaces/constants';
 import type { SpaceLogoBackground } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
@@ -46,10 +47,7 @@ export default function SpaceLogo({
 
   const sizeClass = sizeClasses[size];
   const hasImage = Boolean(logoUrl && !imageFailed);
-  const zoom = Math.min(
-    MAX_SPACE_LOGO_ZOOM,
-    Math.max(MIN_SPACE_LOGO_ZOOM, logoZoom),
-  );
+  const zoom = clampSpaceLogoZoom(logoZoom);
 
   return (
     <div
@@ -65,17 +63,17 @@ export default function SpaceLogo({
       {hasImage ? (
         <img
           alt={`Logo de ${name}`}
-          className="h-[70.7107%] w-[70.7107%] object-contain transition-transform duration-200"
+          className="object-contain transition-transform duration-200"
           referrerPolicy="no-referrer"
           src={logoUrl ?? undefined}
-          style={{ transform: `scale(${zoom})` }}
+          style={{
+            height: `${SPACE_LOGO_IMAGE_SCALE * 100}%`,
+            width: `${SPACE_LOGO_IMAGE_SCALE * 100}%`,
+            transform: `scale(${zoom})`,
+          }}
           onError={() => setImageFailed(true)}
         />
-      ) : getInitial(name)}
+      ) : getSpaceInitial(name)}
     </div>
   );
-}
-
-function getInitial(name: string) {
-  return Array.from(name.trim())[0]?.toLocaleUpperCase('fr-FR') ?? '?';
 }

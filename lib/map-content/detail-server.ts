@@ -1,6 +1,8 @@
 import {
   loadPlaceByMapEntryId,
+  loadPlaceBySlug,
   loadPortalByMapEntryId,
+  loadPortalBySlug,
 } from '@/app/api/utils/shared/loaders';
 import {
   contentCacheTags,
@@ -24,6 +26,28 @@ export function loadMapEntryDetail(
         contentCacheTags.mapDetails,
         mapEntryDetailCacheTag(mapEntryId),
       ],
+    },
+  )();
+}
+
+export function loadPlaceDetailBySlug(slug: string) {
+  return cacheDatabaseQuery(
+    () => loadPlaceBySlug(slug),
+    ['place-detail-by-slug-v1', slug],
+    {
+      revalidate: 300,
+      tags: [contentCacheTags.mapDetails],
+    },
+  )();
+}
+
+export function loadPortalDetailBySlug(slug: string) {
+  return cacheDatabaseQuery(
+    () => loadPortalBySlug(slug),
+    ['portal-detail-by-slug-v1', slug],
+    {
+      revalidate: 300,
+      tags: [contentCacheTags.mapDetails],
     },
   )();
 }

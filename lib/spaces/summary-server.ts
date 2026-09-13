@@ -2,7 +2,10 @@ import type { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import type { PaginatedResponse } from '@/lib/api/pagination';
 import { toPaginationMeta } from '@/lib/api/pagination';
-import { contentCacheTags } from '@/lib/content/cache-tags';
+import {
+  contentCacheTags,
+  spaceDetailCacheTag,
+} from '@/lib/content/cache-tags';
 import {
   DEFAULT_SPACE_SUMMARY_SORT,
   type SpaceReference,
@@ -98,6 +101,23 @@ export const loadSpaceSummaries = (
   query: string,
   sort: SpaceSummarySort,
 ) => loadCachedSummaries(page, pageSize, query, sort);
+
+export function loadSpaceSummaryBySlug(slug: string) {
+  return cacheDatabaseQuery(
+    async () => {
+      const record = await prisma.space.findUnique({
+        where: { slug },
+        select: summarySelect,
+      });
+      return record ? toSpaceSummary(record) : null;
+    },
+    ['space-summary-by-slug-v1', slug],
+    {
+      revalidate: 300,
+      tags: [contentCacheTags.spaces, spaceDetailCacheTag(slug)],
+    },
+  )();
+}
 
 export function parseSpaceSummarySort(value: string | null): SpaceSummarySort {
   if (
