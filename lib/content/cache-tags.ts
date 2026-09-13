@@ -31,6 +31,7 @@ export function invalidateMapEntryPublicData(
 ) {
   invalidateContentCache([
     contentCacheTags.map,
+    contentCacheTags.mapDetails,
     contentCacheTags.spaces,
     contentCacheTags.spaceDetails,
     mapEntryDetailCacheTag(mapEntryId),

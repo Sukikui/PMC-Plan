@@ -1,30 +1,42 @@
 import { getPagination } from '@/lib/api/pagination';
+import {
+  loadPlaceBySlug,
+  loadPortalBySlug,
+} from '@/app/api/utils/shared/loaders';
 import { loadMapContentUncached } from '@/lib/map-content/server';
 import { listMarketOffers } from '@/lib/market/server';
 import { prisma } from '@/lib/prisma';
 import { listServices } from '@/lib/services/list-server';
 import {
   listSpaceSummaries,
+  loadSpaceSummaryBySlug,
   parseSpaceSummarySort,
 } from '@/lib/spaces/summary-server';
+
+jest.mock('@/lib/cache/database-cache', () => ({
+  cacheDatabaseQuery: (callback: (...args: unknown[]) => unknown) => callback,
+}));
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     $transaction: jest.fn((queries: Array<Promise<unknown>>) => Promise.all(queries)),
-    place: { findMany: jest.fn() },
-    portal: { findMany: jest.fn() },
+    place: { findMany: jest.fn(), findUnique: jest.fn() },
+    portal: { findFirst: jest.fn(), findMany: jest.fn() },
     service: { count: jest.fn(), findMany: jest.fn() },
-    space: { count: jest.fn(), findMany: jest.fn() },
+    space: { count: jest.fn(), findMany: jest.fn(), findUnique: jest.fn() },
     tradeOffer: { count: jest.fn(), findMany: jest.fn() },
   },
 }));
 
 const placeFindMany = prisma.place.findMany as jest.Mock;
+const placeFindUnique = prisma.place.findUnique as jest.Mock;
+const portalFindFirst = prisma.portal.findFirst as jest.Mock;
 const portalFindMany = prisma.portal.findMany as jest.Mock;
 const serviceCount = prisma.service.count as jest.Mock;
 const serviceFindMany = prisma.service.findMany as jest.Mock;
 const spaceCount = prisma.space.count as jest.Mock;
 const spaceFindMany = prisma.space.findMany as jest.Mock;
+const spaceFindUnique = prisma.space.findUnique as jest.Mock;
 const offerCount = prisma.tradeOffer.count as jest.Mock;
 const offerFindMany = prisma.tradeOffer.findMany as jest.Mock;
 
@@ -102,6 +114,32 @@ describe('data-loading projections', () => {
     });
     expect(placeFindMany).toHaveBeenCalledWith(expect.objectContaining({
       select: expect.not.objectContaining({ tradeOffers: expect.anything() }),
+    }));
+  });
+
+  it('loads one complete place directly from its public slug', async () => {
+    placeFindUnique.mockResolvedValue(null);
+
+    await expect(loadPlaceBySlug('marche')).resolves.toBeNull();
+
+    expect(placeFindUnique).toHaveBeenCalledWith(expect.objectContaining({
+      where: { slug: 'marche' },
+    }));
+  });
+
+  it('resolves one canonical portal entry from its public slug', async () => {
+    portalFindFirst.mockResolvedValue({ mapEntryId: 'entry-portal' });
+    portalFindMany.mockResolvedValue([]);
+
+    await expect(loadPortalBySlug('portail')).resolves.toBeNull();
+
+    expect(portalFindFirst).toHaveBeenCalledWith({
+      where: { slug: 'portail' },
+      orderBy: { world: 'asc' },
+      select: { mapEntryId: true },
+    });
+    expect(portalFindMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { mapEntryId: 'entry-portal' },
     }));
   });
 
@@ -200,5 +238,37 @@ describe('data-loading projections', () => {
     expect(parseSpaceSummarySort('content-desc')).toBe('content-desc');
     expect(parseSpaceSummarySort('unsupported')).toBe('content-desc');
     expect(parseSpaceSummarySort(null)).toBe('content-desc');
+  });
+
+  it('loads one social space summary directly from its public slug', async () => {
+    spaceFindUnique.mockResolvedValue({
+      color: '#1F2A65',
+      description: 'Capitale impériale.',
+      discordUrl: null,
+      entries: [{
+        images: ['preview.png'],
+        owners: [{ profile: { name: 'Suki', uuid: 'member-uuid' } }],
+        place: { _count: { tradeOffers: 2 } },
+        portals: [{ uid: 'portal-id' }],
+      }],
+      id: 'space-id',
+      logoBackground: 'color',
+      logoUrl: null,
+      logoZoom: 1,
+      name: 'Valnyfrost',
+      slug: 'valnyfrost',
+    });
+
+    await expect(loadSpaceSummaryBySlug('valnyfrost')).resolves.toMatchObject({
+      firstMember: { name: 'Suki', uuid: 'member-uuid' },
+      memberCount: 1,
+      offerCount: 2,
+      placeCount: 1,
+      portalCount: 1,
+      previewImage: 'preview.png',
+    });
+    expect(spaceFindUnique).toHaveBeenCalledWith(expect.objectContaining({
+      where: { slug: 'valnyfrost' },
+    }));
   });
 });
