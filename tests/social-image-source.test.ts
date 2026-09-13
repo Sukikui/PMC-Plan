@@ -26,6 +26,5 @@ describe('social image sources', () => {
     await expect(loadSocialImageSource('http://[::ffff:7f00:1]/image.png')).resolves
       .toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
-
   });
 });

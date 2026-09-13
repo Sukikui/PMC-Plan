@@ -1,12 +1,18 @@
 import { GET as getPlaceImage } from '@/app/lieux/[slug]/image/route';
+import PlacePage, {
+  generateMetadata as generatePlaceMetadata,
+} from '@/app/lieux/[slug]/page';
 import { GET as getPortalImage } from '@/app/portails/[slug]/image/route';
+import PortalPage, {
+  generateMetadata as generatePortalMetadata,
+} from '@/app/portails/[slug]/page';
 import { GET as getSpaceImage } from '@/app/espaces/[slug]/image/route';
+import SpacePage from '@/app/espaces/[slug]/page';
 import {
   loadPlaceDetailBySlug,
   loadPortalDetailBySlug,
 } from '@/lib/map-content/detail-server';
 import { loadSocialImageSource } from '@/lib/social-preview/image-source';
-import { createPublicContentRoute } from '@/lib/social-preview/content-page';
 import { createSocialContentMetadata } from '@/lib/social-preview/metadata';
 import { loadSpaceSummaryBySlug } from '@/lib/spaces/summary-server';
 
@@ -44,6 +50,12 @@ jest.mock('@/components/HomeMapApp', () => ({
   default: 'home-map-app',
 }));
 
+jest.mock('next/navigation', () => ({
+  notFound: jest.fn(() => {
+    throw new Error('NEXT_NOT_FOUND');
+  }),
+}));
+
 const loadPlace = loadPlaceDetailBySlug as jest.Mock;
 const loadPortal = loadPortalDetailBySlug as jest.Mock;
 const loadImage = loadSocialImageSource as jest.Mock;
@@ -59,14 +71,13 @@ describe('public content routes', () => {
       mapEntryId: 'place-entry',
       name: 'Marché de Valnyfrost',
     });
-    const route = createPublicContentRoute('place');
     const props = { params: Promise.resolve({ slug: 'marche-de-valnyfrost' }) };
 
-    await expect(route.generateMetadata(props)).resolves.toMatchObject({
+    await expect(generatePlaceMetadata(props)).resolves.toMatchObject({
       title: 'Marché de Valnyfrost',
       alternates: { canonical: '/lieux/marche-de-valnyfrost' },
     });
-    const page = await route.Page(props);
+    const page = await PlacePage(props);
 
     expect(page.props.initialContent).toEqual({
       mapEntryId: 'place-entry',
@@ -82,12 +93,40 @@ describe('public content routes', () => {
       slug: 'valnyfrost',
     };
     loadSpace.mockResolvedValue(space);
-    const route = createPublicContentRoute('space');
-    const page = await route.Page({
+    const page = await SpacePage({
       params: Promise.resolve({ slug: 'valnyfrost' }),
     });
 
     expect(page.props.initialContent).toEqual({ space, type: 'space' });
+  });
+
+  it('uses the canonical portal pair identity for metadata and navigation', async () => {
+    loadPortal.mockResolvedValue({
+      description: null,
+      mapEntryId: 'portal-entry',
+      name: 'Portail de Valnyfrost',
+      slug: 'portail-de-valnyfrost',
+    });
+    const props = { params: Promise.resolve({ slug: 'portail-de-valnyfrost' }) };
+
+    await expect(generatePortalMetadata(props)).resolves.toMatchObject({
+      title: 'Portail de Valnyfrost',
+      alternates: { canonical: '/portails/portail-de-valnyfrost' },
+    });
+    const page = await PortalPage(props);
+
+    expect(page.props.initialContent).toEqual({
+      mapEntryId: 'portal-entry',
+      type: 'portal',
+    });
+  });
+
+  it('returns the Next.js not-found boundary for an unknown public slug', async () => {
+    loadPlace.mockResolvedValue(null);
+
+    await expect(PlacePage({
+      params: Promise.resolve({ slug: 'lieu-inconnu' }),
+    })).rejects.toThrow('NEXT_NOT_FOUND');
   });
 });
 
@@ -120,7 +159,6 @@ describe('social content metadata', () => {
     expect(metadata.openGraph).not.toHaveProperty('description');
     expect(metadata.twitter).not.toHaveProperty('description');
   });
-
 });
 
 describe('place social image route', () => {
