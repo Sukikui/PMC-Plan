@@ -3,18 +3,24 @@ import type { ScreenMapPoint } from './map-types';
 import type { MapViewport } from './map-view';
 
 const CENTRAL_REGION_WIDTH_RATIO = 0.5;
-const CENTRAL_REGION_HEIGHT_RATIO = 0.4;
+const CENTRAL_REGION_HEIGHT_RATIO = 0.3;
 const MINIMUM_SPACE_POINTS = 2;
+type DominantSpaceRegion = 'central' | 'viewport';
 
 export function findDominantMapSpace(
   points: ScreenMapPoint[],
   viewport: MapViewport,
+  region: DominantSpaceRegion = 'central',
 ): SpaceReference | null {
   if (viewport.width <= 0 || viewport.height <= 0) return null;
 
-  // The centered 50% by 40% rectangle covers 20% of the viewport area.
-  const horizontalMargin = viewport.width * (1 - CENTRAL_REGION_WIDTH_RATIO) / 2;
-  const verticalMargin = viewport.height * (1 - CENTRAL_REGION_HEIGHT_RATIO) / 2;
+  // The centered 50% by 30% rectangle covers 15% of the viewport area.
+  const horizontalMargin = region === 'viewport'
+    ? 0
+    : viewport.width * (1 - CENTRAL_REGION_WIDTH_RATIO) / 2;
+  const verticalMargin = region === 'viewport'
+    ? 0
+    : viewport.height * (1 - CENTRAL_REGION_HEIGHT_RATIO) / 2;
   const right = viewport.width - horizontalMargin;
   const bottom = viewport.height - verticalMargin;
   const counts = new Map<string, { count: number; space: SpaceReference }>();

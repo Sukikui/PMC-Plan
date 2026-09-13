@@ -31,10 +31,18 @@ describe('dominant map space', () => {
 
   it('ignores points without a space and points outside the central region', () => {
     expect(findDominantMapSpace([
-      createPoint('v-1', 225, 400, valnyfrost),
-      createPoint('v-2', 775, 400, valnyfrost),
+      createPoint('v-1', 500, 270, valnyfrost),
+      createPoint('v-2', 500, 530, valnyfrost),
       createPoint('standalone', 500, 400),
     ], viewport)).toBeNull();
+  });
+
+  it('uses the complete viewport when requested for a map preview', () => {
+    expect(findDominantMapSpace([
+      createPoint('v-1', 100, 100, valnyfrost),
+      createPoint('v-2', 900, 700, valnyfrost),
+      createPoint('s-1', 500, 400, spawn),
+    ], viewport, 'viewport')).toEqual(valnyfrost);
   });
 });
 
