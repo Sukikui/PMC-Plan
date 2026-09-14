@@ -8,7 +8,8 @@ import IconActionButton from '@/components/ui/IconActionButton';
 import { OverlayHeaderFrame } from '@/components/ui/OverlayHeader';
 import { themeColors } from '@/lib/theme-colors';
 
-const warmingSocialPreviewPaths = new Set<string>();
+const SOCIAL_PREVIEW_WARM_COOLDOWN_MS = 10_000;
+const socialPreviewWarmTimes = new Map<string, number>();
 
 interface ContentInfoOverlayHeaderProps {
   canEdit: boolean;
@@ -101,13 +102,28 @@ export default function ContentInfoOverlayHeader({
 }
 
 function warmSocialPreview(path: string) {
-  if (warmingSocialPreviewPaths.has(path)) return;
-  warmingSocialPreviewPaths.add(path);
+  const startedAt = Date.now();
+  const previousWarmTime = socialPreviewWarmTimes.get(path);
+  if (
+    previousWarmTime !== undefined
+    && startedAt - previousWarmTime < SOCIAL_PREVIEW_WARM_COOLDOWN_MS
+  ) {
+    return;
+  }
+  socialPreviewWarmTimes.set(path, startedAt);
 
   void fetch('/api/social-preview/warm', {
     body: JSON.stringify({ path }),
     headers: { 'Content-Type': 'application/json' },
     keepalive: true,
     method: 'POST',
-  }).finally(() => warmingSocialPreviewPaths.delete(path));
+  }).then((response) => {
+    if (!response.ok) releaseSocialPreviewWarm(path, startedAt);
+  }).catch(() => releaseSocialPreviewWarm(path, startedAt));
+}
+
+function releaseSocialPreviewWarm(path: string, startedAt: number) {
+  if (socialPreviewWarmTimes.get(path) === startedAt) {
+    socialPreviewWarmTimes.delete(path);
+  }
 }
