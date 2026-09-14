@@ -7,6 +7,7 @@ import { loadPlaceDetailBySlug } from '@/lib/map-content/detail-server';
 import { getMapIconSrc } from '@/lib/place/categories';
 import { loadSocialImageSource } from '@/lib/social-preview/image-source';
 import { createSocialImageResponse } from '@/lib/social-preview/image-response';
+import { getSocialHeaderTextSize } from '@/lib/social-preview/format';
 import {
   SOCIAL_PREVIEW_ICON_SIZE,
   SOCIAL_PREVIEW_SECONDARY_TEXT_SIZE,
@@ -16,8 +17,6 @@ import {
   SocialPreviewMetrics,
   SocialPreviewSpaceLogo,
   SocialPreviewWorldBadge,
-  getSocialCountLabel,
-  getSocialHeaderTextSize,
 } from '@/lib/social-preview/layout';
 
 interface RouteContext {
@@ -47,7 +46,6 @@ export async function GET(_request: Request, context: RouteContext) {
       : Promise.resolve(null),
   ]);
   const titleSize = getSocialHeaderTextSize(place.name, Boolean(place.space));
-  const offerCount = place.trade?.length ?? 0;
 
   return createSocialImageResponse(
     <SocialPreviewFrame
@@ -68,17 +66,6 @@ export async function GET(_request: Request, context: RouteContext) {
             { label: 'Y', value: place.coordinates.y },
             { label: 'Z', value: place.coordinates.z },
           ]} />
-          {offerCount > 0 && (
-            <div style={{ display: 'flex', marginLeft: 48 }}>
-              <SocialPreviewMetrics
-                valueFirst
-                metrics={[{
-                  label: getSocialCountLabel(offerCount, 'offre', 'offres'),
-                  value: offerCount,
-                }]}
-              />
-            </div>
-          )}
         </div>
       )}
       footerRight={(

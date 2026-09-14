@@ -9,6 +9,11 @@ import { getMapIconSrc } from '@/lib/place/categories';
 import { loadSocialImageSource } from '@/lib/social-preview/image-source';
 import { createSocialImageResponse } from '@/lib/social-preview/image-response';
 import {
+  formatSocialCoordinates,
+  getSocialHeaderTextSize,
+  shouldCompactSocialMember,
+} from '@/lib/social-preview/format';
+import {
   SOCIAL_PREVIEW_SECONDARY_TEXT_SIZE,
   SocialPreviewFrame,
   SocialPreviewHeaderIdentity,
@@ -16,10 +21,9 @@ import {
   SocialPreviewMetrics,
   SocialPreviewSpaceLogo,
   SocialPreviewWorldBadge,
-  getSocialHeaderTextSize,
 } from '@/lib/social-preview/layout';
 
-const PORTAL_HEADER_ICON_SIZE = 76;
+const PORTAL_HEADER_ICON_SIZE = 88;
 
 interface RouteContext {
   params: Promise<{ slug: string }>;
@@ -53,6 +57,26 @@ export async function GET(_request: Request, context: RouteContext) {
     ? portal.address
     : null;
   const titleSize = getSocialHeaderTextSize(portal.name, Boolean(portal.space));
+  const primaryMetrics = toCoordinateMetrics(portal.coordinates);
+  const secondaryMetrics = netherAssociate
+    ? toAlignedCoordinateMetrics(portal.coordinates, netherAssociate.coordinates)
+    : null;
+  const coordinateLines = [formatSocialCoordinates(portal.coordinates)];
+  const secondaryAddress = netherAssociate?.address ?? standaloneNetherAddress;
+  if (netherAssociate) {
+    coordinateLines.push(
+      formatSocialCoordinates(netherAssociate.coordinates)
+      + `${secondaryAddress ? ` • ${secondaryAddress}` : ''}`,
+    );
+  } else if (secondaryAddress) {
+    coordinateLines[0] += ` • ${secondaryAddress}`;
+  }
+  const compactOwner = owner ? shouldCompactSocialMember({
+    additionalCount: Math.max(0, portal.owners.length - 1),
+    coordinateLines,
+    memberName: owner.name,
+    world: linked ? 'over+nether' : portal.world,
+  }) : false;
 
   return createSocialImageResponse(
     <SocialPreviewFrame
@@ -75,13 +99,10 @@ export async function GET(_request: Request, context: RouteContext) {
               alignItems: 'flex-start',
               lineHeight: 1,
             }}>
-              <SocialPreviewMetrics metrics={toCoordinateMetrics(portal.coordinates)} />
-              <div style={{ display: 'flex', marginTop: 7 }}>
+              <SocialPreviewMetrics metrics={primaryMetrics} />
+              <div style={{ display: 'flex', marginTop: 10 }}>
                 <SocialPreviewMetrics
-                  metrics={toAlignedCoordinateMetrics(
-                    portal.coordinates,
-                    netherAssociate.coordinates,
-                  )}
+                  metrics={secondaryMetrics ?? []}
                   trailingValue={netherAssociate.address}
                 />
               </div>
@@ -97,6 +118,7 @@ export async function GET(_request: Request, context: RouteContext) {
       footerRight={(
         <SocialPreviewMember
           additionalCount={Math.max(0, portal.owners.length - 1)}
+          compact={compactOwner}
           headSource={ownerHead}
           member={owner}
         />

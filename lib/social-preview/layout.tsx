@@ -7,27 +7,30 @@ import {
   getSpaceInitial,
 } from '@/lib/spaces/constants';
 import type { SpaceReference } from '@/lib/spaces/types';
+import {
+  SOCIAL_PREVIEW_FOOTER_HEIGHT,
+  SOCIAL_PREVIEW_FOOTER_GAP,
+  SOCIAL_PREVIEW_HEADER_HEIGHT,
+  SOCIAL_PREVIEW_HORIZONTAL_PADDING,
+  SOCIAL_PREVIEW_IMAGE_HEIGHT,
+  SOCIAL_PREVIEW_WIDTH,
+} from './constants';
 
-export const SOCIAL_PREVIEW_ICON_SIZE = 62;
-export const SOCIAL_PREVIEW_SECONDARY_TEXT_SIZE = 27;
+export const SOCIAL_PREVIEW_ICON_SIZE = 72;
+export const SOCIAL_PREVIEW_SECONDARY_TEXT_SIZE = 31;
 
 const COLORS = {
-  background: '#0B1020',
-  foreground: '#F9FAFB',
-  muted: '#AAB3C2',
-  panel: '#121A2A',
+  background: '#FFFFFF',
+  foreground: '#111827',
+  muted: '#6B7280',
+  panel: '#FFFFFF',
   overworld: { background: '#DCFCE7', foreground: '#166534' },
   nether: { background: '#FEE2E2', foreground: '#991B1B' },
   linked: { background: '#F3E8FF', foreground: '#7E22CE' },
 } as const;
-const HEADER_TEXT_SIZES = {
-  large: 48,
-  medium: 40,
-  compact: 34,
-} as const;
 const META_LABEL_STYLE = {
   color: COLORS.muted,
-  fontSize: 26,
+  fontSize: 29,
   fontWeight: 400,
 } as const;
 
@@ -59,8 +62,8 @@ export function SocialPreviewFrame({
       fontFamily: 'Inter',
     }}>
       <div style={{
-        height: 116,
-        padding: '24px 46px',
+        height: SOCIAL_PREVIEW_HEADER_HEIGHT,
+        padding: `24px ${SOCIAL_PREVIEW_HORIZONTAL_PADDING}px`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -72,7 +75,7 @@ export function SocialPreviewFrame({
       </div>
 
       <div style={{
-        height: 390,
+        height: SOCIAL_PREVIEW_IMAGE_HEIGHT,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -83,19 +86,20 @@ export function SocialPreviewFrame({
           <img
             alt=""
             src={mainImage}
-            width={1200}
-            height={390}
+            width={SOCIAL_PREVIEW_WIDTH}
+            height={SOCIAL_PREVIEW_IMAGE_HEIGHT}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : fallbackVisual}
       </div>
 
       <div style={{
-        height: 124,
-        padding: '25px 46px',
+        height: SOCIAL_PREVIEW_FOOTER_HEIGHT,
+        padding: `28px ${SOCIAL_PREVIEW_HORIZONTAL_PADDING}px`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        gap: SOCIAL_PREVIEW_FOOTER_GAP,
         backgroundColor: COLORS.background,
       }}>
         {footerLeft}
@@ -211,35 +215,43 @@ export function SocialPreviewSpaceLogo({
 
 export function SocialPreviewMember({
   additionalCount,
+  compact = false,
   headSource,
   member,
 }: {
   additionalCount: number;
+  compact?: boolean;
   headSource: string | null;
   member: MinecraftOwner | null;
 }) {
   if (!member) return null;
+  const showName = !compact || !headSource;
+  const showDetails = showName || additionalCount > 0;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
       {headSource && (
         <img
           alt=""
           src={headSource}
-          width={66}
-          height={66}
+          width={76}
+          height={76}
           style={{ borderRadius: 8, objectFit: 'cover' }}
         />
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 27, fontWeight: 600, lineHeight: 1 }}>
-          {member.name}
-        </span>
-        {additionalCount > 0 && (
-          <span style={{ ...META_LABEL_STYLE, lineHeight: 1 }}>
-            + {additionalCount}
-          </span>
-        )}
-      </div>
+      {showDetails && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {showName && (
+            <span style={{ fontSize: 31, fontWeight: 600, lineHeight: 1 }}>
+              {member.name}
+            </span>
+          )}
+          {additionalCount > 0 && (
+            <span style={{ ...META_LABEL_STYLE, lineHeight: 1 }}>
+              + {additionalCount}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -259,7 +271,7 @@ export function SocialPreviewMetrics({
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      fontSize: 26,
+      fontSize: 30,
       fontWeight: 400,
     }}>
       {metrics.map(({ label, value }, index) => (
@@ -309,38 +321,14 @@ export function SocialPreviewWorldBadge({ world }: { world: string }) {
   return (
     <div style={{
       display: 'flex',
-      padding: '10px 18px',
+      padding: '12px 20px',
       borderRadius: 999,
       backgroundColor: colors.background,
       color: colors.foreground,
-      fontSize: 23,
+      fontSize: 26,
       fontWeight: 700,
     }}>
       {world}
     </div>
   );
-}
-
-export function getSocialHeaderTextSize(
-  primaryName: string,
-  hasSecondaryIdentity = false,
-) {
-  const primaryLength = Array.from(primaryName.trim()).length;
-  if (!hasSecondaryIdentity) {
-    if (primaryLength <= 28) return HEADER_TEXT_SIZES.large;
-    if (primaryLength <= 44) return HEADER_TEXT_SIZES.medium;
-    return HEADER_TEXT_SIZES.compact;
-  }
-
-  if (primaryLength <= 18) return HEADER_TEXT_SIZES.large;
-  if (primaryLength <= 30) return HEADER_TEXT_SIZES.medium;
-  return HEADER_TEXT_SIZES.compact;
-}
-
-export function getSocialCountLabel(
-  count: number,
-  singular: string,
-  plural: string,
-) {
-  return count === 1 ? singular : plural;
 }

@@ -3,35 +3,35 @@
 import type { ReactNode } from 'react';
 import CrossIcon from '@/components/icons/CrossIcon';
 import PencilIcon from '@/components/icons/PencilIcon';
-import { DiscordIcon } from '@/components/ui/DiscordLink';
+import CopyButton from '@/components/ui/CopyButton';
 import IconActionButton from '@/components/ui/IconActionButton';
 import { OverlayHeaderFrame } from '@/components/ui/OverlayHeader';
 import { themeColors } from '@/lib/theme-colors';
 
 interface ContentInfoOverlayHeaderProps {
   canEdit: boolean;
-  discordUrl?: string | null;
   identity: ReactNode;
   metadata: ReactNode;
   metadataUnderTitle?: boolean;
   onClose: () => void;
   onEdit: () => void;
   secondaryIdentity?: ReactNode;
+  sharePath: string;
   title: ReactNode;
-  titleText: string;
+  titleMaxLines?: 1 | 2;
 }
 
 export default function ContentInfoOverlayHeader({
   canEdit,
-  discordUrl,
   identity,
   metadata,
   metadataUnderTitle = false,
   onClose,
   onEdit,
   secondaryIdentity,
+  sharePath,
   title,
-  titleText,
+  titleMaxLines = 1,
 }: ContentInfoOverlayHeaderProps) {
   return (
     <OverlayHeaderFrame className="z-10">
@@ -47,22 +47,20 @@ export default function ContentInfoOverlayHeader({
             <div className={`flex min-w-0 items-center gap-3 ${metadataUnderTitle ? '' : 'mb-2'}`}>
               {identity}
               <div className="min-w-0">
-                <h2 className={`min-w-0 text-2xl font-bold [word-spacing:0.25rem] ${themeColors.text.primary} ${themeColors.transition}`}>
-                  {discordUrl ? (
-                    <a
-                      aria-label={`Ouvrir le serveur Discord de ${titleText}`}
-                      className={`${themeColors.interactive.hoverAccentText} ${themeColors.interactive.focusRing} ${themeColors.transition}`}
-                      href={discordUrl}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <span className="[word-spacing:normal]">{title}</span>
-                      {' '}
-                      <DiscordIcon className="inline h-6 w-6 align-[-0.15em] [word-spacing:normal]" />
-                    </a>
-                  ) : (
-                    <span className="[word-spacing:normal]">{title}</span>
-                  )}
+                <h2 className={`min-w-0 text-2xl font-bold [word-spacing:0.25rem] ${themeColors.text.primary}`}>
+                  <CopyButton
+                    className={`inline-flex min-w-0 max-w-full items-center gap-2 text-left [word-spacing:normal] ${themeColors.interactive.hoverAccentText} ${themeColors.interactive.focusRing} data-[copied=true]:text-blue-500 dark:data-[copied=true]:text-blue-400`}
+                    copiedLabel="Lien copié"
+                    copyLabel="Copier le lien"
+                    revealIconOnHover
+                    value={() => new URL(sharePath, window.location.origin).href}
+                  >
+                    <span className={`min-w-0 transition-colors duration-300 ease-out ${
+                      titleMaxLines === 2 ? 'line-clamp-2' : 'truncate'
+                    }`}>
+                      {title}
+                    </span>
+                  </CopyButton>
                 </h2>
                 {metadataUnderTitle && (
                   <div className="mt-0.5">

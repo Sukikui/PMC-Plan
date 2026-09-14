@@ -10,6 +10,7 @@ interface OverlayProps {
   children: React.ReactNode;
   className?: string;
   closing?: boolean;
+  initialFocus?: 'dialog' | 'first';
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -30,7 +31,14 @@ function getFocusableElements(container: HTMLElement) {
     ));
 }
 
-const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, children, className = '', closing = false }) => {
+const Overlay: React.FC<OverlayProps> = ({
+  isOpen,
+  onClose,
+  children,
+  className = '',
+  closing = false,
+  initialFocus = 'first',
+}) => {
   const [visible, setVisible] = useState(false);
   const [show, setShow] = useState(false);
   const [hasBeenRevealed, setHasBeenRevealed] = useState(false);
@@ -97,7 +105,9 @@ const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, children, className 
 
     if (!hasFocusedRef.current) {
       const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
-      const focusTarget = getFocusableElements(container)[0] ?? dialog ?? container;
+      const focusTarget = initialFocus === 'dialog'
+        ? dialog ?? container
+        : getFocusableElements(container)[0] ?? dialog ?? container;
       focusTarget.focus({ preventScroll: true });
       hasFocusedRef.current = true;
     }
@@ -125,7 +135,7 @@ const Overlay: React.FC<OverlayProps> = ({ isOpen, onClose, children, className 
 
     document.addEventListener('keydown', trapFocus, true);
     return () => document.removeEventListener('keydown', trapFocus, true);
-  }, [interactive]);
+  }, [initialFocus, interactive]);
 
   useEffect(() => {
     if (show) return;

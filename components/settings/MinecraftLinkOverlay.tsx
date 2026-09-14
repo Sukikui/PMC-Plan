@@ -1,13 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { MineVerifyPublicStatus } from '@/lib/mineverify/types';
 import { themeColors } from '@/lib/theme-colors';
 import CheckIcon from '@/components/icons/CheckIcon';
-import CopyIcon from '@/components/icons/CopyIcon';
 import MinecraftLinkTimeline from '@/components/settings/MinecraftLinkTimeline';
 import MinecraftHeadImage from '@/components/ui/MinecraftHeadImage';
+import CopyButton from '@/components/ui/CopyButton';
 import OverlayPanel from '@/components/ui/OverlayPanel';
 
 interface MinecraftLinkOverlayProps {
@@ -154,64 +154,15 @@ function LinkStepMessage({ children }: { children: React.ReactNode }) {
 }
 
 function CommandBox({ command }: { command: string }) {
-  const [copied, setCopied] = useState(false);
-  const resetTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (resetTimeoutRef.current) {
-        clearTimeout(resetTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const copyCommand = async () => {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(command);
-      } else {
-        copyWithFallback(command);
-      }
-
-      setCopied(true);
-      if (resetTimeoutRef.current) {
-        clearTimeout(resetTimeoutRef.current);
-      }
-      resetTimeoutRef.current = window.setTimeout(() => {
-        resetTimeoutRef.current = null;
-        setCopied(false);
-      }, 1400);
-    } catch {
-      setCopied(false);
-    }
-  };
-
   return (
     <div className={`flex items-center gap-2 border ${themeColors.border.secondary} ${themeColors.panel.primary} ${themeColors.util.roundedLg} px-3 py-2`}>
       <code className={`block text-sm font-mono ${themeColors.text.primary} break-all flex-1 min-w-0`}>{command}</code>
-      <button
-        type="button"
-        onClick={copyCommand}
-        aria-label={copied ? 'Commande copiée' : 'Copier la commande'}
-        title={copied ? 'Copié' : 'Copier'}
-        className={`relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${themeColors.transition} ${
-          copied
-            ? themeColors.text.accent
-            : `${themeColors.text.tertiary} ${themeColors.interactive.hoverAccentText}`
-        }`}
-      >
-        <CopyIcon
-          className={`absolute h-4 w-4 transition-all duration-200 ease-out ${
-            copied ? '-translate-y-1 opacity-0' : 'translate-y-0 opacity-100'
-          }`}
-        />
-        <CheckIcon
-          className={`absolute h-4 w-4 transition-all duration-200 ease-out ${
-            copied ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0'
-          }`}
-          aria-hidden="true"
-        />
-      </button>
+      <CopyButton
+        className={`relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${themeColors.text.tertiary} ${themeColors.interactive.hoverAccentText} ${themeColors.transition} data-[copied=true]:text-blue-500 dark:data-[copied=true]:text-blue-400`}
+        copiedLabel="Commande copiée"
+        copyLabel="Copier la commande"
+        value={command}
+      />
     </div>
   );
 }
@@ -249,16 +200,4 @@ function formatRemainingTime(remainingMs: number) {
   }
 
   return `${minutes}min ${seconds.toString().padStart(2, '0')}s`;
-}
-
-function copyWithFallback(text: string) {
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.left = '-9999px';
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textarea);
 }

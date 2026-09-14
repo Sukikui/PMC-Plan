@@ -10,6 +10,7 @@ import ContentInfoOverlayHeader from '@/components/info-overlay/ContentInfoOverl
 import { useBottomScrollFade } from '@/components/info-overlay/useBottomScrollFade';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
 import { canManageContent } from '@/lib/content-permissions';
+import { getPublicContentPath } from '@/lib/content-path';
 import type { Space, SpaceReference, SpaceSummary } from '@/lib/spaces/types';
 import { spaceDetailQueryOptions } from '@/lib/spaces/client';
 import { themeColors } from '@/lib/theme-colors';
@@ -60,7 +61,6 @@ export default function SpaceInfoOverlay({
       header={(
         <ContentInfoOverlayHeader
           canEdit={canEdit}
-          discordUrl={displaySpace.discordUrl}
           identity={(
             <SpaceLogo
               color={displaySpace.color}
@@ -82,8 +82,8 @@ export default function SpaceInfoOverlay({
             initialData: { ...detail, type: 'space' },
             mode: 'edit',
           })}
+          sharePath={getPublicContentPath('space', displaySpace.slug)}
           title={displaySpace.name}
-          titleText={displaySpace.name}
         />
       )}
       shadowClass={themeColors.shadow.overlay.place}
