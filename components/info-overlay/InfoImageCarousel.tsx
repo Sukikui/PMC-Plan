@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import IconActionButton from '@/components/ui/IconActionButton';
+import { getCachedUserImageUrl } from '@/lib/media/user-image';
 import { themeColors } from '@/lib/theme-colors';
 import { useImageCarousel } from './useImageCarousel';
 
@@ -47,7 +48,7 @@ export default function InfoImageCarousel({
             >
               <div className="relative flex h-72 max-w-full items-center justify-center overflow-hidden">
                 <img
-                  src={image.src}
+                  src={getCachedUserImageUrl(image.src)}
                   alt={image.alt}
                   draggable={false}
                   className={`h-72 w-auto max-w-full object-contain ${themeColors.util.roundedLg}`}

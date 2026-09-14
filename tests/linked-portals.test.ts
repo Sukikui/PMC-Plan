@@ -10,6 +10,7 @@ import {
   getPortalDisplayName,
   UNIDENTIFIED_PORTAL_LABEL,
 } from '@/lib/portal/identity';
+import { getCachedUserImageUrl } from '@/lib/media/user-image';
 
 describe('linked portals', () => {
   it('uses the shared map entry instead of mutable names and slugs', () => {
@@ -90,7 +91,7 @@ describe('linked portals', () => {
     }));
 
     expect(buildWorldMapPoints([], portals, 'overworld')[0]?.previewImageSrc)
-      .toBe(previewImage);
+      .toBe(getCachedUserImageUrl(previewImage));
   });
 
   it('does not merge standalone portals that only share a slug', () => {

@@ -10,6 +10,7 @@ import {
   getSpaceInitial,
 } from '@/lib/spaces/constants';
 import type { SpaceLogoBackground } from '@/lib/spaces/types';
+import { getCachedUserImageUrl } from '@/lib/media/user-image';
 import { themeColors } from '@/lib/theme-colors';
 
 interface SpaceLogoProps {
@@ -18,6 +19,7 @@ interface SpaceLogoProps {
   logoUrl?: string | null;
   logoZoom?: number;
   name: string;
+  source?: 'cached' | 'direct';
   size?: 'tooltip' | 'compact' | 'small' | 'header' | 'medium' | 'overlay' | 'large';
 }
 
@@ -37,6 +39,7 @@ export default function SpaceLogo({
   logoUrl,
   logoZoom = DEFAULT_SPACE_LOGO_ZOOM,
   name,
+  source = 'cached',
   size = 'medium',
 }: SpaceLogoProps) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -65,7 +68,9 @@ export default function SpaceLogo({
           alt={`Logo de ${name}`}
           className="object-contain transition-transform duration-200"
           referrerPolicy="no-referrer"
-          src={logoUrl ?? undefined}
+          src={logoUrl
+            ? (source === 'cached' ? getCachedUserImageUrl(logoUrl) : logoUrl)
+            : undefined}
           style={{
             height: `${SPACE_LOGO_IMAGE_SCALE * 100}%`,
             width: `${SPACE_LOGO_IMAGE_SCALE * 100}%`,

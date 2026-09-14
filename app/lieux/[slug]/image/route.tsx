@@ -5,8 +5,15 @@ import {
 } from '@/lib/minecraft-head-service';
 import { loadPlaceDetailBySlug } from '@/lib/map-content/detail-server';
 import { getMapIconSrc } from '@/lib/place/categories';
-import { loadSocialImageSource } from '@/lib/social-preview/image-source';
-import { createSocialImageResponse } from '@/lib/social-preview/image-response';
+import {
+  loadSocialImageSource,
+  loadSocialUserImageSource,
+} from '@/lib/social-preview/image-source';
+import {
+  canLongCacheSocialPreview,
+  createSocialImageResponse,
+  isSocialPreviewWarmRequest,
+} from '@/lib/social-preview/image-response';
 import { getSocialHeaderTextSize } from '@/lib/social-preview/format';
 import {
   SOCIAL_PREVIEW_ICON_SIZE,
@@ -26,14 +33,17 @@ interface RouteContext {
 export const runtime = 'nodejs';
 export const revalidate = 300;
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const place = await loadPlaceDetailBySlug(slug);
   if (!place) return new Response('Lieu introuvable.', { status: 404 });
 
   const owner = place.owners[0] ?? null;
+  const mainImageSource = place.images[0];
+  const spaceLogoSource = place.space?.logoUrl;
+  const warm = isSocialPreviewWarmRequest(request);
   const [mainImage, categoryIcon, ownerHead, spaceLogo] = await Promise.all([
-    loadSocialImageSource(place.images[0]),
+    loadSocialUserImageSource(mainImageSource, request.url, warm),
     loadSocialImageSource(getMapIconSrc(place.category)),
     owner
       ? loadSocialImageSource(
@@ -41,8 +51,8 @@ export async function GET(_request: Request, context: RouteContext) {
         getDefaultMinecraftHeadUrl(),
       )
       : Promise.resolve(null),
-    place.space?.logoUrl
-      ? loadSocialImageSource(place.space.logoUrl)
+    spaceLogoSource
+      ? loadSocialUserImageSource(spaceLogoSource, request.url, warm)
       : Promise.resolve(null),
   ]);
   const titleSize = getSocialHeaderTextSize(place.name, Boolean(place.space));
@@ -101,5 +111,9 @@ export async function GET(_request: Request, context: RouteContext) {
       ) : undefined}
       mainImage={mainImage}
     />,
+    canLongCacheSocialPreview(request, [
+      [mainImageSource, mainImage],
+      [spaceLogoSource, spaceLogo],
+    ]),
   );
 }

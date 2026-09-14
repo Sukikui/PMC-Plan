@@ -19,6 +19,7 @@ import {
   type SpaceSummarySort,
 } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
+import { getCachedUserImageUrl } from '@/lib/media/user-image';
 
 interface SpaceExplorerOverlayProps {
   onClose: () => void;
@@ -169,7 +170,7 @@ function SpaceExplorerTile({
             alt={`Aperçu de ${space.name}`}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.025]"
             referrerPolicy="no-referrer"
-            src={imageUrl}
+            src={getCachedUserImageUrl(imageUrl)}
             onError={() => setImageFailed(true)}
           />
         ) : (

@@ -138,6 +138,7 @@ export default function SpaceForm({
             logoUrl={input.logoUrl}
             logoZoom={input.logoZoom}
             name={input.name || 'Valnyfrost'}
+            source="direct"
             size="large"
           />
           <div className="space-y-4">

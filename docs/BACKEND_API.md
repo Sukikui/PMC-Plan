@@ -25,9 +25,11 @@ Public content pages are available at `GET /lieux/{slug}`, `GET
 /portails/{slug}`, and `GET /espaces/{slug}`. They render the main application,
 open the requested content overlay, and expose content-specific Open Graph and
 Twitter metadata. Their `/image` subroutes return the corresponding `1200 ×
-957` PNG. The public page contract, payload sources, fallback behavior, and
-local inspection URLs are documented in the [public data loading
-API](api/data-loading.md).
+957` PNG. Persisted place and portal images and space logos are served through
+`GET /media/user-image`, while `POST /social-preview/warm` prepares a versioned
+social image before a shared link is copied. The public page contract, image
+cache behavior, payload sources, fallbacks, and local inspection URLs are
+documented in the [public data loading API](api/data-loading.md).
 
 Space responses include dynamically derived place and portal summaries and an
 aggregate trade-offer count for their associated map entries. These summaries
