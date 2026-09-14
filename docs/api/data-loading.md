@@ -83,12 +83,12 @@ overlay after the startup screen has completed. The routes reuse the regular
 map and overlay components rather than maintaining a parallel public UI.
 
 Each page publishes its content name, canonical URL, and generated `1200 × 957`
-image through Open Graph and Twitter metadata. Place and portal embeds identify
-the content type, append the associated space name when one exists, and list
-coordinates on one line per represented world. A linked portal therefore lists
-both its Overworld and Nether coordinates. Discord and other compatible clients
-can render a concise preview while browsers retain the normal interactive map
-experience.
+image through Open Graph and Twitter metadata. Place and portal embed titles
+append the associated space name when one exists, separated by `•`. Their
+descriptions contain only coordinates, on one line per represented world. A
+linked portal therefore lists both its Overworld and Nether coordinates.
+Discord and other compatible clients can render a concise preview while
+browsers retain the normal interactive map experience.
 
 ## GET `/lieux/{slug}/image`
 
@@ -140,6 +140,53 @@ http://localhost:3000/espaces/example-space/image
 
 Unknown slugs return `404`. The route reuses the lightweight explorer summary
 and the same cache invalidation contract as the public space collection.
+
+## GET `/api/media/user-image`
+
+Proxies user-provided place and portal images and space logos through PMC Plan.
+The `url` query parameter must exactly match an image URL currently persisted
+on a map entry or space. Local application assets, Minecraft heads, and Discord
+assets do not use this endpoint.
+
+The endpoint validates the source protocol, DNS resolution, redirects, media
+type, and response size before returning the bytes. It rejects private network
+destinations and acts only as a closed proxy for persisted application content,
+not as a general-purpose remote image proxy.
+
+Successful responses are cached in the browser for one day and on Vercel's CDN
+for up to one year. Distinct source query values produce distinct cache entries.
+The CDN cache is best-effort and may evict an image earlier; a cache miss simply
+causes PMC Plan to validate and retrieve the persisted source again. Invalid,
+unreferenced, unavailable, or oversized sources are never cached.
+
+Public map points, hover previews, content overlays, space logos, explorer
+tiles, and social-image generation all reuse this URL builder. Content forms
+keep their direct source preview so a new URL can be checked before it exists in
+the database.
+
+## POST `/api/social-preview/warm`
+
+Prepares the current version of a place, portal, or space social preview when a
+user focuses, hovers, or clicks its shareable title. The endpoint accepts only a
+known public content path:
+
+```json
+{
+  "path": "/lieux/example-place"
+}
+```
+
+It reloads the public content, derives the same content hash used by page
+metadata, and requests the corresponding versioned `/image?v={hash}` route.
+Concurrent intentions for the same title are deduplicated in the browser. This
+is a performance hint only: sharing remains functional when the warm request
+fails or never occurs.
+
+Versioned social images are cached on Vercel's CDN for up to one year only when
+all persisted user images required by the render loaded successfully. A render
+using a fallback receives a short cache lifetime so a temporarily unavailable
+source can recover. Changing any content used by the preview changes its image
+version and therefore selects a fresh cache entry.
 
 ## GET `/api/market/offers`
 

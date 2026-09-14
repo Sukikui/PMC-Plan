@@ -8,6 +8,8 @@ import IconActionButton from '@/components/ui/IconActionButton';
 import { OverlayHeaderFrame } from '@/components/ui/OverlayHeader';
 import { themeColors } from '@/lib/theme-colors';
 
+const warmingSocialPreviewPaths = new Set<string>();
+
 interface ContentInfoOverlayHeaderProps {
   canEdit: boolean;
   identity: ReactNode;
@@ -52,6 +54,7 @@ export default function ContentInfoOverlayHeader({
                     className={`inline-flex min-w-0 max-w-full items-center gap-2 text-left [word-spacing:normal] ${themeColors.interactive.hoverAccentText} ${themeColors.interactive.focusRing} data-[copied=true]:text-blue-500 dark:data-[copied=true]:text-blue-400`}
                     copiedLabel="Lien copié"
                     copyLabel="Copier le lien"
+                    onIntent={() => warmSocialPreview(sharePath)}
                     revealIconOnHover
                     value={() => new URL(sharePath, window.location.origin).href}
                   >
@@ -95,4 +98,16 @@ export default function ContentInfoOverlayHeader({
       </div>
     </OverlayHeaderFrame>
   );
+}
+
+function warmSocialPreview(path: string) {
+  if (warmingSocialPreviewPaths.has(path)) return;
+  warmingSocialPreviewPaths.add(path);
+
+  void fetch('/api/social-preview/warm', {
+    body: JSON.stringify({ path }),
+    headers: { 'Content-Type': 'application/json' },
+    keepalive: true,
+    method: 'POST',
+  }).finally(() => warmingSocialPreviewPaths.delete(path));
 }

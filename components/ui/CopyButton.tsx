@@ -11,6 +11,7 @@ interface CopyButtonProps {
   copiedLabel: string;
   copyLabel: string;
   iconClassName?: string;
+  onIntent?: () => void;
   revealIconOnHover?: boolean;
   value: string | (() => string);
 }
@@ -21,6 +22,7 @@ export default function CopyButton({
   copiedLabel,
   copyLabel,
   iconClassName = 'h-4 w-4',
+  onIntent,
   revealIconOnHover = false,
   value,
 }: CopyButtonProps) {
@@ -32,6 +34,7 @@ export default function CopyButton({
   }, []);
 
   const copy = async () => {
+    onIntent?.();
     try {
       await copyText(typeof value === 'function' ? value() : value);
       setCopied(true);
@@ -51,6 +54,8 @@ export default function CopyButton({
       className={`group/copy ${className}`}
       data-copied={copied}
       onClick={() => void copy()}
+      onFocus={onIntent}
+      onPointerEnter={onIntent}
       title={copied ? copiedLabel : copyLabel}
       type="button"
     >

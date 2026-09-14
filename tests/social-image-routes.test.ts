@@ -18,7 +18,10 @@ import {
   SOCIAL_PREVIEW_WIDTH,
 } from '@/lib/social-preview/constants';
 import { shouldCompactSocialMember } from '@/lib/social-preview/format';
-import { loadSocialImageSource } from '@/lib/social-preview/image-source';
+import {
+  loadSocialImageSource,
+  loadSocialUserImageSource,
+} from '@/lib/social-preview/image-source';
 import { createSocialContentMetadata } from '@/lib/social-preview/metadata';
 import { loadSpaceSummaryBySlug } from '@/lib/spaces/summary-server';
 
@@ -45,6 +48,9 @@ jest.mock('@/lib/social-preview/image-source', () => ({
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB' +
     'CAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
   )),
+  loadSocialUserImageSource: jest.fn(() => Promise.resolve(
+    'data:image/png;base64,AQID',
+  )),
 }));
 
 jest.mock('@/lib/spaces/summary-server', () => ({
@@ -65,6 +71,7 @@ jest.mock('next/navigation', () => ({
 const loadPlace = loadPlaceDetailBySlug as jest.Mock;
 const loadPortal = loadPortalDetailBySlug as jest.Mock;
 const loadImage = loadSocialImageSource as jest.Mock;
+const loadUserImage = loadSocialUserImageSource as jest.Mock;
 const loadSpace = loadSpaceSummaryBySlug as jest.Mock;
 
 describe('public content routes', () => {
@@ -84,13 +91,15 @@ describe('public content routes', () => {
 
     await expect(generatePlaceMetadata(props)).resolves.toMatchObject({
       title: 'Marché de Valnyfrost',
-      description: 'Lieu • Valnyfrost\noverworld • X 13 • Y 49 • Z 74',
+      description: 'overworld • X 13 • Y 49 • Z 74',
       alternates: { canonical: '/lieux/marche-de-valnyfrost' },
       openGraph: {
-        description: 'Lieu • Valnyfrost\noverworld • X 13 • Y 49 • Z 74',
+        description: 'overworld • X 13 • Y 49 • Z 74',
+        title: 'Marché de Valnyfrost • Valnyfrost',
       },
       twitter: {
-        description: 'Lieu • Valnyfrost\noverworld • X 13 • Y 49 • Z 74',
+        description: 'overworld • X 13 • Y 49 • Z 74',
+        title: 'Marché de Valnyfrost • Valnyfrost',
       },
     });
     const page = await PlacePage(props);
@@ -123,7 +132,7 @@ describe('public content routes', () => {
       mapEntryId: 'portal-entry',
       name: 'Portail de Valnyfrost',
       slug: 'portail-de-valnyfrost',
-      space: null,
+      space: { name: 'Valnyfrost' },
       world: 'overworld',
       'nether-associate': {
         coordinates: { x: -100, y: 71, z: 200 },
@@ -133,16 +142,18 @@ describe('public content routes', () => {
 
     await expect(generatePortalMetadata(props)).resolves.toMatchObject({
       title: 'Portail de Valnyfrost',
-      description: 'Portail\noverworld • X -800 • Y 64 • Z 1600\n' +
+      description: 'overworld • X -800 • Y 64 • Z 1600\n' +
         'nether • X -100 • Y 71 • Z 200',
       alternates: { canonical: '/portails/portail-de-valnyfrost' },
       openGraph: {
-        description: 'Portail\noverworld • X -800 • Y 64 • Z 1600\n' +
+        description: 'overworld • X -800 • Y 64 • Z 1600\n' +
           'nether • X -100 • Y 71 • Z 200',
+        title: 'Portail de Valnyfrost • Valnyfrost',
       },
       twitter: {
-        description: 'Portail\noverworld • X -800 • Y 64 • Z 1600\n' +
+        description: 'overworld • X -800 • Y 64 • Z 1600\n' +
           'nether • X -100 • Y 71 • Z 200',
+        title: 'Portail de Valnyfrost • Valnyfrost',
       },
     });
     const page = await PortalPage(props);
@@ -165,30 +176,33 @@ describe('public content routes', () => {
 describe('social content metadata', () => {
   it('references the public page and its generated large image', () => {
     const metadata = createSocialContentMetadata({
-      description: 'Lieu • Valnyfrost',
+      description: 'overworld • X 13 • Y 49 • Z 74',
       imageAlt: 'Aperçu du Marché sur PMC Plan',
+      imageVersion: 'version-1',
       name: 'Marché',
       path: '/lieux/marche',
+      previewTitle: 'Marché • Valnyfrost',
     });
 
     expect(metadata).toMatchObject({
       alternates: { canonical: '/lieux/marche' },
-      description: 'Lieu • Valnyfrost',
+      description: 'overworld • X 13 • Y 49 • Z 74',
       openGraph: {
-        description: 'Lieu • Valnyfrost',
+        description: 'overworld • X 13 • Y 49 • Z 74',
         images: [{
           alt: 'Aperçu du Marché sur PMC Plan',
           height: 957,
-          url: '/lieux/marche/image',
+          url: '/lieux/marche/image?v=version-1',
           width: 1200,
         }],
-        title: 'Marché',
+        title: 'Marché • Valnyfrost',
         url: '/lieux/marche',
       },
       twitter: {
         card: 'summary_large_image',
-        description: 'Lieu • Valnyfrost',
-        images: ['/lieux/marche/image'],
+        description: 'overworld • X 13 • Y 49 • Z 74',
+        images: ['/lieux/marche/image?v=version-1'],
+        title: 'Marché • Valnyfrost',
       },
     });
   });
@@ -265,12 +279,72 @@ describe('place social image route', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/png');
     expect(loadPlace).toHaveBeenCalledWith('marche-de-valnyfrost');
-    expect(loadImage).toHaveBeenCalledWith('https://images.example/place.png');
+    expect(loadUserImage).toHaveBeenCalledWith(
+      'https://images.example/place.png',
+      'http://localhost/',
+      false,
+    );
     expect(loadImage).toHaveBeenCalledWith(
       expect.stringContaining('/ioshead/owner-uuid/'),
       '/assets/minecraft/default-player-head.png',
     );
-    expect(loadImage).toHaveBeenCalledWith('https://images.example/space.png');
+    expect(loadUserImage).toHaveBeenCalledWith(
+      'https://images.example/space.png',
+      'http://localhost/',
+      false,
+    );
+  });
+
+  it('long-caches only a versioned render with every user image available', async () => {
+    loadPlace.mockResolvedValue({
+      category: 'commerce',
+      coordinates: { x: 13, y: 49, z: 74 },
+      images: ['https://images.example/place.png'],
+      name: 'Marché',
+      owners: [],
+      space: null,
+      world: 'overworld',
+    });
+
+    const response = await getPlaceImage(new Request(
+      'http://localhost/lieux/marche/image?v=content-version',
+      { headers: { 'X-PMC-Social-Preview-Warm': '1' } },
+    ), {
+      params: Promise.resolve({ slug: 'marche' }),
+    });
+
+    expect(response.headers.get('cache-control'))
+      .toBe('public, max-age=86400, immutable');
+    expect(response.headers.get('vercel-cdn-cache-control'))
+      .toBe('public, max-age=31536000');
+    expect(loadUserImage).toHaveBeenCalledWith(
+      'https://images.example/place.png',
+      'http://localhost/lieux/marche/image?v=content-version',
+      true,
+    );
+  });
+
+  it('short-caches a versioned fallback when its user image is unavailable', async () => {
+    loadPlace.mockResolvedValue({
+      category: 'commerce',
+      coordinates: { x: 13, y: 49, z: 74 },
+      images: ['https://images.example/place.png'],
+      name: 'Marché',
+      owners: [],
+      space: null,
+      world: 'overworld',
+    });
+    loadUserImage.mockResolvedValueOnce(null);
+
+    const response = await getPlaceImage(new Request(
+      'http://localhost/lieux/marche/image?v=content-version',
+    ), {
+      params: Promise.resolve({ slug: 'marche' }),
+    });
+
+    expect(response.headers.get('cache-control'))
+      .toBe('public, max-age=0, s-maxage=60, stale-while-revalidate=300');
+    expect(response.headers.has('vercel-cdn-cache-control')).toBe(false);
   });
 
   it('does not load a fallback head when the place has no owner', async () => {
@@ -332,8 +406,16 @@ describe('space social image route', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/png');
     expect(loadSpace).toHaveBeenCalledWith('valnyfrost');
-    expect(loadImage).toHaveBeenCalledWith('https://images.example/place.png');
-    expect(loadImage).toHaveBeenCalledWith('https://images.example/space.png');
+    expect(loadUserImage).toHaveBeenCalledWith(
+      'https://images.example/place.png',
+      'http://localhost/',
+      false,
+    );
+    expect(loadUserImage).toHaveBeenCalledWith(
+      'https://images.example/space.png',
+      'http://localhost/',
+      false,
+    );
     expect(loadImage).toHaveBeenCalledWith(
       expect.stringContaining('/ioshead/member-uuid/'),
       '/assets/minecraft/default-player-head.png',
@@ -388,7 +470,11 @@ describe('portal social image route', () => {
 
     expect(response.status).toBe(200);
     expect(loadPortal).toHaveBeenCalledWith('portail-de-valnyfrost');
-    expect(loadImage).toHaveBeenCalledWith('https://images.example/portal.png');
+    expect(loadUserImage).toHaveBeenCalledWith(
+      'https://images.example/portal.png',
+      'http://localhost/',
+      false,
+    );
     expect(loadImage).toHaveBeenCalledWith('/map/icons/portail_icon.png');
     expect(loadImage).toHaveBeenCalledWith(
       expect.stringContaining('/ioshead/owner-uuid/'),

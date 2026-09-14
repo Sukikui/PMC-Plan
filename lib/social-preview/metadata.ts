@@ -11,25 +11,27 @@ import {
 interface SocialContentMetadataOptions {
   description: string | null;
   imageAlt: string;
+  imageVersion: string;
   name: string;
   path: string;
+  previewTitle?: string;
 }
 
 interface MapContentSocialDescriptionOptions {
-  contentType: 'Lieu' | 'Portail';
   coordinates: SocialCoordinates;
   netherCoordinates?: SocialCoordinates | null;
-  spaceName?: string;
   world: string;
 }
 
 export function createSocialContentMetadata({
   description,
   imageAlt,
+  imageVersion,
   name,
   path,
+  previewTitle = name,
 }: SocialContentMetadataOptions): Metadata {
-  const imageUrl = `${path}/image`;
+  const imageUrl = `${path}/image?v=${imageVersion}`;
 
   return {
     title: name,
@@ -40,7 +42,7 @@ export function createSocialContentMetadata({
       locale: 'fr_FR',
       siteName: 'PMC Plan',
       url: path,
-      title: name,
+      title: previewTitle,
       ...(description ? { description } : {}),
       images: [{
         url: imageUrl,
@@ -51,7 +53,7 @@ export function createSocialContentMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: name,
+      title: previewTitle,
       ...(description ? { description } : {}),
       images: [imageUrl],
     },
@@ -59,16 +61,13 @@ export function createSocialContentMetadata({
 }
 
 export function createMapContentSocialDescription({
-  contentType,
   coordinates,
   netherCoordinates,
-  spaceName,
   world,
 }: MapContentSocialDescriptionOptions) {
-  const identity = spaceName ? `${contentType} • ${spaceName}` : contentType;
   const coordinateLines = [formatSocialCoordinateLine(world, coordinates)];
   if (netherCoordinates) {
     coordinateLines.push(formatSocialCoordinateLine('nether', netherCoordinates));
   }
-  return [identity, ...coordinateLines].join('\n');
+  return coordinateLines.join('\n');
 }

@@ -2,8 +2,15 @@ import {
   getDefaultMinecraftHeadUrl,
   getMinecraftHeadUrl,
 } from '@/lib/minecraft-head-service';
-import { loadSocialImageSource } from '@/lib/social-preview/image-source';
-import { createSocialImageResponse } from '@/lib/social-preview/image-response';
+import {
+  loadSocialImageSource,
+  loadSocialUserImageSource,
+} from '@/lib/social-preview/image-source';
+import {
+  canLongCacheSocialPreview,
+  createSocialImageResponse,
+  isSocialPreviewWarmRequest,
+} from '@/lib/social-preview/image-response';
 import {
   getSocialCountLabel,
   getSocialHeaderTextSize,
@@ -24,15 +31,18 @@ interface RouteContext {
 export const runtime = 'nodejs';
 export const revalidate = 300;
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const space = await loadSpaceSummaryBySlug(slug);
   if (!space) return new Response('Espace introuvable.', { status: 404 });
 
   const member = space.firstMember;
+  const warm = isSocialPreviewWarmRequest(request);
   const [mainImage, spaceLogo, memberHead] = await Promise.all([
-    loadSocialImageSource(space.previewImage),
-    space.logoUrl ? loadSocialImageSource(space.logoUrl) : Promise.resolve(null),
+    loadSocialUserImageSource(space.previewImage, request.url, warm),
+    space.logoUrl
+      ? loadSocialUserImageSource(space.logoUrl, request.url, warm)
+      : Promise.resolve(null),
     member
       ? loadSocialImageSource(
         getMinecraftHeadUrl(member.uuid, 128),
@@ -85,5 +95,9 @@ export async function GET(_request: Request, context: RouteContext) {
       )}
       mainImage={mainImage}
     />,
+    canLongCacheSocialPreview(request, [
+      [space.previewImage, mainImage],
+      [space.logoUrl, spaceLogo],
+    ]),
   );
 }

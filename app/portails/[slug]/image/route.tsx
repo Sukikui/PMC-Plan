@@ -6,8 +6,15 @@ import {
 import QuestionMarkIcon from '@/components/icons/QuestionMarkIcon';
 import { loadPortalDetailBySlug } from '@/lib/map-content/detail-server';
 import { getMapIconSrc } from '@/lib/place/categories';
-import { loadSocialImageSource } from '@/lib/social-preview/image-source';
-import { createSocialImageResponse } from '@/lib/social-preview/image-response';
+import {
+  loadSocialImageSource,
+  loadSocialUserImageSource,
+} from '@/lib/social-preview/image-source';
+import {
+  canLongCacheSocialPreview,
+  createSocialImageResponse,
+  isSocialPreviewWarmRequest,
+} from '@/lib/social-preview/image-response';
 import {
   formatSocialCoordinates,
   getSocialHeaderTextSize,
@@ -32,14 +39,17 @@ interface RouteContext {
 export const runtime = 'nodejs';
 export const revalidate = 300;
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { slug } = await context.params;
   const portal = await loadPortalDetailBySlug(slug);
   if (!portal) return new Response('Portail introuvable.', { status: 404 });
 
   const owner = portal.owners[0] ?? null;
+  const mainImageSource = portal.images[0];
+  const spaceLogoSource = portal.space?.logoUrl;
+  const warm = isSocialPreviewWarmRequest(request);
   const [mainImage, portalIcon, ownerHead, spaceLogo] = await Promise.all([
-    loadSocialImageSource(portal.images[0]),
+    loadSocialUserImageSource(mainImageSource, request.url, warm),
     loadSocialImageSource(getMapIconSrc('portail')),
     owner
       ? loadSocialImageSource(
@@ -47,8 +57,8 @@ export async function GET(_request: Request, context: RouteContext) {
         getDefaultMinecraftHeadUrl(),
       )
       : Promise.resolve(null),
-    portal.space?.logoUrl
-      ? loadSocialImageSource(portal.space.logoUrl)
+    spaceLogoSource
+      ? loadSocialUserImageSource(spaceLogoSource, request.url, warm)
       : Promise.resolve(null),
   ]);
   const netherAssociate = portal['nether-associate'];
@@ -156,6 +166,10 @@ export async function GET(_request: Request, context: RouteContext) {
       ) : undefined}
       mainImage={mainImage}
     />,
+    canLongCacheSocialPreview(request, [
+      [mainImageSource, mainImage],
+      [spaceLogoSource, spaceLogo],
+    ]),
   );
 }
 

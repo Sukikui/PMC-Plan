@@ -13,6 +13,7 @@ import {
 import { mapContentQueryOptions } from '@/lib/map-content/client';
 import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import { resolveContentColor } from '@/lib/content/colors';
+import { getCachedUserImageUrl } from '@/lib/media/user-image';
 
 const EMPTY_PLACES: PlaceSummary[] = [];
 const EMPTY_PORTALS: PortalSummary[] = [];
@@ -61,9 +62,11 @@ export function buildWorldMapPoints(
           : DEFAULT_PLACE_CATEGORY,
       ),
       markerColor: resolveContentColor(place),
-      previewImageSrc: 'previewImage' in place
-        ? place.previewImage ?? undefined
-        : place.images[0],
+      previewImageSrc: getCachedUserImageUrl(
+        'previewImage' in place
+          ? place.previewImage ?? undefined
+          : place.images[0],
+      ) ?? undefined,
       spaceLogo: place.space ?? undefined,
       item: place,
       itemType: 'place',
@@ -84,9 +87,11 @@ export function buildWorldMapPoints(
         label: item.name,
         iconSrc: getMapIconSrc('portail'),
         markerColor: resolveContentColor(item),
-        previewImageSrc: 'previewImage' in item
-          ? item.previewImage ?? undefined
-          : item.images[0],
+        previewImageSrc: getCachedUserImageUrl(
+          'previewImage' in item
+            ? item.previewImage ?? undefined
+            : item.images[0],
+        ) ?? undefined,
         spaceLogo: item.space ?? undefined,
         unidentified: item.unidentified,
         item,
