@@ -4,7 +4,7 @@ import type React from 'react';
 import InfoDescriptionSection from '@/components/info-overlay/InfoDescriptionSection';
 import InfoImageCarousel from '@/components/info-overlay/InfoImageCarousel';
 import InfoOverlayBody from '@/components/info-overlay/InfoOverlayBody';
-import MinecraftProfileList from '@/components/info-overlay/MinecraftProfileList';
+import CommunitySections from '@/components/info-overlay/CommunitySections';
 import { OverlaySlideTrack } from '@/components/ui/OverlaySlider';
 import OverlayTabs from '@/components/ui/OverlayTabs';
 import type { Space } from '@/lib/spaces/types';
@@ -64,7 +64,8 @@ export default function SpaceInfoContent({
                     caption: image.placeName,
                   }))}
                 />
-                <MinecraftProfileList
+                <CommunitySections
+                  discordUrl={space.discordUrl}
                   pluralTitle="Membres"
                   profiles={space.members}
                   singularTitle="Membre"

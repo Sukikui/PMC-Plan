@@ -15,11 +15,17 @@ Domain-specific endpoint documentation:
 - [Public data loading API](api/data-loading.md)
 - [Account preferences API](api/preferences.md)
 
+Discord server invitations displayed by content overlays are resolved through
+`GET /discord/invite`. The endpoint accepts only official Discord invitation
+hosts, obtains the public server name and icon from Discord, and caches the
+result without persisting it. Its response and fallback behavior are documented
+in the [public data loading API](api/data-loading.md#discord-server-preview).
+
 Public content pages are available at `GET /lieux/{slug}`, `GET
 /portails/{slug}`, and `GET /espaces/{slug}`. They render the main application,
 open the requested content overlay, and expose content-specific Open Graph and
 Twitter metadata. Their `/image` subroutes return the corresponding `1200 ×
-630` PNG. The public page contract, payload sources, fallback behavior, and
+957` PNG. The public page contract, payload sources, fallback behavior, and
 local inspection URLs are documented in the [public data loading
 API](api/data-loading.md).
 

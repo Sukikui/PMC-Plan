@@ -24,6 +24,7 @@ export default function InfoOverlayStack({
         return (
           <Overlay
             closing={layer.isClosing}
+            initialFocus="dialog"
             isOpen
             key={layer.id}
             onClose={close}

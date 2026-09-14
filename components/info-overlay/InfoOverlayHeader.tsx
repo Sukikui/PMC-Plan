@@ -5,6 +5,7 @@ import type { Place, Portal } from '@/lib/api/types';
 import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { getMapIconSrc, type MapIconCategory } from '@/lib/place/categories';
+import { getPublicContentPath } from '@/lib/content-path';
 import { themeColors } from '@/lib/theme-colors';
 import ContentInfoOverlayHeader from './ContentInfoOverlayHeader';
 import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
@@ -33,11 +34,11 @@ export default function InfoOverlayHeader({
   onSelectItem,
 }: InfoOverlayHeaderProps) {
   const space = item.space;
+  const slug = type === 'place' ? item.id : (item as Portal | PortalSummary).slug;
 
   return (
     <ContentInfoOverlayHeader
       canEdit={canEdit}
-      discordUrl={type === 'place' ? (item as Place).discord : null}
       identity={(
         <img
           src={getMapIconSrc(iconCategory)}
@@ -62,10 +63,11 @@ export default function InfoOverlayHeader({
           onClick={() => onOpenSpace(space)}
         />
       ) : undefined}
+      sharePath={getPublicContentPath(type, slug)}
       title={type === 'portal' && 'unidentified' in item && item.unidentified
         ? <PortalIdentityLabel />
         : item.name}
-      titleText={item.name}
+      titleMaxLines={2}
     />
   );
 }

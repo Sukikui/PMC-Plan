@@ -82,18 +82,20 @@ on the server, returns `404` for missing content, and opens the corresponding
 overlay after the startup screen has completed. The routes reuse the regular
 map and overlay components rather than maintaining a parallel public UI.
 
-Each page publishes its content name, canonical URL, and generated `1200 × 630`
-image through Open Graph and Twitter metadata. Discord and other compatible
-clients can therefore render a concise preview while browsers retain the normal
-interactive map experience.
+Each page publishes its content name, canonical URL, and generated `1200 × 957`
+image through Open Graph and Twitter metadata. Place and portal embeds identify
+the content type, append the associated space name when one exists, and list
+coordinates on one line per represented world. A linked portal therefore lists
+both its Overworld and Nether coordinates. Discord and other compatible clients
+can render a concise preview while browsers retain the normal interactive map
+experience.
 
 ## GET `/lieux/{slug}/image`
 
-Generates the public `1200 × 630` PNG social preview for one place. The image
+Generates the public `1200 × 957` PNG social preview for one place. The image
 uses the place's first image, associated space identity, world, coordinates,
-visible trade-offer count when non-zero, and ordered Minecraft owners. Missing
-or unavailable remote images fall back to local application assets without
-preventing the preview from rendering.
+and ordered Minecraft owners. Missing or unavailable remote images fall back
+to local application assets without preventing the preview from rendering.
 
 During development, open this route directly in a browser to inspect the exact
 image that will later be referenced by the place's Open Graph metadata:
@@ -107,12 +109,13 @@ cache; production results use the shared public-detail invalidation contract.
 
 ## GET `/portails/{slug}/image`
 
-Generates the public `1200 × 630` PNG social preview for one portal using the
+Generates the public `1200 × 957` PNG social preview for one portal using the
 same identity, image, space, and owner presentation as place previews. A linked
 portal stacks its Overworld coordinates above its Nether coordinates and
 appends the Nether address to the second line. A standalone Nether portal
 appends its own Nether address, while a standalone Overworld portal displays
-coordinates only.
+coordinates only. When the footer would overflow, the owner identity contracts
+to the Minecraft head and additional-owner count.
 
 ```text
 http://localhost:3000/portails/example-portal/image
@@ -123,7 +126,7 @@ so the preview remains canonical for the portal pair.
 
 ## GET `/espaces/{slug}/image`
 
-Generates the public `1200 × 630` PNG social preview for one space. The header
+Generates the public `1200 × 957` PNG social preview for one space. The header
 uses the space logo and name, the center uses the first image from an associated
 place when available, and the footer includes place, portal, and offer counts
 alongside the first derived Minecraft member. Missing remote assets fall back
@@ -198,3 +201,25 @@ The database indexes the fields used by collection ordering and filtering,
 including content update timestamps, worlds, trade-offer relations, and service
 contact types. Public browsing never loads all complete places, portals,
 spaces, services, or offers into a second client-side cache.
+
+## Discord Server Preview
+
+`GET /api/discord/invite?url={inviteUrl}` resolves an official Discord invite
+URL into the public identity shown by place, portal, and space overlays.
+
+```json
+{
+  "server": {
+    "id": "123456789",
+    "name": "ValnyFrost",
+    "iconUrl": "https://cdn.discordapp.com/icons/123456789/icon.webp?size=128"
+  }
+}
+```
+
+Only HTTPS invitations hosted by `discord.gg`, `discord.com`, or their official
+Discord variants are accepted. The server calls Discord's fixed invite API
+origin, so user-provided URLs can never select the upstream host. Discord
+responses are cached for six hours. Invalid, expired, or unavailable invites
+return `{ "server": null }`; overlays retain a generic Discord identity and the
+original invitation link instead of failing to render.

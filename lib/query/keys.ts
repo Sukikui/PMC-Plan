@@ -1,4 +1,5 @@
 export const queryKeys = {
+  discordInvite: (url: string) => ['discord-invite', url] as const,
   githubContributors: ['github-contributors'] as const,
   mapContent: ['map-content'] as const,
   mapEntryDetail: (type: 'place' | 'portal', mapEntryId: string) => (

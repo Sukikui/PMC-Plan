@@ -2,8 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ImageResponse } from 'next/og';
 import type { ReactElement } from 'react';
-
-const SOCIAL_PREVIEW_SIZE = { width: 1200, height: 630 } as const;
+import {
+  SOCIAL_PREVIEW_HEIGHT,
+  SOCIAL_PREVIEW_WIDTH,
+} from './constants';
 
 const socialPreviewFonts = Promise.all([
   readFile(join(process.cwd(), 'public/branding/fonts/Inter-Regular.ttf')),
@@ -14,7 +16,8 @@ const socialPreviewFonts = Promise.all([
 export async function createSocialImageResponse(element: ReactElement) {
   const [regular, semiBold, bold] = await socialPreviewFonts;
   return new ImageResponse(element, {
-    ...SOCIAL_PREVIEW_SIZE,
+    width: SOCIAL_PREVIEW_WIDTH,
+    height: SOCIAL_PREVIEW_HEIGHT,
     headers: {
       'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400',
     },

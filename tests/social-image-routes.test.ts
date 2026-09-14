@@ -12,6 +12,12 @@ import {
   loadPlaceDetailBySlug,
   loadPortalDetailBySlug,
 } from '@/lib/map-content/detail-server';
+import {
+  SOCIAL_PREVIEW_HEIGHT,
+  SOCIAL_PREVIEW_IMAGE_HEIGHT,
+  SOCIAL_PREVIEW_WIDTH,
+} from '@/lib/social-preview/constants';
+import { shouldCompactSocialMember } from '@/lib/social-preview/format';
 import { loadSocialImageSource } from '@/lib/social-preview/image-source';
 import { createSocialContentMetadata } from '@/lib/social-preview/metadata';
 import { loadSpaceSummaryBySlug } from '@/lib/spaces/summary-server';
@@ -67,15 +73,25 @@ describe('public content routes', () => {
   it('uses one canonical place identity for metadata and overlay navigation', async () => {
     loadPlace.mockResolvedValue({
       description: 'Une place incontournable.',
+      coordinates: { x: 13, y: 49, z: 74 },
       id: 'marche-de-valnyfrost',
       mapEntryId: 'place-entry',
       name: 'Marché de Valnyfrost',
+      space: { name: 'Valnyfrost' },
+      world: 'overworld',
     });
     const props = { params: Promise.resolve({ slug: 'marche-de-valnyfrost' }) };
 
     await expect(generatePlaceMetadata(props)).resolves.toMatchObject({
       title: 'Marché de Valnyfrost',
+      description: 'Lieu • Valnyfrost\noverworld • X 13 • Y 49 • Z 74',
       alternates: { canonical: '/lieux/marche-de-valnyfrost' },
+      openGraph: {
+        description: 'Lieu • Valnyfrost\noverworld • X 13 • Y 49 • Z 74',
+      },
+      twitter: {
+        description: 'Lieu • Valnyfrost\noverworld • X 13 • Y 49 • Z 74',
+      },
     });
     const page = await PlacePage(props);
 
@@ -103,15 +119,31 @@ describe('public content routes', () => {
   it('uses the canonical portal pair identity for metadata and navigation', async () => {
     loadPortal.mockResolvedValue({
       description: null,
+      coordinates: { x: -800, y: 64, z: 1600 },
       mapEntryId: 'portal-entry',
       name: 'Portail de Valnyfrost',
       slug: 'portail-de-valnyfrost',
+      space: null,
+      world: 'overworld',
+      'nether-associate': {
+        coordinates: { x: -100, y: 71, z: 200 },
+      },
     });
     const props = { params: Promise.resolve({ slug: 'portail-de-valnyfrost' }) };
 
     await expect(generatePortalMetadata(props)).resolves.toMatchObject({
       title: 'Portail de Valnyfrost',
+      description: 'Portail\noverworld • X -800 • Y 64 • Z 1600\n' +
+        'nether • X -100 • Y 71 • Z 200',
       alternates: { canonical: '/portails/portail-de-valnyfrost' },
+      openGraph: {
+        description: 'Portail\noverworld • X -800 • Y 64 • Z 1600\n' +
+          'nether • X -100 • Y 71 • Z 200',
+      },
+      twitter: {
+        description: 'Portail\noverworld • X -800 • Y 64 • Z 1600\n' +
+          'nether • X -100 • Y 71 • Z 200',
+      },
     });
     const page = await PortalPage(props);
 
@@ -133,6 +165,7 @@ describe('public content routes', () => {
 describe('social content metadata', () => {
   it('references the public page and its generated large image', () => {
     const metadata = createSocialContentMetadata({
+      description: 'Lieu • Valnyfrost',
       imageAlt: 'Aperçu du Marché sur PMC Plan',
       name: 'Marché',
       path: '/lieux/marche',
@@ -140,11 +173,12 @@ describe('social content metadata', () => {
 
     expect(metadata).toMatchObject({
       alternates: { canonical: '/lieux/marche' },
-      description: null,
+      description: 'Lieu • Valnyfrost',
       openGraph: {
+        description: 'Lieu • Valnyfrost',
         images: [{
           alt: 'Aperçu du Marché sur PMC Plan',
-          height: 630,
+          height: 957,
           url: '/lieux/marche/image',
           width: 1200,
         }],
@@ -153,11 +187,38 @@ describe('social content metadata', () => {
       },
       twitter: {
         card: 'summary_large_image',
+        description: 'Lieu • Valnyfrost',
         images: ['/lieux/marche/image'],
       },
     });
-    expect(metadata.openGraph).not.toHaveProperty('description');
-    expect(metadata.twitter).not.toHaveProperty('description');
+  });
+
+  it('reserves a full-width 16:9 area for the primary image', () => {
+    expect(SOCIAL_PREVIEW_IMAGE_HEIGHT * 16).toBe(SOCIAL_PREVIEW_WIDTH * 9);
+    expect(SOCIAL_PREVIEW_HEIGHT).toBe(957);
+  });
+});
+
+describe('social preview footer layout', () => {
+  it('keeps a short owner identity visible when the footer fits', () => {
+    expect(shouldCompactSocialMember({
+      additionalCount: 0,
+      coordinateLines: ['X 13 • Y 49 • Z 74'],
+      memberName: 'Suki',
+      world: 'overworld',
+    })).toBe(false);
+  });
+
+  it('compacts the owner when linked coordinates and address fill the footer', () => {
+    expect(shouldCompactSocialMember({
+      additionalCount: 3,
+      coordinateLines: [
+        'X -12345 • Y 64 • Z 12345',
+        'X -1543 • Y 71 • Z 1543 • Axe nord, troisième sortie à droite',
+      ],
+      memberName: 'LongMinecraftName',
+      world: 'over+nether',
+    })).toBe(true);
   });
 });
 

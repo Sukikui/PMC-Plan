@@ -2,7 +2,7 @@ import type { Place, Portal } from '@/lib/api/types';
 import { themeColors } from '@/lib/theme-colors';
 import ActionButton from '@/components/ui/ActionButton';
 import InfoDescriptionSection from './InfoDescriptionSection';
-import MapEntryOwners from './MapEntryOwners';
+import CommunitySections from './CommunitySections';
 
 interface InfoOverlayDetailsProps {
   item: Place | Portal;
@@ -12,10 +12,16 @@ interface InfoOverlayDetailsProps {
 
 export default function InfoOverlayDetails({ item, onClaim, type }: InfoOverlayDetailsProps) {
   const place = type === 'place' ? item as Place : null;
+  const discordUrl = place?.discord ?? item.space?.discordUrl ?? null;
 
   return (
     <>
-      <MapEntryOwners owners={item.owners} />
+      <CommunitySections
+        discordUrl={discordUrl}
+        pluralTitle="Propriétaires"
+        profiles={item.owners}
+        singularTitle="Propriétaire"
+      />
 
       {type === 'portal' && (item as Portal).unidentified && onClaim && (
         <div className="flex justify-center pt-6">

@@ -2,12 +2,16 @@ import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import HomeMapApp, { type HomeMapDeepLink } from '@/components/HomeMapApp';
+import { getPublicContentPath } from '@/lib/content-path';
 import {
   loadPlaceDetailBySlug,
   loadPortalDetailBySlug,
 } from '@/lib/map-content/detail-server';
 import { loadSpaceSummaryBySlug } from '@/lib/spaces/summary-server';
-import { createSocialContentMetadata } from './metadata';
+import {
+  createMapContentSocialDescription,
+  createSocialContentMetadata,
+} from './metadata';
 
 type PublicContentType = HomeMapDeepLink['type'];
 
@@ -19,6 +23,7 @@ interface PublicContentIdentity {
   deepLink: HomeMapDeepLink;
   name: string;
   slug: string;
+  socialDescription: string | null;
 }
 
 export function createPublicContentRoute(type: PublicContentType) {
@@ -28,9 +33,10 @@ export function createPublicContentRoute(type: PublicContentType) {
       if (!content) notFound();
 
       return createSocialContentMetadata({
+        description: content.socialDescription,
         imageAlt: getImageAlt(type, content.name),
         name: content.name,
-        path: `/${getPathSegment(type)}/${encodeURIComponent(content.slug)}`,
+        path: getPublicContentPath(type, content.slug),
       });
     },
     async Page({ params }: PublicContentPageProps) {
@@ -56,6 +62,12 @@ const loadPublicContent = cache(async function loadPublicContent(
       deepLink: { mapEntryId: place.mapEntryId, type: 'place' },
       name: place.name,
       slug: place.id,
+      socialDescription: createMapContentSocialDescription({
+        contentType: 'Lieu',
+        coordinates: place.coordinates,
+        spaceName: place.space?.name,
+        world: place.world,
+      }),
     } : null;
   }
   if (type === 'portal') {
@@ -64,6 +76,13 @@ const loadPublicContent = cache(async function loadPublicContent(
       deepLink: { mapEntryId: portal.mapEntryId, type: 'portal' },
       name: portal.name,
       slug: portal.slug,
+      socialDescription: createMapContentSocialDescription({
+        contentType: 'Portail',
+        coordinates: portal.coordinates,
+        netherCoordinates: portal['nether-associate']?.coordinates,
+        spaceName: portal.space?.name,
+        world: portal.world,
+      }),
     } : null;
   }
   const space = await loadSpaceSummaryBySlug(slug);
@@ -71,14 +90,9 @@ const loadPublicContent = cache(async function loadPublicContent(
     deepLink: { space, type: 'space' },
     name: space.name,
     slug: space.slug,
+    socialDescription: null,
   } : null;
 });
-
-function getPathSegment(type: PublicContentType) {
-  if (type === 'place') return 'lieux';
-  if (type === 'portal') return 'portails';
-  return 'espaces';
-}
 
 function getImageAlt(type: PublicContentType, name: string) {
   return type === 'space'

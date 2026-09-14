@@ -5,13 +5,15 @@ import {
 import { loadSocialImageSource } from '@/lib/social-preview/image-source';
 import { createSocialImageResponse } from '@/lib/social-preview/image-response';
 import {
+  getSocialCountLabel,
+  getSocialHeaderTextSize,
+} from '@/lib/social-preview/format';
+import {
   SocialPreviewFrame,
   SocialPreviewHeaderIdentity,
   SocialPreviewMember,
   SocialPreviewMetrics,
   SocialPreviewSpaceLogo,
-  getSocialCountLabel,
-  getSocialHeaderTextSize,
 } from '@/lib/social-preview/layout';
 import { loadSpaceSummaryBySlug } from '@/lib/spaces/summary-server';
 
@@ -39,7 +41,7 @@ export async function GET(_request: Request, context: RouteContext) {
       : Promise.resolve(null),
   ]);
   const titleSize = getSocialHeaderTextSize(space.name);
-  const logo = <SocialPreviewSpaceLogo logo={space} size={70} source={spaceLogo} />;
+  const logo = <SocialPreviewSpaceLogo logo={space} size={82} source={spaceLogo} />;
   const metrics = [
     {
       label: getSocialCountLabel(space.placeCount, 'lieu', 'lieux'),
