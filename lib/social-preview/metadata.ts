@@ -18,6 +18,7 @@ interface SocialContentMetadataOptions {
 }
 
 interface MapContentSocialDescriptionOptions {
+  address?: string | null;
   coordinates: SocialCoordinates;
   netherCoordinates?: SocialCoordinates | null;
   world: string;
@@ -61,11 +62,16 @@ export function createSocialContentMetadata({
 }
 
 export function createMapContentSocialDescription({
+  address,
   coordinates,
   netherCoordinates,
   world,
 }: MapContentSocialDescriptionOptions) {
-  const coordinateLines = [formatSocialCoordinateLine(world, coordinates)];
+  const primaryAddress = world === 'nether' ? address : null;
+  const coordinateLines = [
+    formatSocialCoordinateLine(world, coordinates)
+    + `${primaryAddress ? ` • ${primaryAddress}` : ''}`,
+  ];
   if (netherCoordinates) {
     coordinateLines.push(formatSocialCoordinateLine('nether', netherCoordinates));
   }

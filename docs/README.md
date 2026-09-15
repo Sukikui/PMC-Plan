@@ -18,6 +18,8 @@ architecture, operational procedures, and API contracts remain separate.
   tests, coverage, and dependency security.
 - [Database Deployment](DATABASE_DEPLOYMENT.md): maintain the migration baseline
   and deploy schema changes to production.
+- [User Changelog](USER_CHANGELOG.md): archived French release announcements
+  and their inclusive Git boundaries.
 
 ## API References
 
