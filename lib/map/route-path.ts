@@ -12,7 +12,7 @@ import {
   type RouteStep,
 } from '@/lib/route-planning';
 
-export type MapRouteMarkerKind = 'start' | 'transition' | 'destination';
+type MapRouteMarkerKind = 'start' | 'transition' | 'destination';
 type MapRouteTargetKind = 'portal' | 'destination';
 
 export interface MapRouteSegment {
