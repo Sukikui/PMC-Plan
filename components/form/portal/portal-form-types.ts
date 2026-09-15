@@ -9,7 +9,7 @@ export interface InitialPortalData {
   type: 'portal';
   color: string;
   images?: string[];
-  variant: 'overworld' | 'nether' | 'linked';
+  variant: PortalVariant;
   name: string;
   unidentified: boolean;
   id: string;
@@ -26,6 +26,8 @@ export interface InitialPortalData {
   description?: string;
   netherAddress?: string;
 }
+
+export type PortalVariant = 'overworld' | 'nether' | 'linked';
 
 interface PortalPayloadBase {
   color: string;

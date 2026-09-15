@@ -255,7 +255,8 @@ export default function PlaceForm({
               />
             </>
           )}
-          descriptionPlaceholder="Présentez rapidement votre lieu, ses services et comment y accéder."
+          descriptionPlaceholder="Présentez le lieu, ses services et comment y accéder.
+          Évitez de répéter les coordonnées ou adresses Nether déjà indiquées sur la fiche et les portails proches."
           disabled={submission.isSubmitting}
           form={fields}
           namePlaceholder="Marché impérial de Valnyfrost"

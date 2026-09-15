@@ -76,11 +76,9 @@ export default function PortalForm({
     netherCoordinates,
     overworldCoords,
     portalVariant,
+    setNetherCoords,
     setOverworldCoords,
     setPortalVariant,
-    setSingleCoords,
-    singleAddress,
-    singleCoords,
   } = usePortalLocationState(initialData, initialPosition);
   const netherCoords = netherCoordinates.value;
 
@@ -93,6 +91,7 @@ export default function PortalForm({
 
   const isLinkedVariant = portalVariant === 'linked';
   const singleWorld: 'overworld' | 'nether' = portalVariant === 'nether' ? 'nether' : 'overworld';
+  const singleCoords = portalVariant === 'nether' ? netherCoords : overworldCoords;
   const snapshot = {
     ...createPortalSnapshot({
       color,
@@ -104,7 +103,7 @@ export default function PortalForm({
       },
       name: fields.name,
       netherAddress: netherAddress.value,
-      singleAddress: singleAddress.value,
+      singleAddress: netherAddress.value,
       singleCoordinates: singleCoords,
       slugSource: fields.input.slug,
       spaceId: selectedSpace?.id ?? null,
@@ -155,7 +154,7 @@ export default function PortalForm({
             world: singleWorld,
             coordinates: parsedSingleCoords,
             description: fields.input.description || undefined,
-            address: singleWorld === 'nether' ? (singleAddress.value.trim() || undefined) : undefined,
+            address: singleWorld === 'nether' ? (netherAddress.value.trim() || undefined) : undefined,
           },
         };
         await onSubmit(payload);
@@ -310,10 +309,8 @@ export default function PortalForm({
           netherAddress={netherAddress}
           netherCoordinates={netherCoordinates}
           overworldCoordinates={overworldCoords}
+          setNetherCoordinates={setNetherCoords}
           setOverworldCoordinates={setOverworldCoords}
-          setSingleCoordinates={setSingleCoords}
-          singleAddress={singleAddress}
-          singleCoordinates={singleCoords}
           variant={portalVariant}
         />
       </FormSection>
