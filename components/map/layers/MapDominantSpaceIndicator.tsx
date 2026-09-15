@@ -5,10 +5,14 @@ import ArrowRightIcon from '@/components/icons/ArrowRightIcon';
 import { useOverlay } from '@/components/overlay/OverlayProvider';
 import SpaceLogo from '@/components/spaces/SpaceLogo';
 import {
+  FLOATING_STATUS_BUBBLE_FADE_DURATION_MS,
   FloatingStatusBubblePresence,
   getFloatingStatusBubbleClassName,
-  useFloatingStatusBubblePresence,
 } from '@/components/ui/FloatingStatusBubble';
+import {
+  SOFT_VALUE_TRANSITION_DURATION_MS,
+  useSoftValueTransition,
+} from '@/components/ui/useSoftValueTransition';
 import { spaceDetailQueryOptions } from '@/lib/spaces/client';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { themeColors } from '@/lib/theme-colors';
@@ -25,7 +29,14 @@ export default function MapDominantSpaceIndicator({
 }: MapDominantSpaceIndicatorProps) {
   const queryClient = useQueryClient();
   const { openSpaceInfo } = useOverlay();
-  const { displayedValue: displayedSpace, visible } = useFloatingStatusBubblePresence(space);
+  const {
+    contentVisible,
+    displayedValue: displayedSpace,
+    visible,
+  } = useSoftValueTransition(space, space?.id ?? null, {
+    animateInitial: true,
+    retainedDurationMs: FLOATING_STATUS_BUBBLE_FADE_DURATION_MS,
+  });
   const prefetchSpace = () => {
     if (interactive && displayedSpace) {
       void queryClient.prefetchQuery(spaceDetailQueryOptions(displayedSpace.slug));
@@ -43,10 +54,14 @@ export default function MapDominantSpaceIndicator({
           ? `Ouvrir l'espace ${displayedSpace.name}`
           : `Espace dominant : ${displayedSpace.name}`}
         className={getFloatingStatusBubbleClassName({
-          className: `${interactive ? `group pointer-events-auto cursor-pointer ${themeColors.interactive.hoverPanel} ${themeColors.interactive.focusRing}` : 'cursor-default'} flex h-10 min-w-0 items-center py-1 pl-1 pr-3`,
+          className: `${interactive ? `group pointer-events-auto cursor-pointer ${themeColors.interactive.hoverPanel} ${themeColors.interactive.focusRing}` : 'cursor-default'} flex h-10 min-w-0 items-center py-1 pl-1 pr-3 transition-[color,background-color,border-color,opacity,filter] ease-out ${contentVisible ? 'opacity-100 blur-0' : 'opacity-0 blur-[3px]'}`,
           highlightOnHover: interactive,
         })}
         disabled={!visible || !interactive}
+        style={{
+          transitionDuration: `${SOFT_VALUE_TRANSITION_DURATION_MS}ms`,
+          transitionProperty: 'color, background-color, border-color, opacity, filter',
+        }}
         type="button"
         onClick={(event) => {
           event.stopPropagation();

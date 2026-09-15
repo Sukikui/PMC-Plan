@@ -11,12 +11,16 @@ import {
   MAP_TOOLTIP_IMAGE_MAX_WIDTH_REM,
   MAP_TOOLTIP_LABEL_MAX_WIDTH_REM,
   getMapTooltipPreviewImageHeightRem,
-  hideDominantSpaceLogos,
   measureMapTooltipLabelWidth,
+  shouldHideDominantSpaceLogo,
 } from './map-tooltip';
 import { getMapTooltipLayout, getVisiblePanelRects, getVisibleTooltipLabelRects, type MapTooltipRect } from './map-tooltip-layout';
 import type { MapTooltip, TooltipFixedStyle } from '../core/map-types';
 import PortalIdentityLabel from '@/components/portal/PortalIdentityLabel';
+import {
+  SOFT_PRESENCE_TRANSITION_DURATION_MS,
+  useSoftPresence,
+} from '@/components/ui/useSoftValueTransition';
 import { usePermanentLabelLayout } from '../hooks/usePermanentLabelLayout';
 import { MAP_TOOLTIP_LABEL_Z_INDEX } from '../core/map-constants';
 import type { MapViewport } from '../core/map-view';
@@ -46,12 +50,14 @@ export default function MapTooltipPortal({
   pointSizePx,
   previewImagePortalRoot,
 }: MapTooltipPortalProps) {
-  const displayedTooltips = useMemo(
-    () => hideDominantSpaceLogos(tooltips, dominantSpaceId),
+  const hiddenSpaceLogoPointIds = useMemo(
+    () => new Set(tooltips
+      .filter((tooltip) => shouldHideDominantSpaceLogo(tooltip, dominantSpaceId))
+      .map((tooltip) => tooltip.pointId)),
     [dominantSpaceId, tooltips],
   );
   const permanent = usePermanentLabelLayout(
-    displayedTooltips,
+    tooltips,
     viewportRef,
     viewport,
     zoom,
@@ -60,12 +66,12 @@ export default function MapTooltipPortal({
     compact,
   );
   const renderedTooltips = compact
-    ? displayedTooltips.filter((tooltip) => (
+    ? tooltips.filter((tooltip) => (
       !tooltip.automatic
       || tooltip.automaticPriority
       || permanent.styles.has(tooltip.pointId)
     ))
-    : displayedTooltips;
+    : tooltips;
   if (renderedTooltips.length === 0) {
     return null;
   }
@@ -80,6 +86,7 @@ export default function MapTooltipPortal({
         <MapTooltipItem
           key={tooltip.pointId}
           tooltip={tooltip}
+          hideSpaceLogo={hiddenSpaceLogoPointIds.has(tooltip.pointId)}
           permanentStyle={tooltip.automatic ? permanent.styles.get(tooltip.pointId) : undefined}
           hideWithoutPermanentStyle={Boolean(tooltip.automatic && !tooltip.automaticPriority)}
           viewportRef={viewportRef}
@@ -93,6 +100,7 @@ export default function MapTooltipPortal({
 
 function MapTooltipItem({
   tooltip,
+  hideSpaceLogo,
   viewportRef,
   onPreviewMouseLeave,
   permanentStyle,
@@ -100,12 +108,14 @@ function MapTooltipItem({
   previewImagePortalRoot,
 }: {
   tooltip: MapTooltip;
+  hideSpaceLogo: boolean;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   onPreviewMouseLeave: (pointId: string) => void;
   permanentStyle?: React.CSSProperties;
   hideWithoutPermanentStyle: boolean;
   previewImagePortalRoot?: HTMLElement | null;
 }) {
+  const logoPresence = useSoftPresence(Boolean(tooltip.spaceLogo) && !hideSpaceLogo);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltipFixedStyle, setTooltipFixedStyle] = useState<TooltipFixedStyle | null>(null);
   const [tooltipImageFixedStyle, setTooltipImageFixedStyle] = useState<TooltipFixedStyle | null>(null);
@@ -241,16 +251,24 @@ function MapTooltipItem({
           ? { visibility: 'hidden' }
           : { ...tooltipFixedStyle, visibility: tooltipFixedStyle ? undefined : 'hidden' })}
       >
-        <div className="flex w-max items-center gap-1.5">
-          {tooltip.spaceLogo && (
-            <SpaceLogo
-              color={tooltip.spaceLogo.color}
-              logoBackground={tooltip.spaceLogo.logoBackground}
-              logoUrl={tooltip.spaceLogo.logoUrl}
-              logoZoom={tooltip.spaceLogo.logoZoom}
-              name={tooltip.spaceLogo.name}
-              size="tooltip"
-            />
+        <div className="relative w-max">
+          {tooltip.spaceLogo && logoPresence.mounted && (
+            <span
+              aria-hidden={hideSpaceLogo}
+              className={`absolute right-full top-1/2 mr-1.5 inline-flex origin-center -translate-y-1/2 transition-[opacity,filter,transform] ease-out motion-reduce:transition-none ${logoPresence.visible
+                ? 'scale-100 opacity-100 blur-0'
+                : 'scale-90 opacity-0 blur-[4px]'}`}
+              style={{ transitionDuration: `${SOFT_PRESENCE_TRANSITION_DURATION_MS}ms` }}
+            >
+              <SpaceLogo
+                color={tooltip.spaceLogo.color}
+                logoBackground={tooltip.spaceLogo.logoBackground}
+                logoUrl={tooltip.spaceLogo.logoUrl}
+                logoZoom={tooltip.spaceLogo.logoZoom}
+                name={tooltip.spaceLogo.name}
+                size="tooltip"
+              />
+            </span>
           )}
           <div
             className={`shrink-0 break-words px-2.5 py-1 text-center text-xs font-medium leading-snug ${tooltip.unidentified ? 'flex items-center justify-center' : ''} ${themeColors.util.roundedXl} ${themeColors.map.tooltip}`}

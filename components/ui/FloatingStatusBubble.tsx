@@ -1,5 +1,6 @@
 import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { themeColors } from '@/lib/theme-colors';
+import { SOFT_PRESENCE_TRANSITION_DURATION_MS } from './useSoftValueTransition';
 
 interface FloatingStatusBubbleProps extends HTMLAttributes<HTMLDivElement> {
   active?: boolean;
@@ -9,7 +10,7 @@ interface FloatingStatusBubbleProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const floatingStatusBubbleCompactClassName = 'h-9 items-center text-xs font-medium';
-const floatingStatusBubbleFadeDurationMs = 220;
+export const FLOATING_STATUS_BUBBLE_FADE_DURATION_MS = SOFT_PRESENCE_TRANSITION_DURATION_MS;
 
 export function FloatingStatusBubblePresence({
   children,
@@ -24,7 +25,7 @@ export function FloatingStatusBubblePresence({
       className={`transition-[opacity,filter] ease-out ${visible ? 'opacity-100 blur-0' : 'opacity-0 blur-[3px]'} ${className}`}
       style={{
         ...props.style,
-        transitionDuration: `${floatingStatusBubbleFadeDurationMs}ms`,
+        transitionDuration: `${FLOATING_STATUS_BUBBLE_FADE_DURATION_MS}ms`,
       }}
     >
       {children}
@@ -43,7 +44,7 @@ export function useFloatingStatusBubblePresence<Value>(value: Value | null) {
 
     const timer = setTimeout(
       () => setRetainedValue(null),
-      floatingStatusBubbleFadeDurationMs,
+      FLOATING_STATUS_BUBBLE_FADE_DURATION_MS,
     );
     return () => clearTimeout(timer);
   }, [value]);

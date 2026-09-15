@@ -23,10 +23,7 @@ export function usePermanentLabelLayout(
     }
     const margin = MAP_TOOLTIP_VIEWPORT_MARGIN_PX;
     const labels = tooltips.filter((tooltip) => tooltip.automatic).map((tooltip) => ({
-      ...estimateMapTooltipSize(tooltip.label, {
-        hasSpaceLogo: Boolean(tooltip.spaceLogo),
-        unidentified: tooltip.unidentified,
-      }),
+      ...estimateMapTooltipSize(tooltip.label, { unidentified: tooltip.unidentified }),
       id: tooltip.pointId,
       offset: tooltip.offset,
       x: tooltip.pointLeft,
