@@ -10,6 +10,7 @@ import {
   getMaxZoom,
   lerp,
   type MapPan,
+  type MapCameraChange,
   type MapPreviewArea,
   getPreviewMinZoom,
   getPanForMapPosition,
@@ -25,6 +26,7 @@ export const useMapView = (metadata: MapMetadata, previewArea?: MapPreviewArea) 
   const zoomRef = useRef(zoom);
   const queuedPanRef = useRef<MapPan>(pan);
   const queuedZoomRef = useRef(zoom);
+  const cameraChangeRef = useRef<MapCameraChange>('programmatic');
   const panFrameRef = useRef<number | null>(null);
   const viewFrameRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -60,6 +62,7 @@ export const useMapView = (metadata: MapMetadata, previewArea?: MapPreviewArea) 
   }, [baseSize, metadata, minZoom, previewArea, viewport]);
 
   const commitPan = useCallback((nextPan: MapPan) => {
+    cameraChangeRef.current = 'pan';
     panRef.current = nextPan;
     queuedPanRef.current = nextPan;
 
@@ -74,6 +77,7 @@ export const useMapView = (metadata: MapMetadata, previewArea?: MapPreviewArea) 
   }, []);
 
   const commitView = useCallback((nextZoom: number, nextPan: MapPan) => {
+    cameraChangeRef.current = 'programmatic';
     if (viewFrameRef.current) {
       cancelAnimationFrame(viewFrameRef.current);
       viewFrameRef.current = null;
@@ -86,6 +90,7 @@ export const useMapView = (metadata: MapMetadata, previewArea?: MapPreviewArea) 
   }, []);
 
   const scheduleView = useCallback((nextZoom: number, nextPan: MapPan) => {
+    cameraChangeRef.current = 'zoom';
     zoomRef.current = nextZoom;
     panRef.current = nextPan;
     queuedZoomRef.current = nextZoom;
@@ -175,6 +180,7 @@ export const useMapView = (metadata: MapMetadata, previewArea?: MapPreviewArea) 
     maxZoom,
     minZoom,
     mapCellPixelSize,
+    cameraChange: cameraChangeRef.current,
     panRef,
     zoomRef,
     clampPan,

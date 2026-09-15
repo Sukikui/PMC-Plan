@@ -88,13 +88,16 @@ export default function InteractiveMapRenderer({
   });
   const appearance = useMapRenderingPreferences({
     activeRouteSegmentId,
-    baseWidth: view.baseSize.width,
+    baseSize: view.baseSize,
+    cameraChange: view.cameraChange,
     mapCellPixelSize: view.mapCellPixelSize,
     metadata,
+    pan: view.pan,
     preview: Boolean(previewArea),
     renderedPoints: pointsState.renderedScreenPoints,
     visiblePoints: pointsState.visibleScreenPoints,
     viewport: view.viewport,
+    world,
     zoom: view.zoom,
   });
   const { iconScale } = appearance;

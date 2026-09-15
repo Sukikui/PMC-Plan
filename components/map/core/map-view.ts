@@ -20,6 +20,8 @@ export interface MapPan {
   y: number;
 }
 
+export type MapCameraChange = 'pan' | 'programmatic' | 'zoom';
+
 export interface MapPreviewArea {
   x: number;
   z: number;

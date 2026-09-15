@@ -1,5 +1,5 @@
 import { buildWorldMapPoints } from '@/components/map/hooks/useOverworldMapPoints';
-import { hideDominantSpaceLogos } from '@/components/map/tooltip/map-tooltip';
+import { shouldHideDominantSpaceLogo } from '@/components/map/tooltip/map-tooltip';
 import type { MapTooltip } from '@/components/map/core/map-types';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { mockPlaces, mockPortals } from './mock-data';
@@ -77,14 +77,9 @@ describe('map point space logos', () => {
     const hovered = createTooltip({ automatic: true, automaticPriority: true });
     const explicit = createTooltip({});
 
-    const displayed = hideDominantSpaceLogos(
-      [automatic, hovered, explicit],
-      space.id,
-    );
-
-    expect(displayed[0]?.spaceLogo).toBeUndefined();
-    expect(displayed[1]?.spaceLogo).toBeDefined();
-    expect(displayed[2]?.spaceLogo).toBeDefined();
+    expect(shouldHideDominantSpaceLogo(automatic, space.id)).toBe(true);
+    expect(shouldHideDominantSpaceLogo(hovered, space.id)).toBe(false);
+    expect(shouldHideDominantSpaceLogo(explicit, space.id)).toBe(false);
   });
 });
 

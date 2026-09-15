@@ -9,9 +9,6 @@ const TOOLTIP_LABEL_VERTICAL_PADDING_PX = 8;
 const TOOLTIP_LABEL_LINE_HEIGHT_PX = 16.5;
 const TOOLTIP_LABEL_FALLBACK_CHARACTER_WIDTH_PX = 6.5;
 const TOOLTIP_UNIDENTIFIED_LABEL_WIDTH_PX = 32;
-const TOOLTIP_SPACE_LOGO_SIZE_PX = 36;
-const TOOLTIP_SPACE_LOGO_GAP_PX = 6;
-
 let tooltipMeasureContext: CanvasRenderingContext2D | null = null;
 
 const getTooltipMaxWidthPx = () => {
@@ -111,7 +108,7 @@ export const measureMapTooltipLabelWidth = (label: string) => {
 
 export const estimateMapTooltipSize = (
   label: string,
-  options: { hasSpaceLogo?: boolean; unidentified?: boolean } = {},
+  options: { unidentified?: boolean } = {},
 ) => {
   const measurement = measureMapTooltipText(label);
   const maxWidth = getTooltipMaxWidthPx();
@@ -126,25 +123,20 @@ export const estimateMapTooltipSize = (
     ? 24
     : measurement?.height ?? 25;
   return {
-    width: labelWidth + (options.hasSpaceLogo
-      ? TOOLTIP_SPACE_LOGO_SIZE_PX + TOOLTIP_SPACE_LOGO_GAP_PX
-      : 0),
-    height: Math.max(labelHeight, options.hasSpaceLogo ? TOOLTIP_SPACE_LOGO_SIZE_PX : 0),
+    width: labelWidth,
+    height: labelHeight,
   };
 };
 
-export const hideDominantSpaceLogos = (
-  tooltips: MapTooltip[],
+export const shouldHideDominantSpaceLogo = (
+  tooltip: MapTooltip,
   dominantSpaceId?: string,
-) => dominantSpaceId
-  ? tooltips.map((tooltip) => (
-      tooltip.automatic
-      && !tooltip.automaticPriority
-      && tooltip.spaceLogo?.id === dominantSpaceId
-        ? { ...tooltip, spaceLogo: undefined }
-        : tooltip
-    ))
-  : tooltips;
+) => Boolean(
+  dominantSpaceId
+  && tooltip.automatic
+  && !tooltip.automaticPriority
+  && tooltip.spaceLogo?.id === dominantSpaceId,
+);
 
 export const getMapTooltipPreviewImageHeightRem = (aspectRatio: number | undefined) => {
   if (!aspectRatio || aspectRatio <= 0) {
