@@ -19,6 +19,7 @@ interface UseNetherAddressOptions {
   enabled: boolean;
   coords: CoordinatesInput;
   initialValue?: string | null;
+  preserveWhenDisabled?: boolean;
 }
 
 export interface NetherAddressState {
@@ -31,7 +32,12 @@ export interface NetherAddressState {
   recompute: () => void;
 }
 
-export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAddressOptions): NetherAddressState {
+export function useNetherAddress({
+  enabled,
+  coords,
+  initialValue,
+  preserveWhenDisabled = false,
+}: UseNetherAddressOptions): NetherAddressState {
   const initialAddress = initialValue ?? '';
   const [value, setValue] = useState(initialAddress);
   const [manual, setManual] = useState(Boolean(initialAddress));
@@ -94,10 +100,12 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
   useEffect(() => {
     if (!enabled) {
       requestId.current += 1;
-      setValue('');
-      setManual(false);
       setLoading(false);
       setError(null);
+      if (!preserveWhenDisabled) {
+        setValue('');
+        setManual(false);
+      }
       return;
     }
 
@@ -113,7 +121,7 @@ export function useNetherAddress({ enabled, coords, initialValue }: UseNetherAdd
     }
 
     requestAddress(parsedCoords);
-  }, [enabled, manual, parsedCoords, requestAddress]);
+  }, [enabled, manual, parsedCoords, preserveWhenDisabled, requestAddress]);
 
   return {
     value,

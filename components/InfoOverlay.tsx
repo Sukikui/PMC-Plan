@@ -24,7 +24,6 @@ import {
   canContribute,
   canManageContent,
 } from '@/lib/content-permissions';
-import { toMapWorld } from '@/lib/destination/selection';
 import { useAdminMode } from '@/components/admin/AdminModeProvider';
 
 interface InfoOverlayProps {
@@ -179,8 +178,8 @@ export default function InfoOverlay({
           type={type}
           onClose={onClose}
           onEdit={handleEditClick}
-          onSelectItem={() => {
-            navigateToDestination(item.id, type, toMapWorld(item.world));
+          onSelectItem={(world) => {
+            navigateToDestination(displayItem.id, type, world);
           }}
         />
       )}

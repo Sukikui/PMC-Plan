@@ -11,16 +11,15 @@ import {
   NetherCoordinatesField,
   type NetherCoordinatesState,
 } from '../nether/NetherCoordinatesField';
+import type { PortalVariant } from './portal-form-types';
 
 interface PortalLocationFieldsProps {
   netherAddress: NetherAddressState;
   netherCoordinates: NetherCoordinatesState;
   overworldCoordinates: CoordinatesInput;
+  setNetherCoordinates: Dispatch<SetStateAction<CoordinatesInput>>;
   setOverworldCoordinates: Dispatch<SetStateAction<CoordinatesInput>>;
-  setSingleCoordinates: Dispatch<SetStateAction<CoordinatesInput>>;
-  singleAddress: NetherAddressState;
-  singleCoordinates: CoordinatesInput;
-  variant: 'overworld' | 'nether' | 'linked';
+  variant: PortalVariant;
 }
 
 const NETHER_ADDRESS_LABEL = 'Adresse dans le nether';
@@ -29,10 +28,8 @@ export default function PortalLocationFields({
   netherAddress,
   netherCoordinates,
   overworldCoordinates,
+  setNetherCoordinates,
   setOverworldCoordinates,
-  setSingleCoordinates,
-  singleAddress,
-  singleCoordinates,
   variant,
 }: PortalLocationFieldsProps) {
   if (variant === 'linked') {
@@ -58,14 +55,14 @@ export default function PortalLocationFields({
     <div className="space-y-4">
       <div className="space-y-3">
         {renderCoordinateInputs(
-          singleCoordinates,
-          setSingleCoordinates,
+          variant === 'nether' ? netherCoordinates.value : overworldCoordinates,
+          variant === 'nether' ? setNetherCoordinates : setOverworldCoordinates,
           `Coordonnées ${variant}`,
         )}
       </div>
       {variant === 'nether' && (
         <NetherAddressField
-          address={singleAddress}
+          address={netherAddress}
           label={NETHER_ADDRESS_LABEL}
         />
       )}

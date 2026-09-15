@@ -1,7 +1,9 @@
 import TargetIcon from '@/components/icons/TargetIcon';
 import SpaceHeaderLink from '@/components/spaces/SpaceHeaderLink';
 import WorldBadge from '@/components/ui/WorldBadge';
-import type { Place, Portal } from '@/lib/api/types';
+import type { Coordinates, Place, Portal } from '@/lib/api/types';
+import { toMapWorld } from '@/lib/destination/selection';
+import type { MapWorld } from '@/lib/map/metadata';
 import type { PlaceSummary, PortalSummary } from '@/lib/map-content/types';
 import type { SpaceReference } from '@/lib/spaces/types';
 import { getMapIconSrc, type MapIconCategory } from '@/lib/place/categories';
@@ -19,7 +21,7 @@ interface InfoOverlayHeaderProps {
   type: 'place' | 'portal';
   onClose: () => void;
   onEdit: () => void;
-  onSelectItem: () => void;
+  onSelectItem: (world: MapWorld) => void;
 }
 
 export default function InfoOverlayHeader({
@@ -81,7 +83,7 @@ function CoordinateRow({
   item: Place | Portal | PlaceSummary | PortalSummary;
   itemNetherAddress?: string | null;
   type: 'place' | 'portal';
-  onSelectItem: () => void;
+  onSelectItem: (world: MapWorld) => void;
 }) {
   const netherAssociate = (item as Portal)['nether-associate'];
 
@@ -89,17 +91,11 @@ function CoordinateRow({
     <>
       <div className="flex items-center gap-3">
         <WorldBadge size="large" world={item.world} />
-        <button
-          type="button"
-          onClick={onSelectItem}
-          className={`group flex items-center gap-1 border-0 bg-transparent p-0 ${themeColors.interactive.focusRing}`}
-          aria-label="Sélectionner dans le panneau"
-        >
-          <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.interactive.groupHoverAccentText} ${themeColors.transition}`}>
-            {item.coordinates.x}, {item.coordinates.y}, {item.coordinates.z}
-          </span>
-          <TargetIcon className={`w-4 h-4 ${themeColors.text.secondary} ${themeColors.interactive.groupHoverAccentText} ${themeColors.transition}`} />
-        </button>
+        <CoordinateSelectButton
+          coordinates={item.coordinates}
+          onSelectItem={onSelectItem}
+          world={toMapWorld(item.world)}
+        />
 
         {itemNetherAddress && (
           <span className={`text-sm ${themeColors.infoOverlay.netherAddressText} ${themeColors.transition} ml-auto`}>
@@ -108,21 +104,49 @@ function CoordinateRow({
         )}
       </div>
 
-      {type === 'portal' && netherAssociate?.address && (
+      {type === 'portal' && netherAssociate && (
         <div className={`mt-2 pt-2 border-t ${themeColors.border.primary} ${themeColors.transition}`}>
           <div className="flex items-center gap-2">
             <WorldBadge size="large" world="nether" />
             <div className="flex items-center justify-between w-full">
-              <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.transition}`}>
-                {netherAssociate.coordinates.x}, {netherAssociate.coordinates.y}, {netherAssociate.coordinates.z}
-              </span>
-              <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.transition}`}>
-                {netherAssociate.address}
-              </span>
+              <CoordinateSelectButton
+                coordinates={netherAssociate.coordinates}
+                onSelectItem={onSelectItem}
+                world="nether"
+              />
+              {netherAssociate.address && (
+                <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.transition}`}>
+                  {netherAssociate.address}
+                </span>
+              )}
             </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function CoordinateSelectButton({
+  coordinates,
+  onSelectItem,
+  world,
+}: {
+  coordinates: Coordinates;
+  onSelectItem: (world: MapWorld) => void;
+  world: MapWorld;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectItem(world)}
+      className={`group flex items-center gap-1 border-0 bg-transparent p-0 ${themeColors.interactive.focusRing}`}
+      aria-label={`Afficher ces coordonnées dans ${world === 'nether' ? 'le Nether' : "l'Overworld"}`}
+    >
+      <span className={`text-sm ${themeColors.text.tertiary} ${themeColors.interactive.groupHoverAccentText} ${themeColors.transition}`}>
+        {coordinates.x}, {coordinates.y}, {coordinates.z}
+      </span>
+      <TargetIcon className={`h-4 w-4 ${themeColors.text.secondary} ${themeColors.interactive.groupHoverAccentText} ${themeColors.transition}`} />
+    </button>
   );
 }

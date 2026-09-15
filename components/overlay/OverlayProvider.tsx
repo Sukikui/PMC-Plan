@@ -31,6 +31,7 @@ const InfoOverlayStack = dynamic(loadInfoOverlayStack);
 
 type MapEntryOverlayType = 'place' | 'portal';
 interface FormOverlayState {
+  instanceKey: number;
   isOpen: boolean;
   isClosing: boolean;
   options: OpenFormOverlayOptions;
@@ -73,6 +74,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const infoStack = useInfoOverlayStack();
   const { applyManagementUpdate } = infoStack;
   const [formOverlayState, setFormOverlayState] = useState<FormOverlayState>({
+    instanceKey: 0,
     isOpen: false,
     isClosing: false,
     options: { mode: 'add' },
@@ -146,7 +148,12 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const openFormOverlay = (options: OpenFormOverlayOptions) => {
     clearScheduledClose(formTimeoutRef);
-    setFormOverlayState({ isOpen: true, isClosing: false, options });
+    setFormOverlayState((current) => ({
+      instanceKey: current.instanceKey + 1,
+      isOpen: true,
+      isClosing: false,
+      options,
+    }));
   };
 
   const handleFormSaved = async (
@@ -184,11 +191,12 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
     clearScheduledClose(formTimeoutRef);
     formTimeoutRef.current = setTimeout(() => {
       formTimeoutRef.current = null;
-      setFormOverlayState({
+      setFormOverlayState((current) => ({
+        instanceKey: current.instanceKey,
         isOpen: false,
         isClosing: false,
         options: { mode: 'add' },
-      });
+      }));
     }, OVERLAY_TRANSITION_MS);
   };
 
@@ -204,6 +212,7 @@ export const OverlayProvider: React.FC<{ children: React.ReactNode }> = ({ child
       {formOverlayState.isOpen && (
         <Overlay isOpen={formOverlayState.isOpen} onClose={closeFormOverlay} closing={formOverlayState.isClosing}>
           <FormOverlay
+            key={formOverlayState.instanceKey}
             {...formOverlayState.options}
             onClose={closeFormOverlay}
             onDeleted={infoStack.removeContent}
