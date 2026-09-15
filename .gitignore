@@ -60,6 +60,7 @@ temp/
 # Personal files
 REMEMBER.md
 PLAN.md
-TODO.Md
+TODO.md
 /generated/prisma
 PR_DESCRIPTION.md
+docs/USER_CHANGELOG.md
