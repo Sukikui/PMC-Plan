@@ -30,6 +30,7 @@ Twitter metadata. Their `/image` subroutes return the corresponding `1200 ×
 social image before a shared link is copied. The public page contract, image
 cache behavior, payload sources, fallbacks, and local inspection URLs are
 documented in the [public data loading API](api/data-loading.md).
+Nether place previews include their address when one is available.
 
 Space responses include dynamically derived place and portal summaries and an
 aggregate trade-offer count for their associated map entries. These summaries

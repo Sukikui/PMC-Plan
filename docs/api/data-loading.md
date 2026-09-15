@@ -87,6 +87,7 @@ image through Open Graph and Twitter metadata. Place and portal embed titles
 append the associated space name when one exists, separated by `•`. Their
 descriptions contain only coordinates, on one line per represented world. A
 linked portal therefore lists both its Overworld and Nether coordinates.
+Nether places append their optional Nether address to their coordinate line.
 Discord and other compatible clients can render a concise preview while
 browsers retain the normal interactive map experience.
 
@@ -94,8 +95,9 @@ browsers retain the normal interactive map experience.
 
 Generates the public `1200 × 957` PNG social preview for one place. The image
 uses the place's first image, associated space identity, world, coordinates,
-and ordered Minecraft owners. Missing or unavailable remote images fall back
-to local application assets without preventing the preview from rendering.
+optional Nether address, and ordered Minecraft owners. Missing or unavailable
+remote images fall back to local application assets without preventing the
+preview from rendering.
 
 During development, open this route directly in a browser to inspect the exact
 image that will later be referenced by the place's Open Graph metadata:

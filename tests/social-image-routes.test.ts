@@ -125,6 +125,30 @@ describe('public content routes', () => {
     expect(page.props.initialContent).toEqual({ space, type: 'space' });
   });
 
+  it('includes an available Nether place address in social metadata', async () => {
+    loadPlace.mockResolvedValue({
+      address: 'Nord 5 droite',
+      coordinates: { x: -100, y: 71, z: 200 },
+      id: 'marche-nether',
+      mapEntryId: 'nether-place-entry',
+      name: 'Marché du Nether',
+      space: null,
+      world: 'nether',
+    });
+
+    await expect(generatePlaceMetadata({
+      params: Promise.resolve({ slug: 'marche-nether' }),
+    })).resolves.toMatchObject({
+      description: 'nether • X -100 • Y 71 • Z 200 • Nord 5 droite',
+      openGraph: {
+        description: 'nether • X -100 • Y 71 • Z 200 • Nord 5 droite',
+      },
+      twitter: {
+        description: 'nether • X -100 • Y 71 • Z 200 • Nord 5 droite',
+      },
+    });
+  });
+
   it('uses the canonical portal pair identity for metadata and navigation', async () => {
     loadPortal.mockResolvedValue({
       description: null,

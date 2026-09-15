@@ -14,7 +14,11 @@ import {
   createSocialImageResponse,
   isSocialPreviewWarmRequest,
 } from '@/lib/social-preview/image-response';
-import { getSocialHeaderTextSize } from '@/lib/social-preview/format';
+import {
+  formatSocialCoordinates,
+  getSocialHeaderTextSize,
+  shouldCompactSocialMember,
+} from '@/lib/social-preview/format';
 import {
   SOCIAL_PREVIEW_ICON_SIZE,
   SOCIAL_PREVIEW_SECONDARY_TEXT_SIZE,
@@ -55,6 +59,16 @@ export async function GET(request: Request, context: RouteContext) {
       ? loadSocialUserImageSource(spaceLogoSource, request.url, warm)
       : Promise.resolve(null),
   ]);
+  const netherAddress = place.world === 'nether' ? place.address : null;
+  const compactOwner = owner ? shouldCompactSocialMember({
+    additionalCount: Math.max(0, place.owners.length - 1),
+    coordinateLines: [
+      formatSocialCoordinates(place.coordinates)
+      + `${netherAddress ? ` • ${netherAddress}` : ''}`,
+    ],
+    memberName: owner.name,
+    world: place.world,
+  }) : false;
   const titleSize = getSocialHeaderTextSize(place.name, Boolean(place.space));
 
   return createSocialImageResponse(
@@ -75,12 +89,13 @@ export async function GET(request: Request, context: RouteContext) {
             { label: 'X', value: place.coordinates.x },
             { label: 'Y', value: place.coordinates.y },
             { label: 'Z', value: place.coordinates.z },
-          ]} />
+          ]} trailingValue={netherAddress} />
         </div>
       )}
       footerRight={(
         <SocialPreviewMember
           additionalCount={Math.max(0, place.owners.length - 1)}
+          compact={compactOwner}
           headSource={ownerHead}
           member={owner}
         />

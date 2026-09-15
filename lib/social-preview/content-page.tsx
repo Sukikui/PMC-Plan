@@ -70,6 +70,7 @@ const loadPublicContent = cache(async function loadPublicContent(
       slug: place.id,
       socialImageVersion: createSocialPreviewVersion(place),
       socialDescription: createMapContentSocialDescription({
+        address: place.address,
         coordinates: place.coordinates,
         world: place.world,
       }),
