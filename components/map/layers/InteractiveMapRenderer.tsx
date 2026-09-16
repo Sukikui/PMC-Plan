@@ -341,10 +341,9 @@ export default function InteractiveMapRenderer({
         <MapTooltipPortal
           compact={Boolean(previewArea)}
           dominantSpaceId={effectivePointRenderMode === 'icons' ? appearance.dominantSpace?.id : undefined}
-          tooltips={tooltips} zoom={view.zoom} iconScale={iconScale}
+          tooltips={tooltips} zoom={view.zoom} isZooming={interactions.isZooming}
           pointSizePx={appearance.pointAppearance.size}
           previewImagePortalRoot={previewImagePortalRoot}
-          viewport={view.viewport}
           viewportRef={view.viewportRef}
           onPreviewMouseLeave={hidePreviewTooltip}
         />

@@ -1,12 +1,30 @@
 import {
+  hasLabelZoomRelayoutThreshold,
   layoutCompactLabels,
   layoutPermanentLabels,
+  projectRetainedLabels,
 } from '@/components/map/tooltip/permanent-label-layout';
 
 const bounds = { left: 0, top: 0, right: 400, bottom: 400 };
 const label = { id: 'a', x: 200, y: 200, width: 100, height: 24, offset: 12 };
 
 describe('permanent map labels', () => {
+  it('recalculates placement only after an eight percent cumulative zoom change', () => {
+    expect(hasLabelZoomRelayoutThreshold(2, 2.15)).toBe(false);
+    expect(hasLabelZoomRelayoutThreshold(2, 2.16)).toBe(true);
+    expect(hasLabelZoomRelayoutThreshold(2, 1.86)).toBe(false);
+    expect(hasLabelZoomRelayoutThreshold(2, 1.85)).toBe(true);
+  });
+
+  it('projects retained placement with the point between zoom layout steps', () => {
+    const retained = new Map([[label.id, {
+      left: -50, right: 50, top: -36, bottom: -12,
+    }]]);
+    expect(projectRetainedLabels([{ ...label, x: 240, y: 220 }], bounds, retained).get('a')).toEqual({
+      left: 190, right: 290, top: 184, bottom: 208,
+    });
+  });
+
   it('places several labels synchronously in compact map previews', () => {
     const points = Array.from({ length: 10 }, (_, index) => ({
       id: String(index),

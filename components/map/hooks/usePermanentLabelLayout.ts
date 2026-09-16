@@ -1,43 +1,31 @@
-import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { MapTooltip } from '../core/map-types';
-import { layoutCompactLabels, layoutPermanentLabels } from '../tooltip/permanent-label-layout';
+import {
+  hasLabelZoomRelayoutThreshold,
+  layoutCompactLabels,
+  layoutPermanentLabels,
+  projectRetainedLabels,
+} from '../tooltip/permanent-label-layout';
 import { estimateMapTooltipSize, MAP_TOOLTIP_VIEWPORT_MARGIN_PX } from '../tooltip/map-tooltip';
 import type { MapTooltipRect } from '../tooltip/map-tooltip-layout';
-import type { MapViewport } from '../core/map-view';
 
 export function usePermanentLabelLayout(
   tooltips: MapTooltip[],
   viewportRef: RefObject<HTMLDivElement | null>,
-  viewport: MapViewport,
   zoom: number,
-  iconScale: number,
   pointSizePx: number,
+  isZooming: boolean,
   compact = false,
 ) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [styles, setStyles] = useState<Map<string, CSSProperties>>(new Map());
-  const cache = useRef({ key: '', offsets: new Map<string, MapTooltipRect>() });
-  const compactStyles = useMemo(() => {
-    if (!compact || !viewport.width || !viewport.height) {
-      return new Map<string, CSSProperties>();
-    }
-    const margin = MAP_TOOLTIP_VIEWPORT_MARGIN_PX;
-    const labels = tooltips.filter((tooltip) => tooltip.automatic).map((tooltip) => ({
-      ...estimateMapTooltipSize(tooltip.label, { unidentified: tooltip.unidentified }),
-      id: tooltip.pointId,
-      offset: tooltip.offset,
-      x: tooltip.pointLeft,
-      y: tooltip.pointTop,
-    }));
-    return layoutCompactLabels(labels, {
-      left: margin,
-      right: viewport.width - margin,
-      top: margin,
-      bottom: viewport.height - margin,
-    });
-  }, [compact, tooltips, viewport.height, viewport.width]);
+  const cache = useRef({
+    key: '',
+    layoutZoom: zoom,
+    offsets: new Map<string, MapTooltipRect>(),
+    wasZooming: false,
+  });
   useLayoutEffect(() => {
-    if (compact) return;
     const viewport = viewportRef.current;
     const container = containerRef.current;
     if (!viewport || !container || !tooltips.some((tooltip) => tooltip.automatic)) return;
@@ -45,8 +33,13 @@ export function usePermanentLabelLayout(
       .map((node) => [node.dataset.mapTooltipPointId, node]));
     const update = () => {
       const mapRect = viewport.getBoundingClientRect();
-      const key = `${zoom}:${iconScale}:${pointSizePx}:${mapRect.width}:${mapRect.height}`;
-      if (cache.current.key !== key) cache.current = { key, offsets: new Map() };
+      const key = `${compact}:${pointSizePx}:${mapRect.width}:${mapRect.height}`;
+      const structureChanged = cache.current.key !== key;
+      if (structureChanged) {
+        cache.current.key = key;
+        cache.current.layoutZoom = zoom;
+        cache.current.offsets.clear();
+      }
       const margin = MAP_TOOLTIP_VIEWPORT_MARGIN_PX;
       const bounds = {
         left: margin,
@@ -54,20 +47,28 @@ export function usePermanentLabelLayout(
         top: margin,
         bottom: mapRect.height - margin,
       };
+      let labelSizeChanged = false;
       const labels = tooltips.filter((tooltip) => tooltip.automatic).flatMap((tooltip) => {
-        const node = nodes.get(tooltip.pointId);
-        if (!node) return [];
-        const { width, height } = node.getBoundingClientRect();
+        const size = compact
+          ? estimateMapTooltipSize(tooltip.label, { unidentified: tooltip.unidentified })
+          : nodes.get(tooltip.pointId)?.getBoundingClientRect();
+        if (!size?.width || !size.height) return [];
+        const { width, height } = size;
         if (!width || !height) return [];
         const radius = Math.max(0, tooltip.offset - 4);
         const saved = cache.current.offsets.get(tooltip.pointId);
         if (saved && (Math.abs(saved.right - saved.left - width) > 0.5 || Math.abs(saved.bottom - saved.top - height) > 0.5)) {
           cache.current.offsets.delete(tooltip.pointId);
+          labelSizeChanged = true;
         }
         return [{ id: tooltip.pointId, x: tooltip.pointLeft,
           y: tooltip.pointTop, offset: tooltip.offset, radius,
           priority: tooltip.automaticPriority, width, height }];
       });
+      const labelIds = new Set(labels.map((label) => label.id));
+      for (const pointId of cache.current.offsets.keys()) {
+        if (!labelIds.has(pointId)) cache.current.offsets.delete(pointId);
+      }
       const obstacles = tooltips.filter((tooltip) => !tooltip.automatic).flatMap((tooltip) => {
         const rect = nodes.get(tooltip.pointId)?.getBoundingClientRect();
         return rect && rect.width > 0 && rect.height > 0 ? [{
@@ -77,20 +78,42 @@ export function usePermanentLabelLayout(
           bottom: rect.bottom - mapRect.top,
         }] : [];
       });
-      const positions = layoutPermanentLabels(labels, bounds, obstacles, cache.current.offsets);
+      const zoomStepChanged = isZooming
+        && hasLabelZoomRelayoutThreshold(cache.current.layoutZoom, zoom);
+      const zoomEnded = cache.current.wasZooming && !isZooming;
+      const shouldRelayout = !isZooming
+        || structureChanged
+        || labelSizeChanged
+        || zoomStepChanged
+        || cache.current.offsets.size === 0;
+      const positions = shouldRelayout
+        ? compact
+          ? layoutCompactLabels(labels, bounds)
+          : layoutPermanentLabels(labels, bounds, obstacles, cache.current.offsets)
+        : projectRetainedLabels(labels, bounds, cache.current.offsets);
+      const replaceOffsets = zoomStepChanged || zoomEnded || (isZooming && labelSizeChanged);
       for (const label of labels) {
-        if (cache.current.offsets.has(label.id)) continue;
+        if (!replaceOffsets && cache.current.offsets.has(label.id)) continue;
         const rect = positions.get(label.id);
-        if (rect) cache.current.offsets.set(label.id, {
-          left: -label.width / 2, right: label.width / 2,
-          top: rect.top - label.y, bottom: rect.bottom - label.y,
-        });
+        if (rect) {
+          cache.current.offsets.set(label.id, {
+            left: rect.left - label.x,
+            right: rect.right - label.x,
+            top: rect.top - label.y,
+            bottom: rect.bottom - label.y,
+          });
+        } else if (replaceOffsets) {
+          cache.current.offsets.delete(label.id);
+        }
       }
+      if (structureChanged || zoomStepChanged || zoomEnded) cache.current.layoutZoom = zoom;
+      cache.current.wasZooming = isZooming;
       setStyles(new Map(Array.from(positions, ([id, rect]) => [id, {
         left: rect.left, top: rect.top, transform: 'none', visibility: 'visible',
       }])));
     };
     update();
+    if (isZooming) return;
     const frame = requestAnimationFrame(update);
     const observer = new ResizeObserver(update);
     observer.observe(viewport);
@@ -103,6 +126,6 @@ export function usePermanentLabelLayout(
       window.removeEventListener('resize', update);
       window.removeEventListener('scroll', update, true);
     };
-  }, [compact, iconScale, pointSizePx, tooltips, viewportRef, zoom]);
-  return { containerRef, styles: compact ? compactStyles : styles };
+  }, [compact, isZooming, pointSizePx, tooltips, viewportRef, zoom]);
+  return { containerRef, styles };
 }

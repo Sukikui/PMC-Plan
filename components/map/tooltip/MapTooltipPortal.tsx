@@ -23,17 +23,15 @@ import {
 } from '@/components/ui/useSoftValueTransition';
 import { usePermanentLabelLayout } from '../hooks/usePermanentLabelLayout';
 import { MAP_TOOLTIP_LABEL_Z_INDEX } from '../core/map-constants';
-import type { MapViewport } from '../core/map-view';
 
 interface MapTooltipPortalProps {
   compact?: boolean;
   dominantSpaceId?: string;
   tooltips: MapTooltip[];
   viewportRef: React.RefObject<HTMLDivElement | null>;
-  viewport: MapViewport;
   onPreviewMouseLeave: (pointId: string) => void;
   zoom: number;
-  iconScale: number;
+  isZooming: boolean;
   pointSizePx: number;
   previewImagePortalRoot?: HTMLElement | null;
 }
@@ -43,10 +41,9 @@ export default function MapTooltipPortal({
   dominantSpaceId,
   tooltips,
   viewportRef,
-  viewport,
   onPreviewMouseLeave,
   zoom,
-  iconScale,
+  isZooming,
   pointSizePx,
   previewImagePortalRoot,
 }: MapTooltipPortalProps) {
@@ -59,10 +56,9 @@ export default function MapTooltipPortal({
   const permanent = usePermanentLabelLayout(
     tooltips,
     viewportRef,
-    viewport,
     zoom,
-    iconScale,
     pointSizePx,
+    isZooming,
     compact,
   );
   const renderedTooltips = compact
