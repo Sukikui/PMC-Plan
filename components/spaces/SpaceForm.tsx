@@ -115,7 +115,7 @@ export default function SpaceForm({
               value={details.discordUrl ?? ''}
             />
           )}
-          descriptionPlaceholder="Présentez rapidement cet espace."
+          descriptionPlaceholder="Présentez cet espace, son histoire, son lore, ses lieux incontournables ou encore ses membres."
           disabled={submission.isSubmitting}
           form={fields}
           namePlaceholder="Valnyfrost"
