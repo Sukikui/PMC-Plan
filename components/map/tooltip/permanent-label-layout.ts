@@ -20,13 +20,6 @@ export interface CompactLabelCandidate {
   height: number;
 }
 
-export interface CompactLabelPosition {
-  left: number;
-  top: number;
-  transform: string;
-  visibility: 'visible';
-}
-
 const GAP = 6;
 const POINT_EDGE_MARGIN_PX = 4;
 const ZONE_HEIGHT = 36;
@@ -35,6 +28,7 @@ const COMPACT_LABEL_LIMIT = 10;
 const COMPACT_LABEL_GAP_PX = 3;
 const COMPACT_LABEL_HORIZONTAL_SHIFTS_PX = [0, -24, 24];
 const COMPACT_LABEL_VERTICAL_SHIFTS_PX = [0, 8, 16];
+const LABEL_ZOOM_RELAYOUT_RATIO = 1.08;
 
 const clamp = (value: number, minimum: number, maximum: number) => (
   Math.max(minimum, Math.min(value, maximum))
@@ -43,8 +37,8 @@ const clamp = (value: number, minimum: number, maximum: number) => (
 export function layoutCompactLabels(
   labels: readonly CompactLabelCandidate[],
   bounds: MapTooltipRect,
-): Map<string, CompactLabelPosition> {
-  const placed = new Map<string, CompactLabelPosition>();
+): Map<string, MapTooltipRect> {
+  const placed = new Map<string, MapTooltipRect>();
   const occupied: MapTooltipRect[] = [];
   const centerX = (bounds.left + bounds.right) / 2;
   const centerY = (bounds.top + bounds.bottom) / 2;
@@ -69,12 +63,6 @@ export function layoutCompactLabels(
             : label.y + label.offset + distance;
           return {
             rect: { left, right: left + width, top, bottom: top + height },
-            style: {
-              left: left + width / 2,
-              top: side < 0 ? top + height : top,
-              transform: side < 0 ? 'translate3d(-50%, -100%, 0)' : 'translate3d(-50%, 0, 0)',
-              visibility: 'visible' as const,
-            },
           };
         })
       ))
@@ -82,11 +70,38 @@ export function layoutCompactLabels(
     const position = candidates.find(({ rect }) => within(rect, bounds)
       && occupied.every((other) => !overlaps(rect, other, COMPACT_LABEL_GAP_PX)));
     if (!position) continue;
-    placed.set(label.id, position.style);
+    placed.set(label.id, position.rect);
     occupied.push(position.rect);
     if (placed.size === COMPACT_LABEL_LIMIT) break;
   }
   return placed;
+}
+
+export function hasLabelZoomRelayoutThreshold(previousZoom: number, zoom: number) {
+  if (previousZoom <= 0 || zoom <= 0) return true;
+  const ratio = zoom / previousZoom;
+  return ratio >= LABEL_ZOOM_RELAYOUT_RATIO || ratio <= 1 / LABEL_ZOOM_RELAYOUT_RATIO;
+}
+
+export function projectRetainedLabels(
+  labels: readonly LabelCandidate[],
+  bounds: MapTooltipRect,
+  retained: ReadonlyMap<string, MapTooltipRect>,
+) {
+  const projected = new Map<string, MapTooltipRect>();
+  for (const label of labels) {
+    const saved = retained.get(label.id);
+    if (!saved || !pointVisibleInsideBounds(label, bounds)) continue;
+    const translated = {
+      left: saved.left + label.x,
+      right: saved.right + label.x,
+      top: saved.top + label.y,
+      bottom: saved.bottom + label.y,
+    };
+    if (translated.right - translated.left > bounds.right - bounds.left) continue;
+    projected.set(label.id, clampRect(translated, bounds));
+  }
+  return projected;
 }
 
 const overlaps = (a: MapTooltipRect, b: MapTooltipRect, gap = GAP) => (
