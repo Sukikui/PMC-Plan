@@ -225,7 +225,7 @@ export default function PortalForm({
               value={selectedSpace}
             />
           )}
-          descriptionPlaceholder="Présentez rapidement ce portail et son accès."
+          descriptionPlaceholder="Présentez rapidement ce portail et son accès. Évitez de répéter les coordonnées ou l’adresse Nether déjà indiquées sur la fiche."
           disabled={submission.isSubmitting}
           form={fields}
           identityPreview={unidentified ? {
