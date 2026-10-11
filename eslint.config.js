@@ -1,11 +1,14 @@
 // @ts-check
 
 import js from "@eslint/js";
+import { fixupPluginRules } from "@eslint/compat";
 import nextPlugin from "@next/eslint-plugin-next";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
+
+const compatibleNextPlugin = fixupPluginRules(nextPlugin);
 
 export default tseslint.config(
   {
@@ -27,7 +30,7 @@ export default tseslint.config(
     plugins: {
       react: reactPlugin,
       "react-hooks": reactHooksPlugin,
-      "@next/next": nextPlugin,
+      "@next/next": compatibleNextPlugin,
     },
     languageOptions: {
       ...reactPlugin.configs.flat.languageOptions,
